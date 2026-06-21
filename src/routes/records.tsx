@@ -31,7 +31,7 @@ function Records() {
                   <td>{r.player.name}{r.player.beginner && r.player.career.matches === 0 ? " ·beginner" : ""}</td>
                   <td className="text-center font-bold">{Math.round(r.score)}</td>
                   <td className="text-center">{r.sr.toFixed(1)}</td>
-                  <td className="text-center">{isFinite(r.econ) ? r.econ.toFixed(1) : "-"}</td>
+                  <td className="text-center">{r.player.career.bowlBalls ? r.econ.toFixed(1) : "-"}</td>
                 </tr>
               ))}
             </tbody>

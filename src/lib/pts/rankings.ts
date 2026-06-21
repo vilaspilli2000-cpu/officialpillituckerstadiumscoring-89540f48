@@ -5,7 +5,7 @@ export function rankPlayers(players: Player[]) {
   const scored = players.map((p) => {
     const c = combinedCareer(p);
     const sr = p.career.balls ? (p.career.runs / p.career.balls) * 100 : 0;
-    const econ = p.career.bowlBalls ? (p.career.bowlRuns / p.career.bowlBalls) * 6 : 99;
+    const econ = p.career.bowlBalls ? (p.career.bowlRuns / p.career.bowlBalls) * 6 : 0;
     const score =
       c.runs * 1 +
       c.hundreds * 60 +
