@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MatchSetupRouteImport } from './routes/match.setup'
+import { Route as MatchResultRouteImport } from './routes/match.result'
+import { Route as MatchLiveRouteImport } from './routes/match.live'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,30 +24,48 @@ const MatchSetupRoute = MatchSetupRouteImport.update({
   path: '/match/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MatchResultRoute = MatchResultRouteImport.update({
+  id: '/match/result',
+  path: '/match/result',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MatchLiveRoute = MatchLiveRouteImport.update({
+  id: '/match/live',
+  path: '/match/live',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/match/live': typeof MatchLiveRoute
+  '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/match/live': typeof MatchLiveRoute
+  '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/match/live': typeof MatchLiveRoute
+  '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/match/setup'
+  fullPaths: '/' | '/match/live' | '/match/result' | '/match/setup'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/match/setup'
-  id: '__root__' | '/' | '/match/setup'
+  to: '/' | '/match/live' | '/match/result' | '/match/setup'
+  id: '__root__' | '/' | '/match/live' | '/match/result' | '/match/setup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MatchLiveRoute: typeof MatchLiveRoute
+  MatchResultRoute: typeof MatchResultRoute
   MatchSetupRoute: typeof MatchSetupRoute
 }
 
@@ -65,11 +85,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MatchSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/match/result': {
+      id: '/match/result'
+      path: '/match/result'
+      fullPath: '/match/result'
+      preLoaderRoute: typeof MatchResultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/match/live': {
+      id: '/match/live'
+      path: '/match/live'
+      fullPath: '/match/live'
+      preLoaderRoute: typeof MatchLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MatchLiveRoute: MatchLiveRoute,
+  MatchResultRoute: MatchResultRoute,
   MatchSetupRoute: MatchSetupRoute,
 }
 export const routeTree = rootRouteImport
