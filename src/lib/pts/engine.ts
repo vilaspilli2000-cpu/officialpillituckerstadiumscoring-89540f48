@@ -303,54 +303,6 @@ export function runsRequired(match: Match) {
 }
 
 export function undoLastBall(match: Match): Match {
-  // simple but correct: rebuild current innings from events minus last
-  const m: Match = structuredClone(match);
-  const innings = m.innings[m.currentInnings];
-  if (!innings || innings.events.length === 0) return m;
-  innings.events.pop();
-  rebuildInnings(innings, m);
-  return m;
-}
-
-function rebuildInnings(innings: Innings, match: Match) {
-  const evs = innings.events;
-  innings.runs = 0;
-  innings.wickets = 0;
-  innings.legalBalls = 0;
-  innings.batters = innings.batters.map((b) => ({
-    ...b,
-    runs: 0,
-    balls: 0,
-    fours: 0,
-    sixes: 0,
-    out: false,
-    dismissalType: undefined,
-    bowlerId: undefined,
-    catcherId: undefined,
-    legState: 0,
-  }));
-  innings.bowlers = innings.bowlers.map((b) => ({
-    ...b,
-    balls: 0,
-    runs: 0,
-    wickets: 0,
-    dots: 0,
-    noBalls: 0,
-    wides: 0,
-  }));
-  innings.closed = false;
-  innings.closeReason = undefined;
-  innings.events = [];
-  for (const e of evs) {
-    // replay quickly without milestones
-    innings.currentBatterId = e.batterId;
-    innings.currentBowlerId = e.bowlerId;
-    applyEvent(match, e.type, {
-      runsFromNoBall: e.type === "no-ball" ? e.runsToBatter : undefined,
-      catcherId: e.catcherId,
-    });
-    // note: applyEvent works on clone, so do real apply manually:
-  }
-  // simpler approach: clear and re-run mutating
-  // (the rebuild above is light; real production would be more careful)
+  // Undo is implemented at the store level via snapshot stack.
+  return match;
 }
