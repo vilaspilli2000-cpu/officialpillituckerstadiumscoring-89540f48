@@ -1,6 +1,6 @@
 import { oversString } from "@/lib/pts/engine";
 import { usePtsStore, playerName } from "@/lib/pts/store";
-import type { Innings } from "@/lib/pts/types";
+import type { Innings, Player } from "@/lib/pts/types";
 
 export function BattingScorecard({ innings }: { innings: Innings }) {
   const players = usePtsStore((s) => s.players);
@@ -33,7 +33,7 @@ export function BattingScorecard({ innings }: { innings: Innings }) {
   );
 }
 
-function dismissalText(b: { dismissalType?: string; bowlerId?: string; catcherId?: string }, players: { id: string; name: string }[]) {
+function dismissalText(b: { dismissalType?: string; bowlerId?: string; catcherId?: string }, players: Player[]) {
   const bowler = b.bowlerId ? `b ${playerName(players, b.bowlerId)}` : "";
   const catcher = b.catcherId ? `c ${playerName(players, b.catcherId)} ` : "";
   switch (b.dismissalType) {
