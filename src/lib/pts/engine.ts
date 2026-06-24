@@ -270,8 +270,12 @@ export function applyEvent(
       innings.closed = true;
       innings.closeReason = "all-out";
       inningsClosed = true;
+      innings.currentBatterId = undefined;
     } else {
       needNextBatter = true;
+      // Clear current batter so the UI prompts for a replacement and never shows the
+      // dismissed batter as on-strike.
+      innings.currentBatterId = undefined;
     }
   }
 
