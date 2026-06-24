@@ -19,7 +19,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlayersIdRouteImport } from './routes/players.$id'
 import { Route as MatchSetupRouteImport } from './routes/match.setup'
 import { Route as MatchResultRouteImport } from './routes/match.result'
-import { Route as MatchLiveRouteImport } from './routes/match.live'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -71,11 +70,6 @@ const MatchResultRoute = MatchResultRouteImport.update({
   path: '/match/result',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MatchLiveRoute = MatchLiveRouteImport.update({
-  id: '/match/live',
-  path: '/match/live',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -85,7 +79,6 @@ export interface FileRoutesByFullPath {
   '/records': typeof RecordsRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/match/live': typeof MatchLiveRoute
   '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
   '/players/$id': typeof PlayersIdRoute
@@ -98,7 +91,6 @@ export interface FileRoutesByTo {
   '/records': typeof RecordsRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/match/live': typeof MatchLiveRoute
   '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
   '/players/$id': typeof PlayersIdRoute
@@ -112,7 +104,6 @@ export interface FileRoutesById {
   '/records': typeof RecordsRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/match/live': typeof MatchLiveRoute
   '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
   '/players/$id': typeof PlayersIdRoute
@@ -127,7 +118,6 @@ export interface FileRouteTypes {
     | '/records'
     | '/settings'
     | '/sitemap.xml'
-    | '/match/live'
     | '/match/result'
     | '/match/setup'
     | '/players/$id'
@@ -140,7 +130,6 @@ export interface FileRouteTypes {
     | '/records'
     | '/settings'
     | '/sitemap.xml'
-    | '/match/live'
     | '/match/result'
     | '/match/setup'
     | '/players/$id'
@@ -153,7 +142,6 @@ export interface FileRouteTypes {
     | '/records'
     | '/settings'
     | '/sitemap.xml'
-    | '/match/live'
     | '/match/result'
     | '/match/setup'
     | '/players/$id'
@@ -167,7 +155,6 @@ export interface RootRouteChildren {
   RecordsRoute: typeof RecordsRoute
   SettingsRoute: typeof SettingsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  MatchLiveRoute: typeof MatchLiveRoute
   MatchResultRoute: typeof MatchResultRoute
   MatchSetupRoute: typeof MatchSetupRoute
 }
@@ -244,13 +231,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MatchResultRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/match/live': {
-      id: '/match/live'
-      path: '/match/live'
-      fullPath: '/match/live'
-      preLoaderRoute: typeof MatchLiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -273,7 +253,6 @@ const rootRouteChildren: RootRouteChildren = {
   RecordsRoute: RecordsRoute,
   SettingsRoute: SettingsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  MatchLiveRoute: MatchLiveRoute,
   MatchResultRoute: MatchResultRoute,
   MatchSetupRoute: MatchSetupRoute,
 }
