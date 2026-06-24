@@ -38,6 +38,10 @@ export type DismissalType =
   | "six-and-out"
   | "leg-l2"
   | "run-out"
+  | "stumped"
+  | "hit-wicket"
+  | "retired"
+  | "other"
   | "not-out";
 
 export interface BatterCard {
