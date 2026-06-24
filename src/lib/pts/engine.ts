@@ -109,6 +109,12 @@ export function applyEvent(
     case "1":
       runsBatter = 1;
       break;
+    case "2":
+      runsBatter = 2;
+      break;
+    case "3":
+      runsBatter = 3;
+      break;
     case "4":
       runsBatter = 4;
       bat.fours += 1;

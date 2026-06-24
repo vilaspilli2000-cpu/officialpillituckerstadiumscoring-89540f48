@@ -66,6 +66,8 @@ export interface BowlerCard {
 export type BallEventType =
   | "0"
   | "1"
+  | "2"
+  | "3"
   | "4"
   | "wide"
   | "no-ball"
