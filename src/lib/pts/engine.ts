@@ -66,6 +66,10 @@ export interface ApplyOptions {
   runsFromNoBall?: number;
   /** for caught dismissals */
   catcherId?: string;
+  /** for wicket button: which dismissal */
+  dismissalType?: DismissalType;
+  /** fielder credited for run-out */
+  fielderId?: string;
 }
 
 /** Apply a scoring event. Returns new match (mutated copy ok). */
@@ -140,8 +144,17 @@ export function applyEvent(
       break;
     case "wicket":
       isWicket = true;
-      dismissalType = "bowled";
+      dismissalType = opts.dismissalType ?? "bowled";
       dismissedPlayerId = batterId;
+      if (opts.dismissalType === "caught" || opts.dismissalType === "caught-one-bounce" || opts.dismissalType === "stumped") {
+        catcherId = opts.catcherId;
+      }
+      if (opts.dismissalType === "run-out") {
+        catcherId = opts.fielderId;
+      }
+      if (opts.dismissalType === "six-and-out") {
+        bat.sixes += 1;
+      }
       break;
     case "catch-direct":
       isWicket = true;
@@ -257,8 +270,12 @@ export function applyEvent(
       innings.closed = true;
       innings.closeReason = "all-out";
       inningsClosed = true;
+      innings.currentBatterId = undefined;
     } else {
       needNextBatter = true;
+      // Clear current batter so the UI prompts for a replacement and never shows the
+      // dismissed batter as on-strike.
+      innings.currentBatterId = undefined;
     }
   }
 
