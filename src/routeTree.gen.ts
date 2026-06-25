@@ -20,6 +20,7 @@ import { Route as PlayersIdRouteImport } from './routes/players.$id'
 import { Route as MatchSetupRouteImport } from './routes/match.setup'
 import { Route as MatchResultRouteImport } from './routes/match.result'
 import { Route as MatchLiveRouteImport } from './routes/match.live'
+import { Route as PlayersIdEditRouteImport } from './routes/players.$id.edit'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -76,6 +77,11 @@ const MatchLiveRoute = MatchLiveRouteImport.update({
   path: '/match/live',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlayersIdEditRoute = PlayersIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => PlayersIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -88,7 +94,8 @@ export interface FileRoutesByFullPath {
   '/match/live': typeof MatchLiveRoute
   '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
-  '/players/$id': typeof PlayersIdRoute
+  '/players/$id': typeof PlayersIdRouteWithChildren
+  '/players/$id/edit': typeof PlayersIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -101,7 +108,8 @@ export interface FileRoutesByTo {
   '/match/live': typeof MatchLiveRoute
   '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
-  '/players/$id': typeof PlayersIdRoute
+  '/players/$id': typeof PlayersIdRouteWithChildren
+  '/players/$id/edit': typeof PlayersIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -115,7 +123,8 @@ export interface FileRoutesById {
   '/match/live': typeof MatchLiveRoute
   '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
-  '/players/$id': typeof PlayersIdRoute
+  '/players/$id': typeof PlayersIdRouteWithChildren
+  '/players/$id/edit': typeof PlayersIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/match/result'
     | '/match/setup'
     | '/players/$id'
+    | '/players/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/match/result'
     | '/match/setup'
     | '/players/$id'
+    | '/players/$id/edit'
   id:
     | '__root__'
     | '/'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/match/result'
     | '/match/setup'
     | '/players/$id'
+    | '/players/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -251,15 +263,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MatchLiveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/players/$id/edit': {
+      id: '/players/$id/edit'
+      path: '/edit'
+      fullPath: '/players/$id/edit'
+      preLoaderRoute: typeof PlayersIdEditRouteImport
+      parentRoute: typeof PlayersIdRoute
+    }
   }
 }
 
+interface PlayersIdRouteChildren {
+  PlayersIdEditRoute: typeof PlayersIdEditRoute
+}
+
+const PlayersIdRouteChildren: PlayersIdRouteChildren = {
+  PlayersIdEditRoute: PlayersIdEditRoute,
+}
+
+const PlayersIdRouteWithChildren = PlayersIdRoute._addFileChildren(
+  PlayersIdRouteChildren,
+)
+
 interface PlayersRouteChildren {
-  PlayersIdRoute: typeof PlayersIdRoute
+  PlayersIdRoute: typeof PlayersIdRouteWithChildren
 }
 
 const PlayersRouteChildren: PlayersRouteChildren = {
-  PlayersIdRoute: PlayersIdRoute,
+  PlayersIdRoute: PlayersIdRouteWithChildren,
 }
 
 const PlayersRouteWithChildren =
@@ -280,13 +311,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

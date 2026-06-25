@@ -4,6 +4,8 @@ export interface Player {
   id: string;
   name: string;
   createdAt: number;
+  role?: "Batter" | "Bowler" | "All-rounder" | "Wicketkeeper" | "—";
+  notes?: string;
   seed: {
     hundreds: number;
     fifties: number;
@@ -27,7 +29,32 @@ export interface Player {
     runOuts: number;
     awards: number;
     notOuts: number;
+    innings?: number;
+    ducks?: number;
+    hundred50s?: number; // 150s
+    doubleHundreds?: number; // 200s
+    maidens?: number;
+    dots?: number;
+    wides?: number;
+    noBalls?: number;
+    bestBowlingWkts?: number;
+    bestBowlingRuns?: number;
   };
+  ratings?: {
+    overall?: number;
+    batting?: number;
+    bowling?: number;
+    fielding?: number;
+    pressure?: number;
+    matchWinning?: number;
+    wicketTaking?: number;
+    sixHitting?: number;
+    deathBat?: number;
+    deathBowl?: number;
+    recentForm?: number;
+  };
+  manualOverride?: boolean;
+  edits?: Array<{ ts: number; field: string; from: string | number; to: string | number }>;
   beginner?: boolean;
 }
 

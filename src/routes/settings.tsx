@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useRef } from "react";
 import { AppShell } from "@/components/pts/AppShell";
 import { Button } from "@/components/ui/button";
 import { usePtsStore } from "@/lib/pts/store";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings — PTS Scorer" }] }),
@@ -10,6 +12,34 @@ export const Route = createFileRoute("/settings")({
 
 function Settings() {
   const resetAll = usePtsStore((s) => s.resetAll);
+  const players = usePtsStore((s) => s.players);
+  const importPlayers = usePtsStore((s) => s.importPlayers);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function exportJson() {
+    const blob = new Blob([JSON.stringify(players, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pts-players-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importFile(file: File) {
+    file.text().then((text) => {
+      try {
+        const data = JSON.parse(text);
+        if (!Array.isArray(data)) throw new Error("Invalid file");
+        if (!confirm(`Replace player list with ${data.length} players?`)) return;
+        importPlayers(data);
+        toast.success("Players imported");
+      } catch {
+        toast.error("Invalid players JSON");
+      }
+    });
+  }
+
   return (
     <AppShell title="Settings">
       <h1 className="text-2xl font-black text-gradient-gold mb-4">Settings & Rules</h1>
@@ -33,6 +63,25 @@ function Settings() {
         <p className="text-muted-foreground"><strong>Probability</strong>: deterministic from runs needed, balls left, wickets in hand, batter & bowler ratings, momentum.</p>
         <p className="text-muted-foreground"><strong>Ranking</strong>: composite of runs, hundreds/fifties, wickets, catches, awards, with SR boost and economy penalty.</p>
         <p className="text-muted-foreground"><strong>Awards</strong>: Player of Match (winning side, impact); Fighter (losing side, pressure); Batsman/Bowler/Fielder (either side, performance).</p>
+      </section>
+
+      <section className="card-gold rounded-xl p-4 mt-4">
+        <h2 className="text-primary font-bold mb-2">Backup</h2>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={exportJson}>Export players</Button>
+          <Button variant="outline" onClick={() => fileRef.current?.click()}>Import players</Button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) importFile(f);
+              e.target.value = "";
+            }}
+          />
+        </div>
       </section>
 
       <section className="card-gold rounded-xl p-4 mt-4">
