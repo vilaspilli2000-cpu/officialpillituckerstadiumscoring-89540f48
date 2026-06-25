@@ -30,7 +30,7 @@ interface State {
   current?: Match;
   achievements: Achievement[];
   undoStack: Match[];
-  settings: { defaultFollowOn: number };
+  settings: { defaultFollowOn: number; commentaryEnabled?: boolean };
 
   startMatch: (input: SetupInput) => void;
   setCurrent: (m: Match | undefined) => void;
@@ -40,6 +40,11 @@ interface State {
   setNextBowler: (id: string) => void;
   completeMatch: () => void;
   resetAll: () => void;
+  addPlayer: (name: string, role?: Player["role"]) => void;
+  updatePlayer: (id: string, patch: Partial<Player>) => void;
+  resetPlayerToCalculated: (id: string) => void;
+  importPlayers: (players: Player[]) => void;
+  setSetting: <K extends keyof State["settings"]>(k: K, v: State["settings"][K]) => void;
 }
 
 export const usePtsStore = create<State>()(
@@ -208,10 +213,93 @@ export const usePtsStore = create<State>()(
       },
 
       resetAll: () => set({ players: SEED_PLAYERS, matches: [], current: undefined, achievements: [], undoStack: [] }),
+
+      addPlayer: (name, role) => {
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        const newPlayer: Player = {
+          id: uid(),
+          name: trimmed,
+          createdAt: Date.now(),
+          role: role ?? "—",
+          seed: { hundreds: 0, fifties: 0, highest: 0, highestNotOut: false },
+          career: {
+            matches: 0, runs: 0, balls: 0, fours: 0, sixes: 0,
+            hundreds: 0, fifties: 0, highest: 0, highestNotOut: false,
+            wickets: 0, bowlBalls: 0, bowlRuns: 0, catches: 0,
+            runOuts: 0, awards: 0, notOuts: 0,
+          },
+        };
+        set({ players: [...get().players, newPlayer] });
+      },
+
+      updatePlayer: (id, patch) => {
+        const players = get().players.map((p) => {
+          if (p.id !== id) return p;
+          const edits = p.edits ? [...p.edits] : [];
+          // Track top-level scalar changes for audit (shallow)
+          for (const [k, v] of Object.entries(patch)) {
+            if (k === "edits" || k === "career" || k === "ratings" || k === "seed") continue;
+            const old = (p as unknown as Record<string, unknown>)[k];
+            if (old !== v && (typeof v === "string" || typeof v === "number")) {
+              edits.push({ ts: Date.now(), field: k, from: String(old ?? ""), to: v });
+            }
+          }
+          return {
+            ...p,
+            ...patch,
+            seed: patch.seed ? { ...p.seed, ...patch.seed } : p.seed,
+            career: patch.career ? { ...p.career, ...patch.career } : p.career,
+            ratings: patch.ratings ? { ...(p.ratings ?? {}), ...patch.ratings } : p.ratings,
+            manualOverride: true,
+            edits,
+          };
+        });
+        set({ players });
+      },
+
+      resetPlayerToCalculated: (id) => {
+        const seed = SEED_PLAYERS.find((p) => p.id === id);
+        if (!seed) return;
+        const players = get().players.map((p) =>
+          p.id === id
+            ? { ...p, seed: seed.seed, career: seed.career, ratings: undefined, manualOverride: false, edits: [] }
+            : p,
+        );
+        set({ players });
+      },
+
+      importPlayers: (incoming) => {
+        if (!Array.isArray(incoming)) return;
+        set({ players: incoming });
+      },
+
+      setSetting: (k, v) => set({ settings: { ...get().settings, [k]: v } }),
     }),
     {
       name: "pts-scorer-v1",
-      version: 1,
+      version: 2,
+      migrate: (persisted: unknown) => {
+        // v1 → v2: ensure all new optional fields exist; preserve everything.
+        const s = (persisted ?? {}) as { players?: Player[] };
+        if (s.players) {
+          s.players = s.players.map((p) => ({
+            ...p,
+            role: p.role ?? "—",
+            notes: p.notes ?? "",
+            edits: p.edits ?? [],
+            manualOverride: p.manualOverride ?? false,
+            ratings: p.ratings ?? {},
+            career: {
+              innings: 0, ducks: 0, hundred50s: 0, doubleHundreds: 0,
+              maidens: 0, dots: 0, wides: 0, noBalls: 0,
+              bestBowlingWkts: 0, bestBowlingRuns: 0,
+              ...p.career,
+            },
+          }));
+        }
+        return s as never;
+      },
     },
   ),
 );
