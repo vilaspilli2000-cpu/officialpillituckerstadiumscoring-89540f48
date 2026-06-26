@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/pts/AppShell";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,13 @@ function History() {
               </div>
               <div className="text-xs text-primary">{m.result?.summary}</div>
               <div className="text-[11px] text-muted-foreground">Format {m.format} · {m.innings.map((i) => `${i.runs}/${i.wickets}`).join(" — ")}</div>
+              <Link
+                to="/match/$id"
+                params={{ id: m.id }}
+                className="mt-2 inline-block rounded-md border border-primary/40 px-3 py-1 text-[11px] uppercase tracking-widest text-primary hover:bg-primary/10"
+              >
+                View Full Scorecard
+              </Link>
             </li>
           ))}
         </ul>
