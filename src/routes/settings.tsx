@@ -13,8 +13,11 @@ export const Route = createFileRoute("/settings")({
 function Settings() {
   const resetAll = usePtsStore((s) => s.resetAll);
   const players = usePtsStore((s) => s.players);
+  const matches = usePtsStore((s) => s.matches);
   const importPlayers = usePtsStore((s) => s.importPlayers);
+  const importMatches = usePtsStore((s) => s.importMatches);
   const fileRef = useRef<HTMLInputElement>(null);
+  const matchFileRef = useRef<HTMLInputElement>(null);
 
   function exportJson() {
     const blob = new Blob([JSON.stringify(players, null, 2)], { type: "application/json" });
@@ -22,6 +25,16 @@ function Settings() {
     const a = document.createElement("a");
     a.href = url;
     a.download = `pts-players-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportMatchesJson() {
+    const blob = new Blob([JSON.stringify(matches, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pts-matches-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -36,6 +49,20 @@ function Settings() {
         toast.success("Players imported");
       } catch {
         toast.error("Invalid players JSON");
+      }
+    });
+  }
+
+  function importMatchFile(file: File) {
+    file.text().then((text) => {
+      try {
+        const data = JSON.parse(text);
+        if (!Array.isArray(data)) throw new Error("Invalid file");
+        if (!confirm(`Replace match history with ${data.length} matches?`)) return;
+        importMatches(data);
+        toast.success("Matches imported");
+      } catch {
+        toast.error("Invalid matches JSON");
       }
     });
   }
@@ -70,6 +97,8 @@ function Settings() {
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={exportJson}>Export players</Button>
           <Button variant="outline" onClick={() => fileRef.current?.click()}>Import players</Button>
+          <Button variant="outline" onClick={exportMatchesJson}>Export matches</Button>
+          <Button variant="outline" onClick={() => matchFileRef.current?.click()}>Import matches</Button>
           <input
             ref={fileRef}
             type="file"
@@ -78,6 +107,17 @@ function Settings() {
             onChange={(e) => {
               const f = e.target.files?.[0];
               if (f) importFile(f);
+              e.target.value = "";
+            }}
+          />
+          <input
+            ref={matchFileRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) importMatchFile(f);
               e.target.value = "";
             }}
           />

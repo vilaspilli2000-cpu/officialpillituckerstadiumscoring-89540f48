@@ -20,6 +20,7 @@ import { Route as PlayersIdRouteImport } from './routes/players.$id'
 import { Route as MatchSetupRouteImport } from './routes/match.setup'
 import { Route as MatchResultRouteImport } from './routes/match.result'
 import { Route as MatchLiveRouteImport } from './routes/match.live'
+import { Route as MatchIdRouteImport } from './routes/match.$id'
 import { Route as PlayersIdEditRouteImport } from './routes/players.$id.edit'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -77,6 +78,11 @@ const MatchLiveRoute = MatchLiveRouteImport.update({
   path: '/match/live',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MatchIdRoute = MatchIdRouteImport.update({
+  id: '/match/$id',
+  path: '/match/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlayersIdEditRoute = PlayersIdEditRouteImport.update({
   id: '/edit',
   path: '/edit',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/records': typeof RecordsRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/match/$id': typeof MatchIdRoute
   '/match/live': typeof MatchLiveRoute
   '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/records': typeof RecordsRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/match/$id': typeof MatchIdRoute
   '/match/live': typeof MatchLiveRoute
   '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/records': typeof RecordsRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/match/$id': typeof MatchIdRoute
   '/match/live': typeof MatchLiveRoute
   '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/records'
     | '/settings'
     | '/sitemap.xml'
+    | '/match/$id'
     | '/match/live'
     | '/match/result'
     | '/match/setup'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/records'
     | '/settings'
     | '/sitemap.xml'
+    | '/match/$id'
     | '/match/live'
     | '/match/result'
     | '/match/setup'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/records'
     | '/settings'
     | '/sitemap.xml'
+    | '/match/$id'
     | '/match/live'
     | '/match/result'
     | '/match/setup'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   RecordsRoute: typeof RecordsRoute
   SettingsRoute: typeof SettingsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  MatchIdRoute: typeof MatchIdRoute
   MatchLiveRoute: typeof MatchLiveRoute
   MatchResultRoute: typeof MatchResultRoute
   MatchSetupRoute: typeof MatchSetupRoute
@@ -263,6 +276,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MatchLiveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/match/$id': {
+      id: '/match/$id'
+      path: '/match/$id'
+      fullPath: '/match/$id'
+      preLoaderRoute: typeof MatchIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/players/$id/edit': {
       id: '/players/$id/edit'
       path: '/edit'
@@ -304,6 +324,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecordsRoute: RecordsRoute,
   SettingsRoute: SettingsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  MatchIdRoute: MatchIdRoute,
   MatchLiveRoute: MatchLiveRoute,
   MatchResultRoute: MatchResultRoute,
   MatchSetupRoute: MatchSetupRoute,
@@ -311,3 +332,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

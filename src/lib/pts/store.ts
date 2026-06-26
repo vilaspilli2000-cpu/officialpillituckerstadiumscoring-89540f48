@@ -44,6 +44,7 @@ interface State {
   updatePlayer: (id: string, patch: Partial<Player>) => void;
   resetPlayerToCalculated: (id: string) => void;
   importPlayers: (players: Player[]) => void;
+  importMatches: (matches: Match[]) => void;
   setSetting: <K extends keyof State["settings"]>(k: K, v: State["settings"][K]) => void;
 }
 
@@ -229,6 +230,12 @@ export const usePtsStore = create<State>()(
             wickets: 0, bowlBalls: 0, bowlRuns: 0, catches: 0,
             runOuts: 0, awards: 0, notOuts: 0,
           },
+          ratings: {
+            overall: 50, batting: 50, bowling: 50, fielding: 50,
+            pressure: 50, matchWinning: 50, wicketTaking: 50,
+            sixHitting: 50, deathBat: 50, deathBowl: 50, recentForm: 50,
+          },
+          notes: "New player, default rating 50.",
         };
         set({ players: [...get().players, newPlayer] });
       },
@@ -274,30 +281,62 @@ export const usePtsStore = create<State>()(
         set({ players: incoming });
       },
 
+      importMatches: (incoming) => {
+        if (!Array.isArray(incoming)) return;
+        set({ matches: incoming });
+      },
+
       setSetting: (k, v) => set({ settings: { ...get().settings, [k]: v } }),
     }),
     {
       name: "pts-scorer-v1",
-      version: 2,
+      version: 3,
       migrate: (persisted: unknown) => {
-        // v1 → v2: ensure all new optional fields exist; preserve everything.
         const s = (persisted ?? {}) as { players?: Player[] };
-        if (s.players) {
-          s.players = s.players.map((p) => ({
+        const existing = s.players ?? [];
+        // Upgrade existing players with any missing optional fields.
+        const byId = new Map<string, Player>();
+        for (const p of existing) {
+          byId.set(p.id, {
             ...p,
             role: p.role ?? "—",
             notes: p.notes ?? "",
             edits: p.edits ?? [],
             manualOverride: p.manualOverride ?? false,
-            ratings: p.ratings ?? {},
+            ratings: p.ratings && Object.keys(p.ratings).length > 0
+              ? p.ratings
+              : {
+                  overall: 50, batting: 50, bowling: 50, fielding: 50,
+                  pressure: 50, matchWinning: 50, wicketTaking: 50,
+                  sixHitting: 50, deathBat: 50, deathBowl: 50, recentForm: 50,
+                },
             career: {
               innings: 0, ducks: 0, hundred50s: 0, doubleHundreds: 0,
               maidens: 0, dots: 0, wides: 0, noBalls: 0,
               bestBowlingWkts: 0, bestBowlingRuns: 0,
               ...p.career,
             },
-          }));
+          });
         }
+        // Add any new seed players that don't yet exist; never overwrite manual edits.
+        for (const seed of SEED_PLAYERS) {
+          if (byId.has(seed.id)) {
+            const cur = byId.get(seed.id)!;
+            if (!cur.manualOverride) {
+              // Refresh notes/role/ratings/career baseline from seed for unedited players.
+              byId.set(seed.id, {
+                ...cur,
+                role: cur.role && cur.role !== "—" ? cur.role : seed.role,
+                notes: cur.notes && cur.notes.length > 0 ? cur.notes : seed.notes,
+                ratings: { ...seed.ratings, ...(cur.ratings ?? {}) },
+                career: { ...seed.career, ...cur.career },
+              });
+            }
+          } else {
+            byId.set(seed.id, seed);
+          }
+        }
+        s.players = Array.from(byId.values());
         return s as never;
       },
     },
