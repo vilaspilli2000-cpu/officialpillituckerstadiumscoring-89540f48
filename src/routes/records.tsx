@@ -18,24 +18,41 @@ function Records() {
       <h1 className="text-2xl font-black text-gradient-gold mb-4">Records & Rankings</h1>
 
       <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-widest text-primary/80 mb-2">Rankings</h2>
-        <div className="card-gold rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="text-xs uppercase tracking-widest text-primary/80">
-              <tr><th className="text-left p-2">#</th><th className="text-left">Player</th><th>Score</th><th>SR</th><th>Econ</th></tr>
-            </thead>
-            <tbody>
-              {ranked.map((r, i) => (
-                <tr key={r.player.id} className="border-t border-border/40">
-                  <td className="p-2">{i + 1}</td>
-                  <td>{r.player.name}{r.player.beginner && r.player.career.matches === 0 ? " ·beginner" : ""}</td>
-                  <td className="text-center font-bold">{Math.round(r.score)}</td>
-                  <td className="text-center">{r.sr.toFixed(1)}</td>
-                  <td className="text-center">{r.player.career.bowlBalls ? r.econ.toFixed(1) : "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <h2 className="text-sm uppercase tracking-widest text-primary/80 mb-2">PTS Player Rankings</h2>
+        <p className="text-[11px] text-muted-foreground mb-2">
+          Deterministic score · Batting 30% · Bowling 22% · Pressure 18% · Awards 12% · Fielding 8% · Form 10%.
+        </p>
+        <div className="space-y-2">
+          {ranked.map((r, i) => (
+            <div key={r.player.id} className="card-gold rounded-xl p-3">
+              <div className="flex items-center gap-3">
+                <div className="text-lg font-black text-primary tabular-nums w-6 text-center">{i + 1}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold truncate">
+                    {r.player.name}
+                    {r.player.beginner && r.player.career.matches === 0 ? (
+                      <span className="ml-2 text-[10px] uppercase tracking-widest text-muted-foreground">Beginner</span>
+                    ) : null}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground truncate">{r.reason}</div>
+                </div>
+                <div className="text-right tabular-nums shrink-0">
+                  <div className="text-lg font-black">{Math.round(r.score)}</div>
+                  <div className="text-[10px] text-muted-foreground">/100</div>
+                </div>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <span>Bat {Math.round(r.breakdown.batting)}</span>
+                <span>Bowl {Math.round(r.breakdown.bowling)}</span>
+                <span>Pres {Math.round(r.breakdown.pressure)}</span>
+                <span>Awards {Math.round(r.breakdown.awards)}</span>
+                <span>Field {Math.round(r.breakdown.fielding)}</span>
+                <span>Form {Math.round(r.breakdown.form)}</span>
+                {r.sr > 0 && <span>SR {r.sr.toFixed(1)}</span>}
+                {r.econ > 0 && <span>Econ {r.econ.toFixed(2)}</span>}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
