@@ -122,9 +122,9 @@ function Live() {
             <Undo2 size={16} />
           </button>
           <button
-            onClick={() => navigate({ to: "/match/result" })}
+            onClick={() => navigate({ to: "/match/$id", params: { id: current.id } })}
             className="rounded-full border border-border/60 bg-secondary/60 p-2 hover:border-primary"
-            aria-label="Scorecard"
+            aria-label="Live Scorecard"
           >
             <FileText size={16} />
           </button>
@@ -208,9 +208,9 @@ function Live() {
       <Button
         variant="gold"
         className="mt-3 w-full"
-        onClick={() => navigate({ to: "/match/result" })}
+        onClick={() => navigate({ to: "/match/$id", params: { id: current.id } })}
       >
-        View Scorecard
+        View Full Scorecard & Analytics
       </Button>
 
       <PlayerSelectModal

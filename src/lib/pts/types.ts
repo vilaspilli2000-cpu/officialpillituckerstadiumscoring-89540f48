@@ -192,6 +192,18 @@ export interface Match {
   superOver?: Match["innings"]; // optional super-over innings reused shape
   pendingNoBall?: boolean; // awaiting runs-from-no-ball selection
   pendingCatchSelection?: { dismissalType: DismissalType }; // awaiting catcher select
+  commentary?: CommentaryEntry[];
+}
+
+export interface CommentaryEntry {
+  id: string;
+  ts: number;
+  inningsIndex: number;
+  ballIndex: number;
+  overLabel: string;
+  text: string;
+  kind: "ball" | "wicket" | "boundary" | "milestone" | "phase" | "swing";
+  probSwing?: number;
 }
 
 export interface Achievement {

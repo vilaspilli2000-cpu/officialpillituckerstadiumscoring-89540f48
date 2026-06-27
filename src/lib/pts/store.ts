@@ -7,6 +7,7 @@ import { advanceInnings, detectResult, newInnings, totalInningsFor } from "./for
 import { computeAwards } from "./awards";
 import { buildStory } from "./story";
 import { computeProbability } from "./probability";
+import { generateCommentaryFor } from "./commentary";
 
 const uid = () =>
   globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
@@ -85,6 +86,10 @@ export const usePtsStore = create<State>()(
         const { current, players, undoStack } = get();
         if (!current) return;
         const snapshot = structuredClone(current);
+        const prevProb = computeProbability(current, players);
+        const prevBatPct = current.innings[current.currentInnings]
+          ? (current.innings[current.currentInnings].battingTeam === "A" ? prevProb.teamA : prevProb.teamB)
+          : 50;
         const res = applyEvent(current, type, opts);
         let m = res.match;
 
@@ -98,7 +103,7 @@ export const usePtsStore = create<State>()(
           text: a.text,
         }));
 
-        // probability snapshot
+        // probability snapshot (deterministic)
         const prob = computeProbability(m, players);
         m.probability = [
           ...m.probability,
@@ -109,6 +114,17 @@ export const usePtsStore = create<State>()(
             note: prob.note,
           },
         ];
+
+        // commentary for the most recent event
+        const inn = m.innings[res.inningsClosed ? m.currentInnings : m.currentInnings];
+        const lastEv = inn?.events[inn.events.length - 1];
+        if (lastEv) {
+          const newBatPct = lastEv.inningsIndex >= 0
+            ? ((m.innings[lastEv.inningsIndex].battingTeam === "A") ? prob.teamA : prob.teamB)
+            : 50;
+          const entry = generateCommentaryFor(m, players, lastEv, prevBatPct, newBatPct);
+          m.commentary = [...(m.commentary ?? []), entry];
+        }
 
         // innings closed → maybe advance
         if (res.inningsClosed) {

@@ -86,6 +86,9 @@ function Result() {
       </section>
 
       <div className="mt-8 flex flex-wrap gap-3">
+        <Button variant="outline" size="xl" onClick={() => navigate({ to: "/match/$id", params: { id: current.id } })}>
+          View Full Scorecard
+        </Button>
         <Button variant="hero" size="xl" onClick={() => { completeMatch(); navigate({ to: "/" }); }}>
           Save & Go Home
         </Button>
