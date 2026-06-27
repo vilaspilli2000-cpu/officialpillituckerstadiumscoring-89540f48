@@ -1,8 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppShell } from "@/components/pts/AppShell";
 import { Button } from "@/components/ui/button";
 import { usePtsStore } from "@/lib/pts/store";
-import { BattingScorecard, BowlingScorecard } from "@/components/pts/Scorecards";
+import { LiveScorecard } from "@/components/pts/LiveScorecard";
+import { MatchAnalytics } from "@/components/pts/MatchAnalytics";
+import { CommentaryFeed } from "@/components/pts/CommentaryFeed";
+import { ProbabilityBar } from "@/components/pts/ProbabilityBar";
 
 export const Route = createFileRoute("/match/$id")({
   head: () => ({ meta: [{ title: "Full Scorecard — PTS Scorer" }] }),
@@ -19,8 +23,12 @@ const AWARD_LABEL: Record<string, string> = {
 
 function MatchView() {
   const { id } = Route.useParams();
-  const match = usePtsStore((s) => s.matches.find((m) => m.id === id));
+  const current = usePtsStore((s) => s.current);
+  const saved = usePtsStore((s) => s.matches.find((m) => m.id === id));
+  const players = usePtsStore((s) => s.players);
+  const match = current?.id === id ? current : saved;
   const navigate = useNavigate();
+  const [tab, setTab] = useState<"scorecard" | "analytics" | "commentary">("scorecard");
 
   if (!match) {
     return (
@@ -34,12 +42,17 @@ function MatchView() {
   }
 
   const awards = match.awards ?? [];
+  const live = !match.result;
 
   return (
     <AppShell title="Scorecard">
       <section className="card-gold rounded-2xl p-5 text-center">
-        <div className="text-[11px] uppercase tracking-[0.3em] text-primary/80">Full Scorecard</div>
-        <h1 className="text-2xl md:text-3xl font-black text-gradient-gold mt-2">{match.result?.summary ?? "Match"}</h1>
+        <div className="text-[11px] uppercase tracking-[0.3em] text-primary/80">
+          {live ? "Live Scorecard" : "Full Scorecard"}
+        </div>
+        <h1 className="text-2xl md:text-3xl font-black text-gradient-gold mt-2">
+          {match.result?.summary ?? `${match.teamA.name} vs ${match.teamB.name}`}
+        </h1>
         <div className="text-xs text-muted-foreground mt-1">
           {match.teamA.name} vs {match.teamB.name} · Format {match.format}
         </div>
@@ -52,6 +65,30 @@ function MatchView() {
           ))}
         </div>
       </section>
+
+      <div className="mt-4">
+        <ProbabilityBar match={match} />
+      </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-1 p-1 rounded-xl border border-border/60 bg-secondary/40 text-xs uppercase tracking-widest">
+        {(["scorecard", "analytics", "commentary"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`rounded-lg px-3 py-2 font-bold transition ${
+              tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4">
+        {tab === "scorecard" && <LiveScorecard match={match} players={players} />}
+        {tab === "analytics" && <MatchAnalytics match={match} />}
+        {tab === "commentary" && <CommentaryFeed entries={match.commentary ?? []} />}
+      </div>
 
       {match.story && (
         <section className="mt-6">
@@ -72,21 +109,15 @@ function MatchView() {
         </section>
       )}
 
-      <section className="mt-8 space-y-6">
-        {match.innings.map((inn, i) => (
-          <div key={i}>
-            <h3 className="text-sm uppercase tracking-widest text-primary/80 mb-2">
-              {inn.battingTeam === "A" ? match.teamA.name : match.teamB.name} — {inn.runs}/{inn.wickets}
-            </h3>
-            <BattingScorecard innings={inn} />
-            <div className="h-2" />
-            <BowlingScorecard innings={inn} />
-          </div>
-        ))}
-      </section>
-
       <div className="mt-8 flex gap-3">
-        <Button variant="outline" className="flex-1" onClick={() => navigate({ to: "/history" })}>Back</Button>
+        {live && (
+          <Button variant="gold" className="flex-1" onClick={() => navigate({ to: "/match/live" })}>
+            Back to Live
+          </Button>
+        )}
+        {!live && (
+          <Button variant="outline" className="flex-1" onClick={() => navigate({ to: "/history" })}>Back</Button>
+        )}
       </div>
     </AppShell>
   );
