@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/pts/AppShell";
 import { usePtsStore, playerName } from "@/lib/pts/store";
 
@@ -21,6 +21,15 @@ function Almanac() {
             <li key={a.id} className="card-gold rounded-xl p-3">
               <div className="text-sm font-semibold">{playerName(players, a.playerId)} — {a.text}</div>
               <div className="text-[11px] text-muted-foreground">{new Date(a.ts).toLocaleString()}</div>
+              {a.matchId && (
+                <Link
+                  to="/match/$id"
+                  params={{ id: a.matchId }}
+                  className="mt-1 inline-block text-[11px] uppercase tracking-widest text-primary hover:opacity-80"
+                >
+                  Open Scorecard
+                </Link>
+              )}
             </li>
           ))}
         </ul>
