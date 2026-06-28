@@ -37,13 +37,19 @@ function battingScore(p: Player): { score: number; sr: number; avg: number } {
   const hundredsS = clamp((c.hundreds / 20) * 100);        // 20 tons → 100
   const fiftiesS = clamp((c.fifties / 40) * 100);          // 40 fifties → 100
   const highestS = clamp((c.highest / 250) * 100);         // HS 250 → 100
+  const bigS = clamp((((p.career.hundred50s ?? 0) * 2 + (p.career.doubleHundreds ?? 0) * 4) / 10) * 100);
+  const boundaries = (p.career.fours ?? 0) + (p.career.sixes ?? 0);
+  const boundaryPct = p.career.balls ? (boundaries / p.career.balls) * 100 : 0;
+  const boundaryS = clamp((boundaryPct / 25) * 100);       // 25% boundaries → 100
   const score =
-    runsS * 0.30 +
-    avgS * 0.20 +
-    srS * 0.20 +
-    hundredsS * 0.15 +
-    fiftiesS * 0.10 +
-    highestS * 0.05;
+    runsS * 0.25 +
+    avgS * 0.18 +
+    srS * 0.17 +
+    hundredsS * 0.12 +
+    fiftiesS * 0.08 +
+    highestS * 0.05 +
+    bigS * 0.07 +
+    boundaryS * 0.08;
   return { score: clamp(score), sr, avg };
 }
 
