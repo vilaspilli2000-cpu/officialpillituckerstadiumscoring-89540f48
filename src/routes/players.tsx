@@ -1,10 +1,12 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Search, Plus } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Search, Plus, Trash2, Download, Upload, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/pts/AppShell";
 import { usePtsStore } from "@/lib/pts/store";
 import { combinedCareer } from "@/lib/pts/seed";
 import { rankPlayers } from "@/lib/pts/rankings";
+import type { Player } from "@/lib/pts/types";
 
 export const Route = createFileRoute("/players")({
   head: () => ({ meta: [{ title: "Players — PTS Scorer" }] }),
@@ -16,18 +18,47 @@ function Players() {
   if (pathname !== "/players") return <Outlet />;
   const players = usePtsStore((s) => s.players);
   const addPlayer = usePtsStore((s) => s.addPlayer);
+  const deletePlayer = usePtsStore((s) => s.deletePlayer);
+  const resetPlayer = usePtsStore((s) => s.resetPlayerToCalculated);
+  const importPlayers = usePtsStore((s) => s.importPlayers);
   const [q, setQ] = useState("");
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
   const ranked = rankPlayers(players);
   const filtered = useMemo(() => {
     const t = q.trim().toLowerCase();
     if (!t) return ranked;
     return ranked.filter((r) => r.player.name.toLowerCase().includes(t));
   }, [ranked, q]);
+
+  function exportPlayers() {
+    const blob = new Blob([JSON.stringify(players, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pts-players-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported players");
+  }
+
+  function importFile(file: File) {
+    file.text().then((text) => {
+      try {
+        const data = JSON.parse(text) as Player[];
+        if (!Array.isArray(data)) throw new Error("not array");
+        importPlayers(data);
+        toast.success(`Imported ${data.length} players`);
+      } catch {
+        toast.error("Invalid players JSON");
+      }
+    });
+  }
+
   return (
     <AppShell title="Players">
-      <h1 className="text-2xl font-black text-gradient-gold mb-3">Player Profiles</h1>
+      <h1 className="text-2xl font-black text-gradient-gold mb-3">Player Management</h1>
       <div className="mb-3 flex gap-2">
         <div className="relative flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -44,6 +75,25 @@ function Players() {
         >
           <Plus size={14} /> Add
         </button>
+      </div>
+      <div className="mb-3 flex flex-wrap gap-2 text-xs">
+        <button onClick={exportPlayers} className="flex items-center gap-1 rounded-full border border-border/60 bg-secondary/40 px-3 py-1.5 hover:border-primary">
+          <Download size={12} /> Export JSON
+        </button>
+        <button onClick={() => fileRef.current?.click()} className="flex items-center gap-1 rounded-full border border-border/60 bg-secondary/40 px-3 py-1.5 hover:border-primary">
+          <Upload size={12} /> Import JSON
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) importFile(f);
+            e.target.value = "";
+          }}
+        />
       </div>
       {adding && (
         <div className="mb-3 flex gap-2">
@@ -66,8 +116,9 @@ function Players() {
         {filtered.map((r) => {
           const c = combinedCareer(r.player);
           return (
-            <Link key={r.player.id} to="/players/$id" params={{ id: r.player.id }} className="card-gold rounded-xl p-4 hover:border-primary transition-colors">
-              <div className="flex items-baseline justify-between">
+            <div key={r.player.id} className="card-gold rounded-xl p-4 hover:border-primary transition-colors relative">
+              <Link to="/players/$id" params={{ id: r.player.id }} className="block">
+              <div className="flex items-baseline justify-between pr-16">
                 <div className="min-w-0">
                   <div className="font-bold text-lg truncate">{r.player.name}</div>
                   {r.player.role && r.player.role !== "—" && (
@@ -83,7 +134,24 @@ function Players() {
               {r.player.manualOverride && (
                 <div className="mt-2 inline-block rounded-full border border-primary/40 px-2 py-0.5 text-[9px] uppercase tracking-wider text-primary">Edited</div>
               )}
-            </Link>
+              </Link>
+              <div className="absolute top-2 right-2 flex gap-1">
+                <button
+                  title="Reset to calculated"
+                  onClick={(e) => { e.preventDefault(); if (confirm(`Reset ${r.player.name} to calculated values?`)) { resetPlayer(r.player.id); toast.success("Reset"); } }}
+                  className="rounded-full border border-border/60 bg-secondary/60 p-1.5 text-muted-foreground hover:text-primary hover:border-primary"
+                >
+                  <RotateCcw size={12} />
+                </button>
+                <button
+                  title="Delete player"
+                  onClick={(e) => { e.preventDefault(); if (confirm(`Delete ${r.player.name}? This cannot be undone.`)) { deletePlayer(r.player.id); toast.success("Deleted"); } }}
+                  className="rounded-full border border-border/60 bg-secondary/60 p-1.5 text-muted-foreground hover:text-red-500 hover:border-red-500"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            </div>
           );
         })}
       </div>
