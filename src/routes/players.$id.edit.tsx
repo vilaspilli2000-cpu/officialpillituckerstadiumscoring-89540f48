@@ -1,11 +1,11 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/pts/AppShell";
 import { Button } from "@/components/ui/button";
 import { usePtsStore } from "@/lib/pts/store";
 import type { Player } from "@/lib/pts/types";
 import { toast } from "sonner";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/players/$id/edit")({
   head: () => ({ meta: [{ title: "Edit Player Records — PTS Scorer" }] }),
@@ -22,9 +22,15 @@ function EditPlayer() {
   const player = usePtsStore((s) => s.players.find((p) => p.id === id));
   const update = usePtsStore((s) => s.updatePlayer);
   const reset = usePtsStore((s) => s.resetPlayerToCalculated);
+  const remove = usePtsStore((s) => s.deletePlayer);
   const navigate = useNavigate();
 
   const [draft, setDraft] = useState<Player | undefined>(player);
+
+  // Keep the form in sync if the store player changes (initial hydration, undo elsewhere).
+  useEffect(() => {
+    if (player && !draft) setDraft(player);
+  }, [player, draft]);
 
   if (!player || !draft) {
     return (
@@ -39,7 +45,9 @@ function EditPlayer() {
 
   function save() {
     if (!draft) return;
-    update(draft.id, draft);
+    // Strip id/createdAt so the patch only mutates real fields.
+    const { id: _i, createdAt: _c, ...patch } = draft;
+    update(draft.id, patch);
     toast.success("Player records saved");
     navigate({ to: "/players/$id", params: { id: draft.id } });
   }
@@ -147,6 +155,19 @@ function EditPlayer() {
           Save changes
         </Button>
       </div>
+
+      <button
+        onClick={() => {
+          if (confirm(`Delete ${draft.name}? This cannot be undone.`)) {
+            remove(draft.id);
+            toast.success("Player deleted");
+            navigate({ to: "/players" });
+          }
+        }}
+        className="mt-4 flex items-center justify-center gap-2 w-full rounded-lg border border-red-500/40 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10"
+      >
+        <Trash2 size={14} /> Delete player
+      </button>
     </AppShell>
   );
 }
