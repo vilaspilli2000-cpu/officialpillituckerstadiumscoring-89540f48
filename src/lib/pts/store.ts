@@ -44,6 +44,7 @@ interface State {
   addPlayer: (name: string, role?: Player["role"]) => void;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
   resetPlayerToCalculated: (id: string) => void;
+  deletePlayer: (id: string) => void;
   importPlayers: (players: Player[]) => void;
   importMatches: (matches: Match[]) => void;
   setSetting: <K extends keyof State["settings"]>(k: K, v: State["settings"][K]) => void;
@@ -292,9 +293,20 @@ export const usePtsStore = create<State>()(
         set({ players });
       },
 
+      deletePlayer: (id) => {
+        set({ players: get().players.filter((p) => p.id !== id) });
+      },
+
       importPlayers: (incoming) => {
         if (!Array.isArray(incoming)) return;
-        set({ players: incoming });
+        const byId = new Map<string, Player>();
+        for (const p of get().players) byId.set(p.id, p);
+        for (const p of incoming) {
+          if (!p || typeof p !== "object" || !(p as Player).id) continue;
+          const existing = byId.get((p as Player).id);
+          byId.set((p as Player).id, existing ? { ...existing, ...(p as Player) } : (p as Player));
+        }
+        set({ players: Array.from(byId.values()) });
       },
 
       importMatches: (incoming) => {
