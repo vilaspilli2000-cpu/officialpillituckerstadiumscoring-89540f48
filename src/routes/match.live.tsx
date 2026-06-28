@@ -10,6 +10,9 @@ import { ProbabilityBar } from "@/components/pts/ProbabilityBar";
 import { PlayerSelectModal } from "@/components/pts/PlayerSelectModal";
 import { NoBallRunsModal } from "@/components/pts/NoBallRunsModal";
 import { WicketModal } from "@/components/pts/WicketModal";
+import { LiveScorecard } from "@/components/pts/LiveScorecard";
+import { MatchAnalytics } from "@/components/pts/MatchAnalytics";
+import { CommentaryFeed } from "@/components/pts/CommentaryFeed";
 import type { BallEvent, BallEventType, DismissalType } from "@/lib/pts/types";
 import { toast } from "sonner";
 
@@ -29,6 +32,7 @@ function Live() {
 
   const [pendingNoBall, setPendingNoBall] = useState(false);
   const [wicketOpen, setWicketOpen] = useState<false | { preselect?: DismissalType }>(false);
+  const [tab, setTab] = useState<"scoring" | "scorecard" | "analytics">("scoring");
 
   useEffect(() => {
     if (current?.result) {
@@ -131,6 +135,28 @@ function Live() {
         </div>
       </div>
 
+      <div className="mb-4 grid grid-cols-3 gap-1 p-1 rounded-xl border border-border/60 bg-secondary/40 text-xs uppercase tracking-widest">
+        {(["scoring", "scorecard", "analytics"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`rounded-lg px-3 py-2 font-bold transition ${
+              tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {tab === "scorecard" && (
+        <LiveScorecard match={current} players={players} />
+      )}
+      {tab === "analytics" && (
+        <MatchAnalytics match={current} />
+      )}
+      {tab === "scoring" && (
+      <>
       <section className="rounded-2xl border border-border/60 bg-card/70 p-5 mb-4 relative overflow-hidden">
         <div className="flex items-start justify-between">
           <div className="text-[11px] font-bold tracking-[0.15em] text-primary uppercase">
@@ -187,6 +213,10 @@ function Live() {
         <ProbabilityBar match={current} />
       </div>
 
+      <div className="mb-4">
+        <CommentaryFeed entries={current.commentary ?? []} />
+      </div>
+
       <div className="flex items-center gap-2 mb-4 min-h-[40px] overflow-x-auto">
         {lastSix.length === 0 ? (
           <div className="text-xs text-muted-foreground">No balls bowled yet</div>
@@ -212,6 +242,8 @@ function Live() {
       >
         View Full Scorecard & Analytics
       </Button>
+      </>
+      )}
 
       <PlayerSelectModal
         open={needNextBatter}
