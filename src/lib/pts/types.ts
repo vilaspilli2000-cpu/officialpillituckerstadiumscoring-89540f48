@@ -156,7 +156,7 @@ export interface Team {
 }
 
 export interface MatchAward {
-  type: "pom" | "fighter" | "batsman" | "bowler" | "fielder";
+  type: "pom" | "fighter" | "batsman" | "bowler" | "fielder" | "worst";
   playerId: string;
   team: "A" | "B";
   headline: string;
