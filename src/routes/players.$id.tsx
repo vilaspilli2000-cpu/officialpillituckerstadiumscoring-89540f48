@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Pencil } from "lucide-react";
 import { AppShell } from "@/components/pts/AppShell";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,9 @@ export const Route = createFileRoute("/players/$id")({
 
 function Profile() {
   const { id } = Route.useParams();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // This file is also the layout for /players/:id/edit — defer to child route there.
+  if (pathname !== `/players/${id}`) return <Outlet />;
   const player = usePtsStore((s) => s.players.find((p) => p.id === id));
   if (!player) return <AppShell><p>Player not found. <Link to="/players" className="text-primary underline">Back</Link></p></AppShell>;
   const c = combinedCareer(player);
