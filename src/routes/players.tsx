@@ -1,12 +1,11 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
-import { Search, Plus, Trash2, Download, Upload, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Search, Plus, Trash2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/pts/AppShell";
 import { usePtsStore } from "@/lib/pts/store";
 import { combinedCareer } from "@/lib/pts/seed";
 import { rankPlayers } from "@/lib/pts/rankings";
-import type { Player } from "@/lib/pts/types";
 
 export const Route = createFileRoute("/players")({
   head: () => ({ meta: [{ title: "Players — PTS Scorer" }] }),
@@ -20,41 +19,15 @@ function Players() {
   const addPlayer = usePtsStore((s) => s.addPlayer);
   const deletePlayer = usePtsStore((s) => s.deletePlayer);
   const resetPlayer = usePtsStore((s) => s.resetPlayerToCalculated);
-  const importPlayers = usePtsStore((s) => s.importPlayers);
   const [q, setQ] = useState("");
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
   const ranked = rankPlayers(players);
   const filtered = useMemo(() => {
     const t = q.trim().toLowerCase();
     if (!t) return ranked;
     return ranked.filter((r) => r.player.name.toLowerCase().includes(t));
   }, [ranked, q]);
-
-  function exportPlayers() {
-    const blob = new Blob([JSON.stringify(players, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `pts-players-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Exported players");
-  }
-
-  function importFile(file: File) {
-    file.text().then((text) => {
-      try {
-        const data = JSON.parse(text) as Player[];
-        if (!Array.isArray(data)) throw new Error("not array");
-        importPlayers(data);
-        toast.success(`Imported ${data.length} players`);
-      } catch {
-        toast.error("Invalid players JSON");
-      }
-    });
-  }
 
   return (
     <AppShell title="Players">
@@ -75,25 +48,6 @@ function Players() {
         >
           <Plus size={14} /> Add
         </button>
-      </div>
-      <div className="mb-3 flex flex-wrap gap-2 text-xs">
-        <button onClick={exportPlayers} className="flex items-center gap-1 rounded-full border border-border/60 bg-secondary/40 px-3 py-1.5 hover:border-primary">
-          <Download size={12} /> Export JSON
-        </button>
-        <button onClick={() => fileRef.current?.click()} className="flex items-center gap-1 rounded-full border border-border/60 bg-secondary/40 px-3 py-1.5 hover:border-primary">
-          <Upload size={12} /> Import JSON
-        </button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="application/json"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) importFile(f);
-            e.target.value = "";
-          }}
-        />
       </div>
       {adding && (
         <div className="mb-3 flex gap-2">

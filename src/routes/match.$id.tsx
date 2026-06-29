@@ -19,6 +19,7 @@ const AWARD_LABEL: Record<string, string> = {
   batsman: "Batsman of the Match",
   bowler: "Bowler of the Match",
   fielder: "Fielder of the Match",
+  worst: "Worst Player of the Match",
 };
 
 function MatchView() {

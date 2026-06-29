@@ -10,11 +10,12 @@ export const Route = createFileRoute("/match/result")({
 });
 
 const AWARD_ICON: Record<string, string> = {
-  pom: "👑", fighter: "🔥", batsman: "🏏", bowler: "🎯", fielder: "🧤",
+  pom: "👑", fighter: "🔥", batsman: "🏏", bowler: "🎯", fielder: "🧤", worst: "🥶",
 };
 const AWARD_LABEL: Record<string, string> = {
   pom: "Player of the Match", fighter: "Fighter of the Match",
   batsman: "Batsman of the Match", bowler: "Bowler of the Match", fielder: "Fielder of the Match",
+  worst: "Worst Player of the Match",
 };
 
 function Result() {
@@ -31,7 +32,7 @@ function Result() {
     );
   }
 
-  const order = ["pom", "fighter", "batsman", "bowler", "fielder"];
+  const order = ["pom", "fighter", "batsman", "bowler", "fielder", "worst"];
   const awards = (current.awards ?? []).sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
 
   return (
