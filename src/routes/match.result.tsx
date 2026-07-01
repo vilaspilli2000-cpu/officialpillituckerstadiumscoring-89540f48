@@ -3,6 +3,8 @@ import { AppShell } from "@/components/pts/AppShell";
 import { Button } from "@/components/ui/button";
 import { usePtsStore, playerName } from "@/lib/pts/store";
 import { BattingScorecard, BowlingScorecard } from "@/components/pts/Scorecards";
+import { MatchTimeline } from "@/components/pts/MatchTimeline";
+import { MatchInsights } from "@/components/pts/MatchInsights";
 
 export const Route = createFileRoute("/match/result")({
   head: () => ({ meta: [{ title: "Match Result — PTS Scorer" }] }),
@@ -56,6 +58,14 @@ function Result() {
           <p className="card-gold rounded-xl p-4 leading-relaxed">{current.story}</p>
         </section>
       )}
+
+      <section className="mt-6">
+        <MatchTimeline match={current} players={players} />
+      </section>
+
+      <section className="mt-6">
+        <MatchInsights match={current} players={players} />
+      </section>
 
       {awards.length > 0 && (
         <section className="mt-6 grid gap-3">

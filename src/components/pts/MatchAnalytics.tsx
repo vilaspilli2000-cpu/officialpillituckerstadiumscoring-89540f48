@@ -1,5 +1,8 @@
 import type { Match } from "@/lib/pts/types";
 import { overBuckets, worm } from "@/lib/pts/analytics";
+import { MomentumChart } from "./MomentumChart";
+import { ProbabilityTimeline } from "./ProbabilityTimeline";
+import { usePtsStore } from "@/lib/pts/store";
 
 const W = 320;
 const H = 110;
@@ -98,8 +101,10 @@ function BarChart({ data, color, title }: { data: { x: number; y: number; flag?:
 }
 
 export function MatchAnalytics({ match }: { match: Match }) {
+  const players = usePtsStore((s) => s.players);
   return (
     <div className="space-y-4">
+      <ProbabilityTimeline match={match} players={players} />
       {match.innings.map((inn, idx) => {
         const buckets = overBuckets(inn);
         const wormPoints = worm(inn).map((w) => ({ x: w.overNumber, y: w.runs }));
@@ -145,6 +150,7 @@ export function MatchAnalytics({ match }: { match: Match }) {
             </h3>
             <LineChart series={wormPoints} color="#D9A928" title="Worm — cumulative runs" />
             <BarChart data={runsPerOver} color="#D9A928" title="Runs per over (red = wicket over)" />
+            <MomentumChart match={match} inningsIndex={idx} title={`Momentum — ${battingName}`} />
             <LineChart
               series={rrSeries}
               color="#22c55e"

@@ -7,6 +7,8 @@ import { LiveScorecard } from "@/components/pts/LiveScorecard";
 import { MatchAnalytics } from "@/components/pts/MatchAnalytics";
 import { CommentaryFeed } from "@/components/pts/CommentaryFeed";
 import { ProbabilityBar } from "@/components/pts/ProbabilityBar";
+import { MatchTimeline } from "@/components/pts/MatchTimeline";
+import { MatchInsights } from "@/components/pts/MatchInsights";
 
 export const Route = createFileRoute("/match/$id")({
   head: () => ({ meta: [{ title: "Full Scorecard — PTS Scorer" }] }),
@@ -69,6 +71,14 @@ function MatchView() {
 
       <div className="mt-4">
         <ProbabilityBar match={match} />
+      </div>
+
+      <div className="mt-4">
+        <MatchTimeline match={match} players={players} />
+      </div>
+
+      <div className="mt-4">
+        <MatchInsights match={match} players={players} />
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-1 p-1 rounded-xl border border-border/60 bg-secondary/40 text-xs uppercase tracking-widest">
