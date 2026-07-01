@@ -1,5 +1,5 @@
 import type { Match, Player } from "./types";
-import { recentRunRate, recentWickets, currentRunRate, partnerships } from "./analytics";
+import { recentRunRate, recentWickets, currentRunRate, partnerships, lastNBalls } from "./analytics";
 
 /** Returns [teamA, teamB] percentages summing to 100. */
 export function computeProbability(
@@ -30,8 +30,14 @@ export function computeProbability(
 
     const rrr = (need / Math.max(1, ballsLeft)) * 6;
     const crr = currentRunRate(innings);
-    const recentRR = recentRunRate(innings, 30);
-    const recentWk = recentWickets(innings, 30);
+    const rr18 = recentRunRate(innings, 18);   // last 3 overs
+    const wk18 = recentWickets(innings, 18);
+    const rr6 = recentRunRate(innings, 6);     // last over
+    const wk6 = recentWickets(innings, 6);
+    // last 6 balls fine-grained: dots + boundaries for micro momentum
+    const last6 = lastNBalls(innings, 6).filter((e) => e.isLegal);
+    const dots6 = last6.filter((e) => e.runsToBatter + e.runsExtras === 0).length;
+    const bnd6 = last6.filter((e) => e.runsToBatter >= 4).length;
 
     let bat = 50;
     const factors: string[] = [];
@@ -47,11 +53,16 @@ export function computeProbability(
     bat += (wktFrac - 0.5) * 24;
     if (wktsLeft <= 2) { bat -= 8; factors.push(`only ${wktsLeft} wkts left`); }
 
-    // Momentum (recent 5 overs)
-    if (recentRR > rrr) { bat += Math.min(6, (recentRR - rrr) * 1.5); factors.push("recent overs going"); }
-    else if (recentRR < rrr - 2) { bat -= Math.min(6, (rrr - recentRR) * 1.3); factors.push("rate slipping"); }
-    bat -= recentWk * 5;
-    if (recentWk >= 2) factors.push(`${recentWk} wkts in last 5 overs`);
+    // Momentum — last 3 overs (medium term)
+    if (rr18 > rrr) { bat += Math.min(7, (rr18 - rrr) * 1.6); factors.push("last 3 overs going"); }
+    else if (rr18 < rrr - 2) { bat -= Math.min(7, (rrr - rr18) * 1.4); factors.push("rate slipping"); }
+    bat -= wk18 * 5;
+    if (wk18 >= 2) factors.push(`${wk18} wkts in last 3 overs`);
+    // Micro momentum — last over
+    if (rr6 >= rrr + 4) { bat += 3; factors.push("last over exploded"); }
+    if (wk6 >= 1) { bat -= 4; factors.push("wicket in the last over"); }
+    if (dots6 >= 4) { bat -= 3; factors.push(`${dots6} dots in last 6`); }
+    if (bnd6 >= 2) { bat += 3; factors.push("boundaries flowing"); }
 
     // Partnership boost
     const ps = partnerships(innings);
@@ -59,6 +70,13 @@ export function computeProbability(
     if (cur && !cur.broken && cur.runs >= 25) {
       bat += Math.min(10, cur.runs * 0.12);
       factors.push(`${cur.runs}-run stand`);
+    }
+    // Set vs new batter — striker's balls faced this innings
+    if (striker) {
+      const stBall = innings.batters.find((b) => b.playerId === striker.id);
+      const faced = stBall?.balls ?? 0;
+      if (faced >= 15) { bat += Math.min(4, (faced - 15) * 0.15); factors.push("set batter"); }
+      else if (faced <= 3) { bat -= 3; factors.push("new batter in"); }
     }
 
     // Striker quality
@@ -75,11 +93,23 @@ export function computeProbability(
       bat += ((r.recentForm ?? 50) - 50) * 0.04;
     }
 
+    // Bowling options remaining — count bowlers with any balls left in cap.
+    // In this custom format there's no per-bowler ball cap, so use variety:
+    // fewer distinct bowlers used = fewer plausible options if fatigued.
+    const bowlersUsed = new Set(innings.events.filter((e) => e.bowlerId).map((e) => e.bowlerId)).size;
+    if (innings.oversCap && ballsLeft <= 24) {
+      // final phase: variety matters
+      if (bowlersUsed >= 4) { bat -= 2; factors.push("bowlers rotating well"); }
+      else if (bowlersUsed <= 2) { bat += 2; factors.push("limited bowling options"); }
+    }
+
     // Bowler quality
     if (bowler?.ratings) {
       const r = bowler.ratings;
       bat -= ((r.bowling ?? 50) - 50) * 0.08;
       bat -= ((r.wicketTaking ?? 50) - 50) * 0.06;
+      bat -= ((r.pressure ?? 50) - 50) * 0.04;
+      bat -= ((r.matchWinning ?? 50) - 50) * 0.04;
       if (innings.oversCap && ballsLeft <= 12) {
         bat -= ((r.deathBowl ?? 50) - 50) * 0.10;
       }
