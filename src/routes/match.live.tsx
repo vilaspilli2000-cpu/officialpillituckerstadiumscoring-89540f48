@@ -13,6 +13,7 @@ import { WicketModal } from "@/components/pts/WicketModal";
 import { LiveScorecard } from "@/components/pts/LiveScorecard";
 import { MatchAnalytics } from "@/components/pts/MatchAnalytics";
 import { CommentaryFeed } from "@/components/pts/CommentaryFeed";
+import { RecordAlerts } from "@/components/pts/RecordAlerts";
 import type { BallEvent, BallEventType, DismissalType } from "@/lib/pts/types";
 import { toast } from "sonner";
 
@@ -215,6 +216,10 @@ function Live() {
 
       <div className="mb-4">
         <CommentaryFeed entries={current.commentary ?? []} />
+      </div>
+
+      <div className="mb-4">
+        <RecordAlerts match={current} players={players} />
       </div>
 
       <div className="flex items-center gap-2 mb-4 min-h-[40px] overflow-x-auto">

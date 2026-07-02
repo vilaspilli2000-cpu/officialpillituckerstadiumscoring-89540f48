@@ -89,41 +89,67 @@ export function generateCommentaryFor(
         "Through the gate — bowled him! {batter} departs for {runs}.",
         "Castle shattered! {bowler} ends {batter}'s knock on {runs}.",
         "Stumps splayed. {batter} walks back, {runs} from {balls}.",
+        "Off stump uprooted — {bowler} strikes! {batter} gone for {runs}.",
+        "Yorker in the block-hole, {batter} beaten all ends up on {runs}.",
+        "That's a peach from {bowler} — {batter} bowled for {runs}.",
+        "Zips off the surface and clips the bail — {batter} b {bowler} {runs}.",
+        "Bowled him neck and crop! {batter} on the walk for {runs}.",
       ],
       caught: [
         "Caught! {batter} picks out the fielder, gone for {runs} ({balls}).",
         "Up and taken! {bowler} gets {batter}, {runs} the contribution.",
         "Safe pair of hands! {batter} holes out for {runs}.",
+        "Skied it and it's held — {batter} c ? b {bowler} {runs}.",
+        "Toe-ended to the sweeper — {batter} departs on {runs}.",
+        "Straight down long-on's throat! {batter} gone for {runs}.",
+        "Edge, and swallowed at slip. {batter} walking back on {runs}.",
+        "Miscue to mid-off — the fielder gobbles it. {batter} out for {runs}.",
       ],
       "caught-one-bounce": [
         "Half-chance taken on the bounce — {batter} c&b style, {runs} ({balls}).",
         "Goes low, scoops it on one bounce. {batter} for {runs}.",
+        "Grabbed on the half-volley — {batter} gone for {runs}, half-chance converted.",
+        "Diving forward, plucks it just above the turf! {batter} on {runs}.",
       ],
       "six-and-out": [
         "SIX AND OUT! {batter} clears the rope but the rule bites — gone for {runs}.",
         "Maximum and immediate exit — {batter} departs on {runs} ({balls}).",
+        "Cleared the fence, paid the price. {batter} out on {runs}.",
+        "Muscled for six but the format has the final word — {batter} out for {runs}.",
       ],
       "leg-l2": [
         "L2 confirms it — {batter} is gone for {runs}.",
         "Second leg cleared, the umpire raises the finger. {batter} out for {runs}.",
+        "Two legs, two warnings — {batter} finally walks for {runs}.",
+        "L2 done and dusted. {bowler} gets his man, {batter} on {runs}.",
       ],
       "run-out": [
         "Run out! Hesitation costs {batter}, walks back for {runs}.",
         "Direct hit! {batter} short of the line, dismissed for {runs}.",
         "Mix-up in the middle — {batter} sacrificed on {runs}.",
+        "Called through, sent back — chaos! {batter} run out on {runs}.",
+        "Arm from the deep, bail's off. {batter} short by a foot for {runs}.",
+        "Suicidal single, the throw is on the money. {batter} gone for {runs}.",
       ],
       stumped: [
         "Stumped! Lightning hands behind the sticks, {batter} gone for {runs}.",
         "Down the track and beaten — {batter} stumped on {runs}.",
+        "Charged, missed, stumped — {batter} on {runs}, the keeper is quick.",
+        "Drawn out of the crease, the bails are dislodged. {batter} st ? b {bowler} {runs}.",
       ],
       "hit-wicket": [
         "Hit wicket! {batter} disturbs his own stumps on {runs}.",
+        "Falls into the stumps in the follow-through — {batter} hit wicket on {runs}.",
+        "Heel back onto the leg bail — extraordinary end for {batter}, {runs}.",
       ],
       retired: [
         "{batter} retires on {runs} ({balls}).",
+        "Walks off retired — {batter} finishes his stay on {runs}.",
       ],
       other: [
         "Wicket! {bowler} sends {batter} packing for {runs} ({balls}).",
+        "That's the breakthrough — {batter} dismissed for {runs}.",
+        "{bowler} strikes! Huge moment, {batter} on {runs}.",
       ],
     };
     const pool = dismissalPools[dt] ?? dismissalPools.other;
@@ -133,13 +159,15 @@ export function generateCommentaryFor(
         " {team} still need {need} from {ballsLeft} balls.",
         " {need} required, {ballsLeft} to come.",
         " A serious dent in the chase — {need} off {ballsLeft}.",
+        " Equation tightens — {need} needed, only {ballsLeft} balls left.",
+        " {ballsLeft} balls, {need} runs, and now a new batter walks in.",
       ];
       main += render(pickPhrase(chasePool, used), vars);
     }
     if (Math.abs(swing) >= 6) {
       const swingPool = swing > 0
-        ? [" Probability swings towards {opp}.", " Game tilts to {opp}.", " Big momentum to {opp}."]
-        : [" {team} claw back into it.", " {team} not done yet.", " Lifeline for {team}."];
+        ? [" Probability swings towards {opp}.", " Game tilts to {opp}.", " Big momentum to {opp}.", " Pendulum swings — {opp} on top."]
+        : [" {team} claw back into it.", " {team} not done yet.", " Lifeline for {team}.", " {team} still very much in this."];
       main += render(pickPhrase(swingPool, used), vars);
     }
   }
@@ -155,6 +183,14 @@ export function generateCommentaryFor(
       "Pierces the field. FOUR! {batter} keeps the press on.",
       "Sweetly timed! Races away to the rope. {batter} {runs} ({balls}).",
       "Boundary! {batter} answers the pressure with class.",
+      "Punched through the covers — FOUR! {batter} climbs to {runs}.",
+      "Late cut, gap found, four! {batter} now on {runs} ({balls}).",
+      "Whipped off the pads — races to the rope. {batter} {runs}.",
+      "Slaps it past mid-on! Boundary, {batter} moves to {runs}.",
+      "Textbook drive, all along the carpet — FOUR for {batter}.",
+      "Guides it fine down to third-man. Four more for {batter}, {runs} up.",
+      "Steps out and lofts inside-out — boundary! {batter} on {runs}.",
+      "Perfectly placed between the sweepers. FOUR runs for {batter}.",
     ];
     main = render(pickPhrase(pool, used), vars);
     if (adv) main += ` One boundary every ${ratio} balls.`;
@@ -167,6 +203,8 @@ export function generateCommentaryFor(
       "SIX AND OUT! {batter} clears the rope but the rule bites — gone for {runs} ({balls}).",
       "Maximum and gone! {batter} undone by the format rule, {runs} the score.",
       "Cleared the boundary, paid the price — {batter} dismissed on {runs}.",
+      "Launched into the stands — but that's curtains for {batter} on {runs}.",
+      "One swing too many. Six, and out. {batter} walks for {runs}.",
     ];
     main = render(pickPhrase(pool, used), vars);
   }
@@ -177,6 +215,10 @@ export function generateCommentaryFor(
       "Strays wide — keeper gathers. One added.",
       "Pressure ball, missed the line. Wide called.",
       "Bonus run as the ball drifts past. Re-ball.",
+      "{bowler} loses his radar — wide signalled.",
+      "Sprayed outside off, umpire's arms out. Wide.",
+      "Slips down leg — free run for {team}.",
+      "That's a wide, and a re-ball. {bowler} needs to reset.",
     ];
     main = render(pickPhrase(pool, used), vars);
   }
@@ -187,11 +229,16 @@ export function generateCommentaryFor(
           "No ball! {batter} cashes in with {runs} off the free hit.",
           "Over-stepped — and punished. {runs} to {batter}.",
           "Free hit dispatched — {batter} adds to the tally.",
+          "Front-foot fault, and {batter} makes {bowler} pay — {runs} runs.",
+          "No ball called, and put away for {runs} by {batter}.",
+          "Waist-high full toss — {runs} runs and a re-ball. Costly.",
         ]
       : [
           "No ball called against {bowler}. Free hit coming.",
           "Foot fault — {bowler} gives one away. Re-ball.",
           "{bowler} oversteps. Costs the side an extra.",
+          "Toe on the line — no ball. {bowler} must re-set.",
+          "High full-toss ruled a no ball. {bowler} warned.",
         ];
     const vars2 = { ...vars, runs: ev.runsToBatter };
     main = render(pickPhrase(pool, used), vars2);
@@ -202,6 +249,8 @@ export function generateCommentaryFor(
       "L1 — {batter} on first leg now. One more and he's walking.",
       "First warning. {batter} on L1.",
       "Dangerous territory — {batter} marked at L1.",
+      "{bowler} lands one on the pad — {batter} carries an L1.",
+      "Half the job done — {bowler} draws first leg on {batter}.",
     ];
     main = render(pickPhrase(pool, used), vars);
   } else if (ev.type === "L2") {
@@ -209,6 +258,8 @@ export function generateCommentaryFor(
       "L2 cleared — {batter} survives the second leg.",
       "Escape! {batter} navigates L2.",
       "{batter} reprieved on L2.",
+      "Second leg negotiated by {batter} — still standing.",
+      "Big let-off — L2 cleared, {batter} lives to fight on.",
     ];
     main = render(pickPhrase(pool, used), vars);
   }
@@ -221,11 +272,19 @@ export function generateCommentaryFor(
       "{bowler} on the money — no score.",
       "Beaten outside off! Big shout, no run.",
       "Played and missed. {bowler} closes in.",
+      "Straight to the fielder. Dot for {bowler}.",
+      "Solid forward defence from {batter}. No run.",
+      "{bowler} nagging on a length — {batter} watches it through.",
+      "Left alone outside off. Nothing given away.",
+      "Squeezed out to point — dot ball.",
     ];
     const pressurePool = [
       "Crucial dot! {bowler} chokes the chase.",
       "Dot ball — RRR climbs to {rrr}.",
       "Squeezing the life out. Another dot, {ballsLeft} to come.",
+      "{bowler} tightens the screw — dot in a chase like this hurts.",
+      "Massive dot! {batter} can't get {bowler} away, RRR now {rrr}.",
+      "Beaten! Priceless dot for {opp} at this stage.",
     ];
     const pool = (rrr !== undefined && rrr > 10) ? pressurePool : tightPool;
     main = render(pickPhrase(pool, used), vars);
@@ -238,6 +297,11 @@ export function generateCommentaryFor(
       "Worked away for one. {batter} keeps the strike rotating.",
       "Nudged for a single — {batter} {runs}, {team} building.",
       "Single taken. Steady cricket.",
+      "Tapped to mid-wicket, sharp run. {batter} on {runs}.",
+      "Dabbed to third-man, one taken. {batter} {runs}.",
+      "Flicked off the hip — easy single. {batter} moves to {runs}.",
+      "Nicely rotated. {batter} to {runs} ({balls}).",
+      "Punched to cover for one. {batter} keeps the scoreboard moving.",
     ];
     main = render(pickPhrase(pool, used), vars);
   }
@@ -248,6 +312,9 @@ export function generateCommentaryFor(
       "Two runs — {batter} hustles to {runs} ({balls}).",
       "Driven into the deep, two completed.",
       "Brace of runs. {batter} on {runs}.",
+      "Placed in the gap, comfortable two. {batter} {runs}.",
+      "Well-run two. {batter} hustles his way to {runs}.",
+      "Deep-set field, but two picked up. {batter} on {runs}.",
     ];
     main = render(pickPhrase(pool, used), vars);
   }
@@ -258,12 +325,15 @@ export function generateCommentaryFor(
       "Three runs! Boundary saved on the rope.",
       "All-run three — {batter} moves to {runs}.",
       "Sprint completed for three — superb running.",
+      "Chased down brilliantly on the rope, three taken. {batter} {runs}.",
+      "Rare three! {batter} runs hard, now on {runs}.",
     ];
     main = render(pickPhrase(pool, used), vars);
   } else {
     const pool = [
       "{runs} run{plural}.",
       "Adds {runs} to the tally.",
+      "{runs} more to the score.",
     ];
     main = render(pickPhrase(pool, used), { ...vars, runs: ev.runsToBatter, plural: ev.runsToBatter === 1 ? "" : "s" });
   }
@@ -328,10 +398,13 @@ export function generateCommentaryFor(
     main += ` 🏆 ${batting.name} get over the line!`;
   }
 
-  // Final dedup safety: if exact text was already used, append unique tag.
-  if (used.has(main) || prevEntries.some((c) => c.text === main)) {
-    main += ` (${overLabel})`;
+  // Final dedup safety: if exact text was already used in this match,
+  // rewrite it with a unique over-tagged variant so no two commentary
+  // lines are ever identical.
+  if (prevEntries.some((c) => c.text === main)) {
+    main = `${main} [${overLabel}]`;
   }
+  void recent; void recWk;
 
   return {
     id: uid(),

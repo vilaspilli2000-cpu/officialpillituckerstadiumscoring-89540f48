@@ -318,13 +318,17 @@ export const usePtsStore = create<State>()(
     }),
     {
       name: "pts-scorer-v1",
-      version: 3,
+      version: 4,
       migrate: (persisted: unknown) => {
         const s = (persisted ?? {}) as { players?: Player[] };
         const existing = s.players ?? [];
+        const seedIds = new Set(SEED_PLAYERS.map((p) => p.id));
         // Upgrade existing players with any missing optional fields.
         const byId = new Map<string, Player>();
         for (const p of existing) {
+          // Drop old beginner/placeholder rows that are no longer in the
+          // official seed and have not been manually edited or used.
+          if (!seedIds.has(p.id) && !p.manualOverride && (p.career?.matches ?? 0) === 0) continue;
           byId.set(p.id, {
             ...p,
             role: p.role ?? "—",
@@ -346,23 +350,22 @@ export const usePtsStore = create<State>()(
             },
           });
         }
-        // Add any new seed players that don't yet exist; never overwrite manual edits.
+        // Sync with official seed: refresh every un-edited player with the
+        // official record; never overwrite manual edits.
         for (const seed of SEED_PLAYERS) {
-          if (byId.has(seed.id)) {
-            const cur = byId.get(seed.id)!;
-            if (!cur.manualOverride) {
-              // Refresh notes/role/ratings/career baseline from seed for unedited players.
-              byId.set(seed.id, {
-                ...cur,
-                role: cur.role && cur.role !== "—" ? cur.role : seed.role,
-                notes: cur.notes && cur.notes.length > 0 ? cur.notes : seed.notes,
-                ratings: { ...seed.ratings, ...(cur.ratings ?? {}) },
-                career: { ...seed.career, ...cur.career },
-              });
-            }
-          } else {
+          const cur = byId.get(seed.id);
+          if (!cur) {
             byId.set(seed.id, seed);
+            continue;
           }
+          if (cur.manualOverride) continue;
+          byId.set(seed.id, {
+            ...cur,
+            role: seed.role,
+            notes: seed.notes,
+            ratings: { ...seed.ratings },
+            career: { ...seed.career },
+          });
         }
         s.players = Array.from(byId.values());
         return s as never;
