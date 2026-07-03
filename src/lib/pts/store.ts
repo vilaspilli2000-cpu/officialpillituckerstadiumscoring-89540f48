@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Achievement, BallEventType, FormatId, Match, Player, Team } from "./types";
+import type {
+  Achievement, AwardFeedEntry, BallEventType, FormatId, Match, MilestoneEntry,
+  Player, RecordEntry, Team,
+} from "./types";
 import { SEED_PLAYERS } from "./seed";
 import { applyEvent, type ApplyOptions } from "./engine";
 import { advanceInnings, detectResult, newInnings, totalInningsFor } from "./formats";
@@ -8,6 +11,7 @@ import { computeAwards } from "./awards";
 import { buildStory } from "./story";
 import { computeProbability } from "./probability";
 import { generateCommentaryFor } from "./commentary";
+import { MILESTONE_STEPS, nextMilestoneTarget, totalAwards } from "./milestones";
 
 const uid = () =>
   globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
@@ -32,6 +36,9 @@ interface State {
   achievements: Achievement[];
   undoStack: Match[];
   settings: { defaultFollowOn: number; commentaryEnabled?: boolean };
+  milestoneFeed: MilestoneEntry[];
+  recordFeed: RecordEntry[];
+  awardFeed: AwardFeedEntry[];
 
   startMatch: (input: SetupInput) => void;
   setCurrent: (m: Match | undefined) => void;
@@ -58,6 +65,9 @@ export const usePtsStore = create<State>()(
       achievements: [],
       undoStack: [],
       settings: { defaultFollowOn: 200 },
+      milestoneFeed: [],
+      recordFeed: [],
+      awardFeed: [],
 
       startMatch: (input) => {
         const lineup = input.firstBattingTeam === "A" ? input.lineupA : input.lineupB;
@@ -177,8 +187,10 @@ export const usePtsStore = create<State>()(
       },
 
       completeMatch: () => {
-        const { current, matches, players } = get();
+        const { current, matches, players, milestoneFeed, recordFeed, awardFeed } = get();
         if (!current) return;
+        // Snapshot pre-match career values (for milestone/personal-best detection).
+        const preById = new Map(players.map((p) => [p.id, structuredClone(p)]));
         // credit career stats
         const updated = players.map((p) => ({ ...p, career: { ...p.career } }));
         const counted = new Set<string>();
@@ -192,17 +204,25 @@ export const usePtsStore = create<State>()(
             pl.career.sixes += b.sixes;
             if (b.runs >= 100) pl.career.hundreds += 1;
             else if (b.runs >= 50) pl.career.fifties += 1;
+            if (b.runs >= 150 && b.runs < 200) pl.career.hundred50s = (pl.career.hundred50s ?? 0) + 1;
+            if (b.runs >= 200) pl.career.doubleHundreds = (pl.career.doubleHundreds ?? 0) + 1;
             if (b.runs > pl.career.highest) {
               pl.career.highest = b.runs;
               pl.career.highestNotOut = !b.out;
             }
             if (!b.out) pl.career.notOuts += 1;
+            pl.career.innings = (pl.career.innings ?? 0) + 1;
+            if (b.runs === 0 && b.out) pl.career.ducks = (pl.career.ducks ?? 0) + 1;
             counted.add(b.playerId);
           }
           for (const ev of inn.events) {
-            if (ev.catcherId) {
+            if (ev.catcherId && ev.dismissalType !== "run-out") {
               const pl = updated.find((x) => x.id === ev.catcherId);
               if (pl) pl.career.catches += 1;
+            }
+            if (ev.isWicket && ev.dismissalType === "run-out" && ev.catcherId) {
+              const pl = updated.find((x) => x.id === ev.catcherId);
+              if (pl) pl.career.runOuts += 1;
             }
           }
           for (const bw of inn.bowlers) {
@@ -211,6 +231,16 @@ export const usePtsStore = create<State>()(
             pl.career.wickets += bw.wickets;
             pl.career.bowlBalls += bw.balls;
             pl.career.bowlRuns += bw.runs;
+            pl.career.dots = (pl.career.dots ?? 0) + bw.dots;
+            pl.career.wides = (pl.career.wides ?? 0) + bw.wides;
+            pl.career.noBalls = (pl.career.noBalls ?? 0) + bw.noBalls;
+            if (bw.wickets > (pl.career.bestBowlingWkts ?? 0)) {
+              pl.career.bestBowlingWkts = bw.wickets;
+              pl.career.bestBowlingRuns = bw.runs;
+            } else if (bw.wickets === (pl.career.bestBowlingWkts ?? 0) && bw.wickets > 0 &&
+                       bw.runs < (pl.career.bestBowlingRuns ?? Infinity)) {
+              pl.career.bestBowlingRuns = bw.runs;
+            }
             counted.add(bw.playerId);
           }
         }
@@ -218,19 +248,129 @@ export const usePtsStore = create<State>()(
           const pl = updated.find((x) => x.id === id);
           if (pl) pl.career.matches += 1;
         }
+        // Per-award-type counters + total.
         for (const aw of current.awards ?? []) {
           const pl = updated.find((x) => x.id === aw.playerId);
-          if (pl) pl.career.awards += 1;
+          if (!pl) continue;
+          pl.career.awards += 1;
+          const map: Record<string, keyof Player["career"]> = {
+            pom: "pomAwards", batsman: "batsmanAwards", bowler: "bowlerAwards",
+            fielder: "fielderAwards", fighter: "fighterAwards", worst: "worstAwards",
+          };
+          const k = map[aw.type];
+          if (k) (pl.career as unknown as Record<string, number>)[k] =
+            ((pl.career as unknown as Record<string, number>)[k] ?? 0) + 1;
         }
+
+        // --- Build permanent feed entries ---------------------------------
+        const opponent = (t: "A" | "B") => (t === "A" ? current.teamB.name : current.teamA.name);
+        const matchLabel = `${current.teamA.name} vs ${current.teamB.name}`;
+        const now = Date.now();
+        const newMilestones: MilestoneEntry[] = [];
+        const newRecords: RecordEntry[] = [];
+        const newAwards: AwardFeedEntry[] = [];
+
+        // Milestones (crossed a fixed step of MILESTONE_STEPS).
+        for (const pl of updated) {
+          const pre = preById.get(pl.id);
+          if (!pre) continue;
+          const check = (key: keyof typeof MILESTONE_STEPS, label: string) => {
+            const step = MILESTONE_STEPS[key];
+            const preVal = key === "awards" ? totalAwards(pre) :
+              (pre.career as unknown as Record<string, number | undefined>)[key] ?? 0;
+            const postVal = key === "awards" ? totalAwards(pl) :
+              (pl.career as unknown as Record<string, number | undefined>)[key] ?? 0;
+            const crossed = Math.floor(postVal / step) - Math.floor(preVal / step);
+            for (let i = 1; i <= crossed; i++) {
+              const value = (Math.floor(preVal / step) + i) * step;
+              // team for opponent — use last innings this player batted/bowled in.
+              const team = teamOfPlayer(current, pl.id);
+              newMilestones.push({
+                id: `${pl.id}-${key}-${value}-${now}-${i}`,
+                ts: now, matchId: current.id, playerId: pl.id, statKey: key,
+                statLabel: label, value, opponent: opponent(team),
+                matchLabel,
+              });
+              newRecords.push({
+                id: `mr-${pl.id}-${key}-${value}-${now}-${i}`,
+                ts: now, matchId: current.id, playerId: pl.id,
+                kind: "career-milestone",
+                recordName: `${value.toLocaleString()} ${label}`,
+                value: String(value),
+                opponent: opponent(team),
+                matchLabel,
+              });
+            }
+          };
+          check("runs", "career runs");
+          check("fours", "career fours");
+          check("sixes", "career sixes");
+          check("wickets", "career wickets");
+          check("catches", "career catches");
+          check("runOuts", "career run outs");
+          check("awards", "career awards");
+          check("pomAwards", "POTM awards");
+          check("batsmanAwards", "BOTM awards");
+          check("bowlerAwards", "BOWLTM awards");
+          check("fielderAwards", "FOTM awards");
+          check("fighterAwards", "Fighter awards");
+
+          // Personal bests
+          if ((pre.career.highest ?? 0) < pl.career.highest) {
+            const team = teamOfPlayer(current, pl.id);
+            newRecords.push({
+              id: `pb-hs-${pl.id}-${now}`,
+              ts: now, matchId: current.id, playerId: pl.id,
+              kind: "highest-score",
+              recordName: "New Highest Score",
+              value: `${pl.career.highest}${pl.career.highestNotOut ? "*" : ""}`,
+              opponent: opponent(team),
+              matchLabel,
+            });
+          }
+          if ((pre.career.bestBowlingWkts ?? 0) < (pl.career.bestBowlingWkts ?? 0) ||
+              ((pre.career.bestBowlingWkts ?? 0) === (pl.career.bestBowlingWkts ?? 0) &&
+               (pl.career.bestBowlingRuns ?? 0) < (pre.career.bestBowlingRuns ?? Infinity) &&
+               (pl.career.bestBowlingWkts ?? 0) > 0)) {
+            const team = teamOfPlayer(current, pl.id);
+            newRecords.push({
+              id: `pb-bb-${pl.id}-${now}`,
+              ts: now, matchId: current.id, playerId: pl.id,
+              kind: "best-bowling",
+              recordName: "New Best Bowling",
+              value: `${pl.career.bestBowlingWkts}/${pl.career.bestBowlingRuns}`,
+              opponent: opponent(team),
+              matchLabel,
+            });
+          }
+        }
+
+        // Award feed
+        for (const aw of current.awards ?? []) {
+          newAwards.push({
+            id: `af-${current.id}-${aw.type}-${aw.playerId}`,
+            ts: now, matchId: current.id, matchLabel,
+            awardType: aw.type, playerId: aw.playerId, headline: aw.headline,
+            reason: aw.reason, team: aw.team,
+          });
+        }
+
         set({
           matches: [current, ...matches],
           players: updated,
           current: undefined,
           undoStack: [],
+          milestoneFeed: [...newMilestones, ...milestoneFeed].slice(0, 2000),
+          recordFeed: [...newRecords, ...recordFeed].slice(0, 2000),
+          awardFeed: [...newAwards, ...awardFeed].slice(0, 2000),
         });
       },
 
-      resetAll: () => set({ players: SEED_PLAYERS, matches: [], current: undefined, achievements: [], undoStack: [] }),
+      resetAll: () => set({
+        players: SEED_PLAYERS, matches: [], current: undefined,
+        achievements: [], undoStack: [],
+        milestoneFeed: [], recordFeed: [], awardFeed: [],
+      }),
 
       addPlayer: (name, role) => {
         const trimmed = name.trim();
@@ -318,9 +458,15 @@ export const usePtsStore = create<State>()(
     }),
     {
       name: "pts-scorer-v1",
-      version: 4,
+      version: 5,
       migrate: (persisted: unknown) => {
-        const s = (persisted ?? {}) as { players?: Player[] };
+        const s = (persisted ?? {}) as {
+          players?: Player[]; milestoneFeed?: MilestoneEntry[];
+          recordFeed?: RecordEntry[]; awardFeed?: AwardFeedEntry[];
+        };
+        s.milestoneFeed = s.milestoneFeed ?? [];
+        s.recordFeed = s.recordFeed ?? [];
+        s.awardFeed = s.awardFeed ?? [];
         const existing = s.players ?? [];
         const seedIds = new Set(SEED_PLAYERS.map((p) => p.id));
         // Upgrade existing players with any missing optional fields.
@@ -346,6 +492,8 @@ export const usePtsStore = create<State>()(
               innings: 0, ducks: 0, hundred50s: 0, doubleHundreds: 0,
               maidens: 0, dots: 0, wides: 0, noBalls: 0,
               bestBowlingWkts: 0, bestBowlingRuns: 0,
+              pomAwards: 0, batsmanAwards: 0, bowlerAwards: 0,
+              fielderAwards: 0, fighterAwards: 0, worstAwards: 0,
               ...p.career,
             },
           });
