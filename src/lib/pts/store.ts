@@ -11,7 +11,7 @@ import { computeAwards } from "./awards";
 import { buildStory } from "./story";
 import { computeProbability } from "./probability";
 import { generateCommentaryFor } from "./commentary";
-import { MILESTONE_STEPS, nextMilestoneTarget, totalAwards } from "./milestones";
+import { MILESTONE_STEPS, totalAwards } from "./milestones";
 
 function teamOfPlayer(m: Match, playerId: string): "A" | "B" {
   if (m.teamA.playerIds.includes(playerId)) return "A";
