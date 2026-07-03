@@ -13,6 +13,11 @@ import { computeProbability } from "./probability";
 import { generateCommentaryFor } from "./commentary";
 import { MILESTONE_STEPS, nextMilestoneTarget, totalAwards } from "./milestones";
 
+function teamOfPlayer(m: Match, playerId: string): "A" | "B" {
+  if (m.teamA.playerIds.includes(playerId)) return "A";
+  return "B";
+}
+
 const uid = () =>
   globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
 
