@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Match, Player } from "@/lib/pts/types";
 import { computeRecordAlerts } from "@/lib/pts/recordAlerts";
+import { computeLiveMilestoneAlerts } from "@/lib/pts/milestones";
 
 /** Rotating record-alert card. Refreshes on every ball via `match` prop
  *  (which changes reference after each scoreEvent) and cycles through the
@@ -12,10 +13,14 @@ export function RecordAlerts({ match, players }: { match?: Match; players: Playe
     return [inn?.currentBatterId, inn?.currentBowlerId].filter((x): x is string => !!x);
   }, [match]);
 
-  const alerts = useMemo(
-    () => computeRecordAlerts(match, players, focusIds),
-    [match, players, focusIds],
-  );
+  const alerts = useMemo(() => {
+    const a = computeRecordAlerts(match, players, focusIds);
+    const b = computeLiveMilestoneAlerts(match, players, focusIds).map((m) => ({
+      id: m.id, icon: m.icon, tone: m.tone, text: m.text,
+    }));
+    const seen = new Set<string>();
+    return [...a, ...b].filter((x) => (seen.has(x.id) ? false : (seen.add(x.id), true)));
+  }, [match, players, focusIds]);
 
   const ballCount = match?.innings.reduce((s, i) => s + i.events.length, 0) ?? 0;
   const [idx, setIdx] = useState(0);

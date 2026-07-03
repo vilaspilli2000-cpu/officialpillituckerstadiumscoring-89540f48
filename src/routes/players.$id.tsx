@@ -6,6 +6,7 @@ import { usePtsStore } from "@/lib/pts/store";
 import { combinedCareer } from "@/lib/pts/seed";
 import { playerAwardCounts, careerImpactScore } from "@/lib/pts/insights";
 import { rankPlayers } from "@/lib/pts/rankings";
+import { allMilestoneCards } from "@/lib/pts/milestones";
 
 export const Route = createFileRoute("/players/$id")({
   head: ({ params }) => ({ meta: [{ title: `Profile · ${params.id} — PTS Scorer` }] }),
@@ -41,7 +42,20 @@ function Profile() {
     ? `${player.career.bestBowlingWkts}/${player.career.bestBowlingRuns}`
     : "-";
   const awardCounts = playerAwardCounts(player.id, matches);
-  const totalAwards = awardCounts.total + player.career.awards;
+  const perTypeCareer = {
+    pom: player.career.pomAwards ?? 0,
+    batsman: player.career.batsmanAwards ?? 0,
+    bowler: player.career.bowlerAwards ?? 0,
+    fielder: player.career.fielderAwards ?? 0,
+    fighter: player.career.fighterAwards ?? 0,
+    worst: player.career.worstAwards ?? 0,
+  };
+  const totalAwards = Math.max(
+    player.career.awards,
+    perTypeCareer.pom + perTypeCareer.batsman + perTypeCareer.bowler +
+      perTypeCareer.fielder + perTypeCareer.fighter + perTypeCareer.worst,
+  );
+  const cards = allMilestoneCards(player);
   const impact = careerImpactScore(player, matches);
   const rankings = rankPlayers(players);
   const rankIdx = rankings.findIndex((r) => r.player.id === player.id);
@@ -153,13 +167,42 @@ function Profile() {
 
       <Section title="Awards">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Stat label="Player of Match" value={awardCounts.pom} />
-          <Stat label="Batsman of Match" value={awardCounts.batsman} />
-          <Stat label="Bowler of Match" value={awardCounts.bowler} />
-          <Stat label="Fielder of Match" value={awardCounts.fielder} />
-          <Stat label="Fighter of Match" value={awardCounts.fighter} />
-          <Stat label="Worst of Match" value={awardCounts.worst} />
+          <Stat label="Player of Match" value={perTypeCareer.pom + awardCounts.pom} />
+          <Stat label="Batsman of Match" value={perTypeCareer.batsman + awardCounts.batsman} />
+          <Stat label="Bowler of Match" value={perTypeCareer.bowler + awardCounts.bowler} />
+          <Stat label="Fielder of Match" value={perTypeCareer.fielder + awardCounts.fielder} />
+          <Stat label="Fighter of Match" value={perTypeCareer.fighter + awardCounts.fighter} />
+          <Stat label="Worst of Match" value={perTypeCareer.worst + awardCounts.worst} />
           <Stat label="Total Awards" value={totalAwards} />
+        </div>
+      </Section>
+
+      <Section title="Next Milestones">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {cards.map((c) => (
+            <div key={c.key} className="rounded-xl border border-primary/30 bg-secondary/40 p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{c.icon}</span>
+                  <span className="text-xs uppercase tracking-widest text-primary/80">{c.label}</span>
+                </div>
+                <span className="text-[10px] tabular-nums text-muted-foreground">
+                  {c.current.toLocaleString()} / {c.target.toLocaleString()}
+                </span>
+              </div>
+              <div className="mt-2 h-2 rounded-full bg-background overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all"
+                  style={{ width: `${Math.round(c.progress * 100)}%` }}
+                />
+              </div>
+              <div className="mt-1 text-[11px] text-muted-foreground">
+                {c.gap === 0
+                  ? `Milestone reached — next at ${(c.target + (c.target - c.current)).toLocaleString()}`
+                  : `${c.gap.toLocaleString()} ${c.gap === 1 ? c.unit : c.unitPlural} to go`}
+              </div>
+            </div>
+          ))}
         </div>
       </Section>
 

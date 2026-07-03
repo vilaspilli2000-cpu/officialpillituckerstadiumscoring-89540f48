@@ -133,7 +133,13 @@ function EditPlayer() {
       <Section title="Fielding & Awards">
         <Num label="Catches" v={c.catches} on={(v) => setCareer("catches", v)} />
         <Num label="Run outs" v={c.runOuts} on={(v) => setCareer("runOuts", v)} />
-        <Num label="Awards" v={c.awards} on={(v) => setCareer("awards", v)} />
+        <Num label="Total Awards" v={c.awards} on={(v) => setCareer("awards", v)} />
+        <Num label="POM" v={c.pomAwards ?? 0} on={(v) => setCareer("pomAwards", v)} />
+        <Num label="Batsman of Match" v={c.batsmanAwards ?? 0} on={(v) => setCareer("batsmanAwards", v)} />
+        <Num label="Bowler of Match" v={c.bowlerAwards ?? 0} on={(v) => setCareer("bowlerAwards", v)} />
+        <Num label="Fielder of Match" v={c.fielderAwards ?? 0} on={(v) => setCareer("fielderAwards", v)} />
+        <Num label="Fighter of Match" v={c.fighterAwards ?? 0} on={(v) => setCareer("fighterAwards", v)} />
+        <Num label="Worst of Match" v={c.worstAwards ?? 0} on={(v) => setCareer("worstAwards", v)} />
       </Section>
 
       <Section title="Ratings (0–100)">

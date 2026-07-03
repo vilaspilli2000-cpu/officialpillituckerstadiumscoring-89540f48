@@ -39,6 +39,13 @@ export interface Player {
     noBalls?: number;
     bestBowlingWkts?: number;
     bestBowlingRuns?: number;
+    // Per-award-type career counters. `awards` remains the total.
+    pomAwards?: number;
+    batsmanAwards?: number;
+    bowlerAwards?: number;
+    fielderAwards?: number;
+    fighterAwards?: number;
+    worstAwards?: number;
   };
   ratings?: {
     overall?: number;
@@ -213,4 +220,44 @@ export interface Achievement {
   playerId: string;
   kind: string;
   text: string;
+}
+
+/** Permanent milestone entry: player crossed a career milestone in a match. */
+export interface MilestoneEntry {
+  id: string;
+  ts: number;
+  matchId: string;
+  playerId: string;
+  statKey: string; // "runs" | "wickets" | ...
+  statLabel: string; // "career runs"
+  value: number; // milestone reached (e.g. 21500)
+  opponent: string;
+  matchLabel: string;
+}
+
+/** Permanent record entry: personal best, league record, new highest score, etc. */
+export interface RecordEntry {
+  id: string;
+  ts: number;
+  matchId: string;
+  playerId: string;
+  kind: "personal-best" | "league-record" | "career-milestone" | "highest-score" | "best-bowling";
+  recordName: string;
+  value: string;
+  opponent: string;
+  matchLabel: string;
+  inningsIndex?: number;
+}
+
+/** Permanent award-feed entry: one row per award of a completed match. */
+export interface AwardFeedEntry {
+  id: string;
+  ts: number;
+  matchId: string;
+  matchLabel: string;
+  awardType: "pom" | "batsman" | "bowler" | "fielder" | "fighter" | "worst";
+  playerId: string;
+  headline: string;
+  reason: string;
+  team: "A" | "B";
 }
