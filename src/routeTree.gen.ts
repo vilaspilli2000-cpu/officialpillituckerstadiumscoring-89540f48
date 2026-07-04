@@ -16,6 +16,7 @@ import { Route as PlayersRouteImport } from './routes/players'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as AlmanacRouteImport } from './routes/almanac'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PlayersCompareRouteImport } from './routes/players.compare'
 import { Route as PlayersIdRouteImport } from './routes/players.$id'
 import { Route as MatchSetupRouteImport } from './routes/match.setup'
 import { Route as MatchResultRouteImport } from './routes/match.result'
@@ -57,6 +58,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PlayersCompareRoute = PlayersCompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
+  getParentRoute: () => PlayersRoute,
 } as any)
 const PlayersIdRoute = PlayersIdRouteImport.update({
   id: '/$id',
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
   '/players/$id': typeof PlayersIdRouteWithChildren
+  '/players/compare': typeof PlayersCompareRoute
   '/players/$id/edit': typeof PlayersIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
   '/players/$id': typeof PlayersIdRouteWithChildren
+  '/players/compare': typeof PlayersCompareRoute
   '/players/$id/edit': typeof PlayersIdEditRoute
 }
 export interface FileRoutesById {
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/match/result': typeof MatchResultRoute
   '/match/setup': typeof MatchSetupRoute
   '/players/$id': typeof PlayersIdRouteWithChildren
+  '/players/compare': typeof PlayersCompareRoute
   '/players/$id/edit': typeof PlayersIdEditRoute
 }
 export interface FileRouteTypes {
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/match/result'
     | '/match/setup'
     | '/players/$id'
+    | '/players/compare'
     | '/players/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/match/result'
     | '/match/setup'
     | '/players/$id'
+    | '/players/compare'
     | '/players/$id/edit'
   id:
     | '__root__'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/match/result'
     | '/match/setup'
     | '/players/$id'
+    | '/players/compare'
     | '/players/$id/edit'
   fileRoutesById: FileRoutesById
 }
@@ -248,6 +260,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/players/compare': {
+      id: '/players/compare'
+      path: '/compare'
+      fullPath: '/players/compare'
+      preLoaderRoute: typeof PlayersCompareRouteImport
+      parentRoute: typeof PlayersRoute
+    }
     '/players/$id': {
       id: '/players/$id'
       path: '/$id'
@@ -307,10 +326,12 @@ const PlayersIdRouteWithChildren = PlayersIdRoute._addFileChildren(
 
 interface PlayersRouteChildren {
   PlayersIdRoute: typeof PlayersIdRouteWithChildren
+  PlayersCompareRoute: typeof PlayersCompareRoute
 }
 
 const PlayersRouteChildren: PlayersRouteChildren = {
   PlayersIdRoute: PlayersIdRouteWithChildren,
+  PlayersCompareRoute: PlayersCompareRoute,
 }
 
 const PlayersRouteWithChildren =
