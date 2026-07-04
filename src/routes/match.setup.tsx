@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePtsStore } from "@/lib/pts/store";
 import { FORMAT_LABELS } from "@/lib/pts/formats";
+import { TeamIntelligence } from "@/components/pts/TeamIntelligence";
 import type { FormatId } from "@/lib/pts/types";
 
 export const Route = createFileRoute("/match/setup")({
@@ -50,6 +51,11 @@ function Setup() {
   function toggle(list: string[], id: string, setList: (v: string[]) => void) {
     if (list.includes(id)) setList(list.filter((x) => x !== id));
     else if (list.length < 4) setList([...list, id]);
+  }
+
+  function applySwap(aId: string, bId: string) {
+    setTeamAIds((prev) => prev.map((x) => (x === aId ? bId : x)));
+    setTeamBIds((prev) => prev.map((x) => (x === bId ? aId : x)));
   }
 
   function moveUp(list: string[], idx: number, setter: (v: string[]) => void) {
@@ -130,10 +136,22 @@ function Setup() {
               className={`px-3 py-2 rounded-lg border ${jokerId === p.id ? "border-primary bg-primary/10" : "border-border"}`}
               onClick={() => setJokerId(p.id)}
             >
-              🃏 {p.name}
+              {p.name}
             </button>
           ))}
         </div>
+      </Section>
+
+      <Section title="Team Intelligence" hint="Auto-analysis, strength meter, prediction and balance suggestions from live career data.">
+        <TeamIntelligence
+          teamAIds={teamAIds}
+          teamBIds={teamBIds}
+          teamAName={teamAName}
+          teamBName={teamBName}
+          players={players}
+          jokerId={jokerId}
+          onApplySwap={applySwap}
+        />
       </Section>
 
       <Section title="First to Bat">
