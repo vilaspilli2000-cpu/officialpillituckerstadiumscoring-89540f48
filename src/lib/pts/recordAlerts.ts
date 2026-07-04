@@ -229,3 +229,135 @@ export function computeRecordAlerts(
   const seen = new Set<string>();
   return alerts.filter((a) => (seen.has(a.id) ? false : (seen.add(a.id), true)));
 }
+
+/* ---------------- Priority-ordered alerts (carousel) ---------------- */
+
+function ordinal(n: number) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+interface PriorityStat {
+  key: "hundreds" | "fifties" | "runs" | "wickets" | "fours" | "catches";
+  icon: string;
+  unit: string;
+  unitPl: string;
+  rankNoun: string;
+  step: number;
+  window: number;
+}
+
+const PRIORITY_STATS: PriorityStat[] = [
+  { key: "hundreds", icon: "💯", unit: "century", unitPl: "centuries", rankNoun: "century scorer", step: 1, window: 1 },
+  { key: "fifties",  icon: "⭐", unit: "fifty", unitPl: "fifties", rankNoun: "fifty scorer", step: 1, window: 2 },
+  { key: "runs",     icon: "👑", unit: "run", unitPl: "runs", rankNoun: "run scorer", step: 500, window: 150 },
+  { key: "wickets",  icon: "🎯", unit: "wicket", unitPl: "wickets", rankNoun: "wicket taker", step: 50, window: 15 },
+  { key: "fours",    icon: "💥", unit: "four", unitPl: "fours", rankNoun: "four hitter", step: 100, window: 25 },
+  { key: "catches",  icon: "🧤", unit: "catch", unitPl: "catches", rankNoun: "fielder", step: 25, window: 6 },
+];
+
+function careerVal(p: Player, key: PriorityStat["key"]) {
+  return (p.career as unknown as Record<string, number | undefined>)[key] ?? 0;
+}
+
+/** Priority-ordered alerts for horizontal-scroll carousel.
+ *  Emits, per stat in priority order:
+ *   1. New No.1 record (live projected exceeds current #1)
+ *   2. Live batting alerts (runs needed for next century/fifty this innings)
+ *   3. Overtake alerts (needs N more to pass the player above them in the ranking)
+ *   4. Career milestone alerts (next round step) */
+export function computePriorityAlerts(
+  match: Match | undefined,
+  players: Player[],
+): RecordAlert[] {
+  const out: RecordAlert[] = [];
+  const inn = match?.innings[match.currentInnings];
+  const strikerId = inn?.currentBatterId;
+
+  for (const stat of PRIORITY_STATS) {
+    // Ranked by projected value (careerVal + live match contribution via `projected`).
+    const ranked = players
+      .map((p) => ({ p, val: projected(p, match, stat.key as StatKey), career: careerVal(p, stat.key) }))
+      .sort((a, b) => b.val - a.val);
+    if (ranked.length === 0) continue;
+
+    const careerLeader = [...ranked].sort((a, b) => b.career - a.career)[0];
+
+    // 1) New #1 (live projected exceeds career leader)
+    for (const row of ranked) {
+      if (row.p.id === careerLeader.p.id) continue;
+      if (row.val > careerLeader.career && row.career <= careerLeader.career) {
+        out.push({
+          id: `pa-newno1-${stat.key}-${row.p.id}`,
+          icon: "🏆",
+          tone: "record",
+          text: `NEW RECORD! ${row.p.name} is now the highest ${stat.rankNoun} in PTS with ${row.val} ${stat.unitPl}.`,
+        });
+      }
+    }
+
+    // 2) Live batting alerts (only for hundreds / fifties / runs on striker)
+    if (inn && strikerId && (stat.key === "hundreds" || stat.key === "fifties" || stat.key === "runs")) {
+      const bc = inn.batters.find((b) => b.playerId === strikerId);
+      const pl = players.find((p) => p.id === strikerId);
+      if (bc && pl && bc.runs >= 0) {
+        if (stat.key === "hundreds" && bc.runs < 100) {
+          const need = 100 - bc.runs;
+          const nth = (pl.career.hundreds ?? 0) + 1;
+          out.push({
+            id: `pa-live-100-${strikerId}-${bc.runs}`,
+            icon: "💯",
+            tone: "milestone",
+            text: `${pl.name} needs ${need} run${need === 1 ? "" : "s"} for his ${ordinal(nth)} career century.`,
+          });
+        }
+        if (stat.key === "fifties" && bc.runs < 50) {
+          const need = 50 - bc.runs;
+          const nth = (pl.career.fifties ?? 0) + 1;
+          out.push({
+            id: `pa-live-50-${strikerId}-${bc.runs}`,
+            icon: "⭐",
+            tone: "milestone",
+            text: `${pl.name} needs ${need} run${need === 1 ? "" : "s"} for his ${ordinal(nth)} career fifty.`,
+          });
+        }
+      }
+    }
+
+    // 3) Overtake alerts
+    for (let i = 1; i < ranked.length; i++) {
+      const me = ranked[i];
+      const above = ranked[i - 1];
+      const gap = above.val - me.val;
+      if (gap <= 0) continue;
+      if (gap > stat.window) continue;
+      const newRank = i; // becomes rank i (1-based) after passing above
+      out.push({
+        id: `pa-over-${stat.key}-${me.p.id}-${above.p.id}`,
+        icon: stat.icon,
+        tone: "chase",
+        text: `${me.p.name} needs ${gap} ${gap === 1 ? stat.unit : stat.unitPl} to pass ${above.p.name} and become the ${ordinal(newRank)} highest ${stat.rankNoun} in PTS.`,
+      });
+    }
+
+    // 4) Milestone alerts (skip step=1 stats — handled by live alerts / overtake)
+    if (stat.step > 1) {
+      for (const row of ranked) {
+        if (row.val <= 0) continue;
+        const target = Math.floor(row.val / stat.step) * stat.step + stat.step;
+        const gap = target - row.val;
+        if (gap <= 0 || gap > stat.window) continue;
+        out.push({
+          id: `pa-mile-${stat.key}-${row.p.id}-${target}`,
+          icon: stat.icon,
+          tone: "milestone",
+          text: `${row.p.name} needs ${gap} ${gap === 1 ? stat.unit : stat.unitPl} to reach ${target.toLocaleString()} career ${stat.unitPl}.`,
+        });
+      }
+    }
+  }
+
+  const seen = new Set<string>();
+  return out.filter((a) => (seen.has(a.id) ? false : (seen.add(a.id), true)));
+}

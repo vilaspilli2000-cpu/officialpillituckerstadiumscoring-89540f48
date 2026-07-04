@@ -32,6 +32,14 @@ function Players() {
   return (
     <AppShell title="Players">
       <h1 className="text-2xl font-black text-gradient-gold mb-3">Player Management</h1>
+      <div className="mb-3">
+        <Link
+          to="/players/compare"
+          className="inline-flex items-center gap-1 rounded-full border border-primary/60 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/20"
+        >
+          ⚖️ Compare Players
+        </Link>
+      </div>
       <div className="mb-3 flex gap-2">
         <div className="relative flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

@@ -14,6 +14,7 @@ import { LiveScorecard } from "@/components/pts/LiveScorecard";
 import { MatchAnalytics } from "@/components/pts/MatchAnalytics";
 import { CommentaryFeed } from "@/components/pts/CommentaryFeed";
 import { RecordAlerts } from "@/components/pts/RecordAlerts";
+import { PlayerRivalries } from "@/components/pts/PlayerRivalries";
 import type { BallEvent, BallEventType, DismissalType } from "@/lib/pts/types";
 import { toast } from "sonner";
 
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/match/live")({
 function Live() {
   const current = usePtsStore((s) => s.current);
   const players = usePtsStore((s) => s.players);
+  const matches = usePtsStore((s) => s.matches);
   const score = usePtsStore((s) => s.scoreEvent);
   const undo = usePtsStore((s) => s.undo);
   const setNextBatter = usePtsStore((s) => s.setNextBatter);
@@ -220,6 +222,10 @@ function Live() {
 
       <div className="mb-4">
         <RecordAlerts match={current} players={players} />
+      </div>
+
+      <div className="mb-4">
+        <PlayerRivalries match={current} matches={matches} players={players} />
       </div>
 
       <div className="flex items-center gap-2 mb-4 min-h-[40px] overflow-x-auto">
