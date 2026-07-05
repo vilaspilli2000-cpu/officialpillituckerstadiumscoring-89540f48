@@ -4,7 +4,7 @@ import type {
   Achievement, AwardFeedEntry, BallEventType, FormatId, Match, MilestoneEntry,
   Player, RecordEntry, Team,
 } from "./types";
-import { SEED_PLAYERS } from "./seed";
+import { SEED_PLAYERS, OFFICIAL_AWARD_SPLITS } from "./seed";
 import { applyEvent, type ApplyOptions } from "./engine";
 import { advanceInnings, detectResult, newInnings, totalInningsFor } from "./formats";
 import { computeAwards } from "./awards";
@@ -463,11 +463,12 @@ export const usePtsStore = create<State>()(
     }),
     {
       name: "pts-scorer-v1",
-      version: 5,
+      version: 6,
       migrate: (persisted: unknown) => {
         const s = (persisted ?? {}) as {
           players?: Player[]; milestoneFeed?: MilestoneEntry[];
           recordFeed?: RecordEntry[]; awardFeed?: AwardFeedEntry[];
+          awardsSeededV6?: boolean;
         };
         s.milestoneFeed = s.milestoneFeed ?? [];
         s.recordFeed = s.recordFeed ?? [];
@@ -503,8 +504,8 @@ export const usePtsStore = create<State>()(
             },
           });
         }
-        // Sync with official seed: refresh every un-edited player with the
-        // official record; never overwrite manual edits.
+        // Ensure every official seed player exists (adds Himmu/Madhu/Nishant).
+        // Never overwrite manually-edited player careers.
         for (const seed of SEED_PLAYERS) {
           const cur = byId.get(seed.id);
           if (!cur) {
@@ -519,6 +520,35 @@ export const usePtsStore = create<State>()(
             ratings: { ...seed.ratings },
             career: { ...seed.career },
           });
+        }
+        // One-time official award-split seed. Only applies when the player
+        // has never been manually edited AND no per-type awards exist yet.
+        // Preserves any cloud-edited award counts.
+        if (!s.awardsSeededV6) {
+          for (const [pid, split] of Object.entries(OFFICIAL_AWARD_SPLITS)) {
+            const cur = byId.get(pid);
+            if (!cur) continue;
+            const hasCustomAwards =
+              (cur.career.pomAwards ?? 0) + (cur.career.batsmanAwards ?? 0) +
+              (cur.career.bowlerAwards ?? 0) + (cur.career.fielderAwards ?? 0) +
+              (cur.career.fighterAwards ?? 0) + (cur.career.worstAwards ?? 0) > 0;
+            if (hasCustomAwards) continue;
+            const total = split.pom + split.batsman + split.bowler + split.fielder + split.fighter + split.worst;
+            byId.set(pid, {
+              ...cur,
+              career: {
+                ...cur.career,
+                pomAwards: split.pom,
+                batsmanAwards: split.batsman,
+                bowlerAwards: split.bowler,
+                fielderAwards: split.fielder,
+                fighterAwards: split.fighter,
+                worstAwards: split.worst,
+                awards: Math.max(cur.career.awards ?? 0, total),
+              },
+            });
+          }
+          s.awardsSeededV6 = true;
         }
         s.players = Array.from(byId.values());
         return s as never;
