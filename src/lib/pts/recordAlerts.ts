@@ -275,6 +275,62 @@ export function computePriorityAlerts(
   const inn = match?.innings[match.currentInnings];
   const strikerId = inn?.currentBatterId;
 
+  // ---- Live match context (all optional) ----------------------------------
+  const battingTeam: "A" | "B" | undefined = inn?.battingTeam;
+  const bowlingTeam: "A" | "B" | undefined = inn?.bowlingTeam;
+  const battingIds = new Set<string>(
+    match && battingTeam ? (battingTeam === "A" ? match.teamA.playerIds : match.teamB.playerIds) : [],
+  );
+  const fieldingIds = new Set<string>(
+    match && bowlingTeam ? (bowlingTeam === "A" ? match.teamA.playerIds : match.teamB.playerIds) : [],
+  );
+  const dismissedIds = new Set<string>(
+    (inn?.batters ?? []).filter((b) => b.out).map((b) => b.playerId),
+  );
+  const teamSize = match && battingTeam
+    ? (battingTeam === "A" ? match.teamA.playerIds.length : match.teamB.playerIds.length)
+    : 11;
+  const wicketsRemaining = inn ? Math.max(0, teamSize - inn.wickets - 1) : 0;
+  const ballsRemaining = inn?.oversCap ? Math.max(0, inn.oversCap - inn.legalBalls) : Infinity;
+
+  // Rough per-innings ceilings for what a single player can still achieve.
+  const maxRunsPossible = Math.max(0, ballsRemaining * 6);
+  const maxFoursPossible = Math.max(0, Math.floor(ballsRemaining));
+  const maxWicketsPossible = wicketsRemaining;
+  const maxCatchesPossible = wicketsRemaining; // caught-out ceiling
+
+  function canAlertFor(pKey: PriorityStat["key"], playerId: string, needed: number): boolean {
+    // Batting-side stats (runs / fours / hundreds / fifties): the player must
+    // still be able to bat this innings — either currently batting or waiting
+    // to come in and not dismissed. Also cap by runs the innings has left.
+    if (pKey === "runs" || pKey === "fours" || pKey === "hundreds" || pKey === "fifties") {
+      if (!match || !inn) return true;
+      if (dismissedIds.has(playerId)) return false;
+      if (!battingIds.has(playerId)) return false;
+      const ceiling = pKey === "fours" ? maxFoursPossible : maxRunsPossible;
+      if (needed > ceiling) return false;
+      return true;
+    }
+    // Wickets / catches: player must be on the fielding side and there must
+    // be enough wickets left in the innings for the alert to complete.
+    if (pKey === "wickets" || pKey === "catches") {
+      if (!match || !inn) return true;
+      if (!fieldingIds.has(playerId)) return false;
+      const ceiling = pKey === "wickets" ? maxWicketsPossible : maxCatchesPossible;
+      if (needed > ceiling) return false;
+      return true;
+    }
+    return true;
+  }
+  const pushIfPossible = (
+    stat: PriorityStat,
+    playerId: string,
+    needed: number,
+    alert: RecordAlert,
+  ) => {
+    if (canAlertFor(stat.key, playerId, needed)) out.push(alert);
+  };
+
   for (const stat of PRIORITY_STATS) {
     // Ranked by projected value (careerVal + live match contribution via `projected`).
     const ranked = players
@@ -288,7 +344,7 @@ export function computePriorityAlerts(
     for (const row of ranked) {
       if (row.p.id === careerLeader.p.id) continue;
       if (row.val > careerLeader.career && row.career <= careerLeader.career) {
-        out.push({
+        pushIfPossible(stat, row.p.id, 0, {
           id: `pa-newno1-${stat.key}-${row.p.id}`,
           icon: "🏆",
           tone: "record",
@@ -301,11 +357,11 @@ export function computePriorityAlerts(
     if (inn && strikerId && (stat.key === "hundreds" || stat.key === "fifties" || stat.key === "runs")) {
       const bc = inn.batters.find((b) => b.playerId === strikerId);
       const pl = players.find((p) => p.id === strikerId);
-      if (bc && pl && bc.runs >= 0) {
+      if (bc && pl && bc.runs >= 0 && !bc.out) {
         if (stat.key === "hundreds" && bc.runs < 100) {
           const need = 100 - bc.runs;
           const nth = (pl.career.hundreds ?? 0) + 1;
-          out.push({
+          pushIfPossible(stat, strikerId, need, {
             id: `pa-live-100-${strikerId}-${bc.runs}`,
             icon: "💯",
             tone: "milestone",
@@ -315,7 +371,7 @@ export function computePriorityAlerts(
         if (stat.key === "fifties" && bc.runs < 50) {
           const need = 50 - bc.runs;
           const nth = (pl.career.fifties ?? 0) + 1;
-          out.push({
+          pushIfPossible(stat, strikerId, need, {
             id: `pa-live-50-${strikerId}-${bc.runs}`,
             icon: "⭐",
             tone: "milestone",
@@ -333,7 +389,7 @@ export function computePriorityAlerts(
       if (gap <= 0) continue;
       if (gap > stat.window) continue;
       const newRank = i; // becomes rank i (1-based) after passing above
-      out.push({
+      pushIfPossible(stat, me.p.id, gap, {
         id: `pa-over-${stat.key}-${me.p.id}-${above.p.id}`,
         icon: stat.icon,
         tone: "chase",
@@ -348,7 +404,7 @@ export function computePriorityAlerts(
         const target = Math.floor(row.val / stat.step) * stat.step + stat.step;
         const gap = target - row.val;
         if (gap <= 0 || gap > stat.window) continue;
-        out.push({
+        pushIfPossible(stat, row.p.id, gap, {
           id: `pa-mile-${stat.key}-${row.p.id}-${target}`,
           icon: stat.icon,
           tone: "milestone",
