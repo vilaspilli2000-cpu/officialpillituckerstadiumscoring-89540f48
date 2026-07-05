@@ -175,6 +175,10 @@ export const OFFICIAL_AWARD_SPLITS: Record<string, {
 };
 
 function toPlayer(r: SeedRow): Player {
+  const split = OFFICIAL_AWARD_SPLITS[r.id];
+  const totalAwards = split
+    ? split.pom + split.batsman + split.bowler + split.fielder + split.fighter + split.worst
+    : r.awards;
   return {
     id: r.id,
     name: r.name,
@@ -207,7 +211,13 @@ function toPlayer(r: SeedRow): Player {
       bestBowlingRuns: r.bestBowlingRuns,
       catches: r.catches,
       runOuts: r.runOuts,
-      awards: r.awards,
+      awards: totalAwards,
+      pomAwards: split?.pom ?? 0,
+      batsmanAwards: split?.batsman ?? 0,
+      bowlerAwards: split?.bowler ?? 0,
+      fielderAwards: split?.fielder ?? 0,
+      fighterAwards: split?.fighter ?? 0,
+      worstAwards: split?.worst ?? 0,
       notOuts: r.notOuts,
       ducks: r.ducks,
     },
