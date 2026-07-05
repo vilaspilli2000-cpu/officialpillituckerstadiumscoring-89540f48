@@ -1,8 +1,57 @@
 import type { Match, Player } from "./types";
 import { recentRunRate, recentWickets, currentRunRate, partnerships, lastNBalls } from "./analytics";
 
+/** Maximum per-ball probability movement (percentage points, batting side). */
+function maxDeltaForLastEvent(match: Match): number {
+  const inn = match.innings[match.currentInnings];
+  if (!inn) return 2;
+  const last = inn.events[inn.events.length - 1];
+  if (!last) return 2;
+  if (last.isWicket) return 8;
+  if (last.type === "wide" || last.type === "no-ball") return 1.5;
+  const runs = last.runsToBatter;
+  if (runs === 6) return 3;
+  if (runs === 4) return 2;
+  if (runs === 3) return 1.5;
+  if (runs === 2) return 1;
+  if (runs === 1) return 0.5;
+  return 1; // dot
+}
+
+function previousBatPct(match: Match): number | undefined {
+  const inn = match.innings[match.currentInnings];
+  if (!inn) return;
+  const prev = match.probability[match.probability.length - 1];
+  if (!prev) return;
+  return inn.battingTeam === "A" ? prev.teamA : prev.teamB;
+}
+
 /** Returns [teamA, teamB] percentages summing to 100. */
 export function computeProbability(
+  match: Match,
+  players: Player[],
+): { teamA: number; teamB: number; note: string } {
+  const raw = computeProbabilityRaw(match, players);
+  // Smooth: clamp per-ball movement so singles/dots don't jump the meter.
+  if (!match.result) {
+    const inn = match.innings[match.currentInnings];
+    const prev = previousBatPct(match);
+    if (inn && prev !== undefined) {
+      const cap = maxDeltaForLastEvent(match);
+      const currentBat = inn.battingTeam === "A" ? raw.teamA : raw.teamB;
+      const delta = currentBat - prev;
+      if (Math.abs(delta) > cap) {
+        const clamped = prev + Math.sign(delta) * cap;
+        return inn.battingTeam === "A"
+          ? { teamA: clamped, teamB: 100 - clamped, note: raw.note }
+          : { teamB: clamped, teamA: 100 - clamped, note: raw.note };
+      }
+    }
+  }
+  return raw;
+}
+
+function computeProbabilityRaw(
   match: Match,
   players: Player[],
 ): { teamA: number; teamB: number; note: string } {
