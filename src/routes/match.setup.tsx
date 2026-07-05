@@ -50,7 +50,7 @@ function Setup() {
 
   function toggle(list: string[], id: string, setList: (v: string[]) => void) {
     if (list.includes(id)) setList(list.filter((x) => x !== id));
-    else if (list.length < 4) setList([...list, id]);
+    else if (list.length < 7) setList([...list, id]);
   }
 
   function applySwap(aId: string, bId: string) {
@@ -219,7 +219,7 @@ function TeamCard({
     <div className="card-gold rounded-xl p-4">
       <Label className="text-xs uppercase tracking-widest text-primary/80">{label} Name</Label>
       <Input value={name} onChange={(e) => onName(e.target.value)} className="mt-1 mb-3" />
-      <div className="text-xs text-muted-foreground mb-2">Select 3–4 players</div>
+      <div className="text-xs text-muted-foreground mb-2">Select 3–7 players</div>
       <div className="grid grid-cols-2 gap-2">
         {allPlayers.map((p) => (
           <button
