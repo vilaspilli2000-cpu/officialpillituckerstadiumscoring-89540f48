@@ -124,7 +124,55 @@ const ROWS: SeedRow[] = [
     catches: 42, runOuts: 7, awards: 18,
     ratings: { overall: 48, batting: 45, bowling: 52, fielding: 49, pressure: 46, matchWinning: 44, wicketTaking: 50, sixHitting: 42, deathBat: 42, deathBowl: 51, recentForm: 47 },
   },
+  {
+    id: "himmu", name: "Himmu", role: "—",
+    notes: "New PTS entrant. Career yet to begin.",
+    matches: 0, innings: 0, runs: 0, balls: 0, highest: 0,
+    fifties: 0, hundreds: 0, hundred50s: 0, doubleHundreds: 0,
+    fours: 0, sixes: 0, notOuts: 0, ducks: 0,
+    wickets: 0, bowlRuns: 0, bowlBalls: 0, maidens: 0, dots: 0,
+    wides: 0, noBalls: 0, bestBowlingWkts: 0, bestBowlingRuns: 0,
+    catches: 0, runOuts: 0, awards: 0,
+    ratings: { overall: 50, batting: 50, bowling: 50, fielding: 50, pressure: 50, matchWinning: 50, wicketTaking: 50, sixHitting: 50, deathBat: 50, deathBowl: 50, recentForm: 50 },
+  },
+  {
+    id: "madhu", name: "Madhu", role: "—",
+    notes: "New PTS entrant. Career yet to begin.",
+    matches: 0, innings: 0, runs: 0, balls: 0, highest: 0,
+    fifties: 0, hundreds: 0, hundred50s: 0, doubleHundreds: 0,
+    fours: 0, sixes: 0, notOuts: 0, ducks: 0,
+    wickets: 0, bowlRuns: 0, bowlBalls: 0, maidens: 0, dots: 0,
+    wides: 0, noBalls: 0, bestBowlingWkts: 0, bestBowlingRuns: 0,
+    catches: 0, runOuts: 0, awards: 0,
+    ratings: { overall: 50, batting: 50, bowling: 50, fielding: 50, pressure: 50, matchWinning: 50, wicketTaking: 50, sixHitting: 50, deathBat: 50, deathBowl: 50, recentForm: 50 },
+  },
+  {
+    id: "nishant", name: "Nishant", role: "—",
+    notes: "New PTS entrant. Career yet to begin.",
+    matches: 0, innings: 0, runs: 0, balls: 0, highest: 0,
+    fifties: 0, hundreds: 0, hundred50s: 0, doubleHundreds: 0,
+    fours: 0, sixes: 0, notOuts: 0, ducks: 0,
+    wickets: 0, bowlRuns: 0, bowlBalls: 0, maidens: 0, dots: 0,
+    wides: 0, noBalls: 0, bestBowlingWkts: 0, bestBowlingRuns: 0,
+    catches: 0, runOuts: 0, awards: 0,
+    ratings: { overall: 50, batting: 50, bowling: 50, fielding: 50, pressure: 50, matchWinning: 50, wicketTaking: 50, sixHitting: 50, deathBat: 50, deathBowl: 50, recentForm: 50 },
+  },
 ];
+
+/** Official career award splits: POTM, BOTM, BOWLTM, FOTM, Fighter, Worst.
+ *  Applied once via store migration; user cloud edits are never overwritten. */
+export const OFFICIAL_AWARD_SPLITS: Record<string, {
+  pom: number; batsman: number; bowler: number; fielder: number; fighter: number; worst: number;
+}> = {
+  sunny:   { pom: 82, batsman: 160, bowler: 51, fielder: 22, fighter: 85, worst: 0 },
+  sathvik: { pom: 58, batsman: 132, bowler: 28, fielder: 12, fighter: 44, worst: 0 },
+  rithu:   { pom: 46, batsman: 54,  bowler: 63, fielder: 18, fighter: 37, worst: 0 },
+  karthik: { pom: 31, batsman: 22,  bowler: 57, fielder: 11, fighter: 44, worst: 0 },
+  atharv:  { pom: 26, batsman: 72,  bowler: 8,  fielder: 4,  fighter: 33, worst: 0 },
+  deva:    { pom: 16, batsman: 41,  bowler: 18, fielder: 7,  fighter: 42, worst: 0 },
+  mahesh:  { pom: 6,  batsman: 18,  bowler: 4,  fielder: 2,  fighter: 18, worst: 0 },
+  karunya: { pom: 0,  batsman: 0,   bowler: 1,  fielder: 0,  fighter: 2,  worst: 15 },
+};
 
 function toPlayer(r: SeedRow): Player {
   return {
