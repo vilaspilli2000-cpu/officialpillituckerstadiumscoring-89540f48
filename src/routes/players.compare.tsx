@@ -5,6 +5,13 @@ import { AppShell } from "@/components/pts/AppShell";
 import { usePtsStore } from "@/lib/pts/store";
 import { rankPlayers } from "@/lib/pts/rankings";
 import { batterVsBowler } from "@/lib/pts/rivalries";
+import {
+  computeOvertakeScore,
+  rankAllOvertake,
+  buildOvertakePlan,
+  type OvertakeScore,
+  type OvertakeCategoryKey,
+} from "@/lib/pts/overtakeRanking";
 import type { Player } from "@/lib/pts/types";
 
 export const Route = createFileRoute("/players/compare")({
@@ -30,8 +37,10 @@ function Compare() {
   const players = usePtsStore((s) => s.players);
   const matches = usePtsStore((s) => s.matches);
   const ranked = useMemo(() => rankPlayers(players), [players]);
+  const overtakeRanked = useMemo(() => rankAllOvertake(players, matches), [players, matches]);
   const [aId, setAId] = useState<string>(players[0]?.id ?? "");
   const [bId, setBId] = useState<string>(players[1]?.id ?? "");
+  const [mode, setMode] = useState<"compare" | "overtake">("compare");
 
   const a = players.find((p) => p.id === aId);
   const b = players.find((p) => p.id === bId);
@@ -43,7 +52,24 @@ function Compare() {
           <ChevronLeft size={20} /> <span className="font-semibold">Back</span>
         </Link>
       </div>
-      <h1 className="text-2xl font-black text-gradient-gold mb-3">Compare Players</h1>
+      <h1 className="text-2xl font-black text-gradient-gold mb-3">
+        {mode === "compare" ? "Compare Players" : "Overtake Analysis"}
+      </h1>
+
+      <div className="inline-flex rounded-xl border border-primary/30 bg-card/60 p-1 mb-3">
+        <button
+          onClick={() => setMode("compare")}
+          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${mode === "compare" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+        >
+          Compare
+        </button>
+        <button
+          onClick={() => setMode("overtake")}
+          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${mode === "overtake" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+        >
+          Overtake
+        </button>
+      </div>
 
       <div className="grid grid-cols-2 gap-2 mb-4">
         <PlayerPicker label="Player A" value={aId} onChange={setAId} players={players} />
@@ -51,7 +77,11 @@ function Compare() {
       </div>
 
       {a && b && a.id !== b.id ? (
-        <Comparison a={a} b={b} ranked={ranked} matches={matches} />
+        mode === "compare" ? (
+          <Comparison a={a} b={b} ranked={ranked} matches={matches} />
+        ) : (
+          <OvertakeView a={a} b={b} overtakeRanked={overtakeRanked} matches={matches} />
+        )
       ) : (
         <div className="rounded-xl border border-border/60 bg-card/60 p-4 text-sm text-muted-foreground">
           Pick two different players to compare.
