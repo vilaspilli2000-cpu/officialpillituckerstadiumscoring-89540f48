@@ -254,6 +254,156 @@ function fmt(v: number | string) {
   return v.toFixed(2);
 }
 
+function OvertakeView({
+  a, b, overtakeRanked, matches,
+}: {
+  a: Player; b: Player;
+  overtakeRanked: OvertakeScore[];
+  matches: ReturnType<typeof usePtsStore.getState>["matches"];
+}) {
+  const sA = useMemo(() => computeOvertakeScore(a, matches), [a, matches]);
+  const sB = useMemo(() => computeOvertakeScore(b, matches), [b, matches]);
+  const rankOf = (id: string) => overtakeRanked.findIndex((r) => r.player.id === id) + 1;
+  const rankA = rankOf(a.id);
+  const rankB = rankOf(b.id);
+
+  const leader = sA.total >= sB.total ? sA : sB;
+  const trailer = leader === sA ? sB : sA;
+  const plan = useMemo(
+    () => buildOvertakePlan(trailer, leader, overtakeRanked),
+    [trailer, leader, overtakeRanked],
+  );
+
+  const catKeys: OvertakeCategoryKey[] = ["batting", "bigInnings", "consistency", "awards", "boundaries", "bowling"];
+
+  return (
+    <div className="space-y-3">
+      {/* Overall */}
+      <div className="rounded-xl border border-primary/40 bg-primary/5 p-3">
+        <div className="text-[10px] uppercase tracking-widest text-primary mb-2">Overall Ranking</div>
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <ScoreCard s={sA} rank={rankA} winner={sA.total > sB.total} />
+          <ScoreCard s={sB} rank={rankB} winner={sB.total > sA.total} />
+        </div>
+        <div className="mt-3 text-xs text-muted-foreground">
+          Difference: <span className="text-primary font-bold">{Math.abs(sA.total - sB.total)} pts</span>
+          {" · "}Leader: <span className="font-bold text-foreground">{leader.player.name}</span>
+        </div>
+      </div>
+
+      {/* Category Breakdown */}
+      <div className="rounded-xl border border-border/60 bg-card/60 p-3">
+        <div className="text-[10px] uppercase tracking-widest text-primary mb-2">Category Points</div>
+        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-1 text-xs items-center">
+          <div className="text-muted-foreground">Category</div>
+          <div className="text-right font-semibold truncate">{a.name}</div>
+          <div className="text-right font-semibold truncate">{b.name}</div>
+          <div className="text-right text-muted-foreground">Winner</div>
+          {catKeys.map((k) => {
+            const ca = sA.categories[k];
+            const cb = sB.categories[k];
+            const aWin = ca.points > cb.points;
+            const bWin = cb.points > ca.points;
+            return (
+              <div key={k} className="contents">
+                <div className="text-muted-foreground">
+                  <div>{ca.label}</div>
+                  <div className="text-[10px] opacity-70">{aWin ? ca.detail : bWin ? cb.detail : ca.detail}</div>
+                </div>
+                <div className={`text-right tabular-nums ${aWin ? "text-primary font-bold" : ""}`}>{ca.points}</div>
+                <div className={`text-right tabular-nums ${bWin ? "text-primary font-bold" : ""}`}>{cb.points}</div>
+                <div className="text-right text-[10px] font-semibold">
+                  {aWin ? a.name : bWin ? b.name : "—"}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Strength / Weakness */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-3">
+          <div className="text-[10px] uppercase tracking-widest text-emerald-500 mb-1">
+            {trailer.player.name}: Strongest
+          </div>
+          <div className="text-sm font-bold">{plan.strongest.label}</div>
+          <div className="text-[11px] text-muted-foreground">{plan.strongest.detail}</div>
+          <div className="text-xs mt-1 text-emerald-500 font-bold">{plan.strongest.points} pts</div>
+        </div>
+        <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-3">
+          <div className="text-[10px] uppercase tracking-widest text-destructive mb-1">
+            {trailer.player.name}: Weakest vs {leader.player.name}
+          </div>
+          <div className="text-sm font-bold">{plan.weakness.label}</div>
+          <div className="text-[11px] text-muted-foreground">{plan.weakness.detail}</div>
+        </div>
+      </div>
+
+      {/* Overtake Plan */}
+      {trailer.total < leader.total && (
+        <div className="rounded-xl border border-primary/40 bg-card/60 p-3">
+          <div className="text-[10px] uppercase tracking-widest text-primary mb-2">
+            Path for {trailer.player.name} to overtake {leader.player.name}
+          </div>
+          <div className="text-sm mb-3">{plan.summary}</div>
+          <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+            <Stat label="Points Gap" value={`${plan.totalGap}`} />
+            <Stat label="Projected Rank" value={`#${plan.projectedRank}`} />
+            <Stat label="Est. Matches" value={`~${plan.estimatedMatches}`} />
+            <Stat label="Confidence" value={`${plan.confidence}%`} />
+          </div>
+          <div className="space-y-2">
+            <div className="text-[10px] uppercase tracking-widest text-primary">Improvement Suggestions</div>
+            {plan.suggestions.length === 0 ? (
+              <div className="text-xs text-muted-foreground">No gaps — {trailer.player.name} already matches or leads in every category.</div>
+            ) : (
+              plan.suggestions.map((sg) => (
+                <div key={sg.key} className="rounded-lg border border-border/60 bg-background/40 p-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-foreground">{sg.label}</span>
+                    <span className="text-primary font-bold tabular-nums">+{sg.points} pts</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">{sg.text}</div>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-2">
+              <div className="text-[10px] uppercase tracking-widest text-primary">Quickest Path</div>
+              <div className="font-semibold">{sA.categories[plan.quickestPath].label}</div>
+            </div>
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-2">
+              <div className="text-[10px] uppercase tracking-widest text-primary">Biggest Gain</div>
+              <div className="font-semibold">{sA.categories[plan.biggestPath].label}</div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScoreCard({ s, rank, winner }: { s: OvertakeScore; rank: number; winner: boolean }) {
+  return (
+    <div className={`rounded-lg border p-2 ${winner ? "border-primary bg-primary/10" : "border-border/60 bg-background/40"}`}>
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground truncate">{s.player.name}</div>
+      <div className={`text-2xl font-black tabular-nums ${winner ? "text-primary" : ""}`}>{s.total}</div>
+      <div className="text-[10px] text-muted-foreground">Rank #{rank || "—"} · SR {s.strikeRate.toFixed(1)}</div>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-background/40 p-2">
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className="text-sm font-bold text-foreground">{value}</div>
+    </div>
+  );
+}
+
 function Section({ title, rows, aName, bName }: { title: string; rows: Row[]; aName: string; bName: string; }) {
   return (
     <div className="rounded-xl border border-border/60 bg-card/60 p-3">
