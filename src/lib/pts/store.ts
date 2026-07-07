@@ -473,12 +473,12 @@ export const usePtsStore = create<State>()(
     }),
     {
       name: "pts-scorer-v1",
-      version: 6,
+      version: 7,
       migrate: (persisted: unknown) => {
         const s = (persisted ?? {}) as {
           players?: Player[]; milestoneFeed?: MilestoneEntry[];
           recordFeed?: RecordEntry[]; awardFeed?: AwardFeedEntry[];
-          awardsSeededV6?: boolean;
+          awardsSeededV6?: boolean; historicRankingFrozenV7?: boolean;
         };
         s.milestoneFeed = s.milestoneFeed ?? [];
         s.recordFeed = s.recordFeed ?? [];
@@ -561,6 +561,16 @@ export const usePtsStore = create<State>()(
           s.awardsSeededV6 = true;
         }
         s.players = Array.from(byId.values());
+        // v7: freeze historic four/wicket snapshot & init matchPoints.
+        if (!s.historicRankingFrozenV7) {
+          s.players = s.players.map((p) => ({
+            ...p,
+            historicFours: p.historicFours ?? p.career?.fours ?? 0,
+            historicWickets: p.historicWickets ?? p.career?.wickets ?? 0,
+            matchPoints: p.matchPoints ?? 0,
+          }));
+          s.historicRankingFrozenV7 = true;
+        }
         return s as never;
       },
     },
