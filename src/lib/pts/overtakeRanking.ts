@@ -1,4 +1,7 @@
 import type { Match, Player } from "./types";
+import {
+  historicFoursPoints, historicWicketsPoints,
+} from "./matchPoints";
 
 /**
  * Overtake Ranking Engine
@@ -21,7 +24,8 @@ export type OvertakeCategoryKey =
   | "consistency"
   | "awards"
   | "boundaries"
-  | "bowling";
+  | "bowling"
+  | "matchPerf";
 
 export interface OvertakeCategory {
   key: OvertakeCategoryKey;
@@ -41,12 +45,13 @@ export interface OvertakeScore {
 }
 
 const CATEGORY_LABELS: Record<OvertakeCategoryKey, string> = {
-  batting: "Batting Quality (SR)",
+  batting: "Strike Rate Points",
   bigInnings: "Big Innings",
-  consistency: "Recent Form & Consistency",
+  consistency: "Consistency Bonus",
   awards: "Match Awards",
-  boundaries: "Boundary Hitting",
-  bowling: "Bowling Contribution",
+  boundaries: "Career Fours",
+  bowling: "Career Wickets",
+  matchPerf: "Match Performance",
 };
 
 /** Collect a player's per-innings scores from completed match history, in
