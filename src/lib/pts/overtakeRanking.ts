@@ -266,7 +266,7 @@ export function buildOvertakePlan(
     text: `${trailerName} needs exactly ${streakLeft} more consecutive 30+ innings${trailer.currentStreak < 2 ? " (first two build the streak)" : ""} to overtake ${leaderName}.`,
   });
 
-  s.sort((a, b) => b.points - a.points);
+  s.sort((a, b) => a.points - b.points);
 
   // Projected rank if trailer closes gap
   const projectedTotal = trailer.total + gap;
