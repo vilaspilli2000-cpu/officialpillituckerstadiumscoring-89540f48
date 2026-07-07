@@ -87,9 +87,9 @@ export function computeConsistency(scores: number[]): {
     if (s >= 30) {
       consecutive += 1;
       if (consecutive <= 2) {
-        points += 2;
+        points += 6;
       } else {
-        points += 10;
+        points += 6 + 12;
         bonusInnings += 1;
       }
       if (consecutive > longest) longest = consecutive;
@@ -335,6 +335,7 @@ function categoryPhrase(k: OvertakeCategoryKey): string {
     case "awards": return "winning more match awards";
     case "boundaries": return "hitting more boundaries";
     case "bowling": return "picking up more wickets";
+    case "matchPerf": return "compiling stronger match-by-match performances";
   }
 }
 
