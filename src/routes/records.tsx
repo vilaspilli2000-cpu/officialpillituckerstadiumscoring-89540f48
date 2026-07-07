@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/pts/AppShell";
 import { usePtsStore } from "@/lib/pts/store";
 import { combinedCareer } from "@/lib/pts/seed";
-import { rankPlayers } from "@/lib/pts/rankings";
+import { rankAllOvertake } from "@/lib/pts/overtakeRanking";
 
 export const Route = createFileRoute("/records")({
   head: () => ({ meta: [{ title: "Records & Rankings — PTS Scorer" }] }),
@@ -11,7 +11,8 @@ export const Route = createFileRoute("/records")({
 
 function Records() {
   const players = usePtsStore((s) => s.players);
-  const ranked = rankPlayers(players);
+  const matches = usePtsStore((s) => s.matches);
+  const ranked = rankAllOvertake(players, matches);
 
   return (
     <AppShell title="Records">
@@ -20,7 +21,7 @@ function Records() {
       <section className="mb-6">
         <h2 className="text-sm uppercase tracking-widest text-primary/80 mb-2">PTS Player Rankings</h2>
         <p className="text-[11px] text-muted-foreground mb-2">
-          Deterministic score · Batting 30% · Bowling 22% · Pressure 18% · Awards 12% · Fielding 8% · Form 10%.
+          Historic ranking points + Net Match Points from every completed match. Auto-updates after every match.
         </p>
         <div className="space-y-2">
           {ranked.map((r, i) => (
@@ -34,22 +35,23 @@ function Records() {
                       <span className="ml-2 text-[10px] uppercase tracking-widest text-muted-foreground">Beginner</span>
                     ) : null}
                   </div>
-                  <div className="text-[11px] text-muted-foreground truncate">{r.reason}</div>
+                  <div className="text-[11px] text-muted-foreground truncate">
+                    SR {r.strikeRate.toFixed(1)} · Streak {r.currentStreak} (best {r.longestStreak})
+                  </div>
                 </div>
                 <div className="text-right tabular-nums shrink-0">
-                  <div className="text-lg font-black">{Math.round(r.score)}</div>
-                  <div className="text-[10px] text-muted-foreground">/100</div>
+                  <div className="text-lg font-black">{r.total}</div>
+                  <div className="text-[10px] text-muted-foreground">pts</div>
                 </div>
               </div>
               <div className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-                <span>Bat {Math.round(r.breakdown.batting)}</span>
-                <span>Bowl {Math.round(r.breakdown.bowling)}</span>
-                <span>Pres {Math.round(r.breakdown.pressure)}</span>
-                <span>Awards {Math.round(r.breakdown.awards)}</span>
-                <span>Field {Math.round(r.breakdown.fielding)}</span>
-                <span>Form {Math.round(r.breakdown.form)}</span>
-                {r.sr > 0 && <span>SR {r.sr.toFixed(1)}</span>}
-                {r.econ > 0 && <span>Econ {r.econ.toFixed(2)}</span>}
+                <span>SR {r.categories.batting.points}</span>
+                <span>Big {r.categories.bigInnings.points}</span>
+                <span>Cons {r.categories.consistency.points}</span>
+                <span>Awd {r.categories.awards.points}</span>
+                <span>4s {r.categories.boundaries.points}</span>
+                <span>Wkt {r.categories.bowling.points}</span>
+                <span>Match {r.categories.matchPerf.points}</span>
               </div>
             </div>
           ))}

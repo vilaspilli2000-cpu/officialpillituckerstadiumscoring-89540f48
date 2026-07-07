@@ -63,6 +63,13 @@ export interface Player {
   manualOverride?: boolean;
   edits?: Array<{ ts: number; field: string; from: string | number; to: string | number }>;
   beginner?: boolean;
+  /** Snapshot of career.fours at the moment historic ranking was frozen.
+   *  New fours (career.fours - historicFours) each earn +1 ranking point. */
+  historicFours?: number;
+  /** Snapshot of career.wickets at freeze time. New wickets earn quality points. */
+  historicWickets?: number;
+  /** Accumulated Net Match Points from every future completed match. */
+  matchPoints?: number;
 }
 
 export type DismissalType =

@@ -1,4 +1,7 @@
 import type { Match, Player } from "./types";
+import {
+  historicFoursPoints, historicWicketsPoints,
+} from "./matchPoints";
 
 /**
  * Overtake Ranking Engine
@@ -21,7 +24,8 @@ export type OvertakeCategoryKey =
   | "consistency"
   | "awards"
   | "boundaries"
-  | "bowling";
+  | "bowling"
+  | "matchPerf";
 
 export interface OvertakeCategory {
   key: OvertakeCategoryKey;
@@ -41,12 +45,13 @@ export interface OvertakeScore {
 }
 
 const CATEGORY_LABELS: Record<OvertakeCategoryKey, string> = {
-  batting: "Batting Quality (SR)",
+  batting: "Strike Rate Points",
   bigInnings: "Big Innings",
-  consistency: "Recent Form & Consistency",
+  consistency: "Consistency Bonus",
   awards: "Match Awards",
-  boundaries: "Boundary Hitting",
-  bowling: "Bowling Contribution",
+  boundaries: "Career Fours",
+  bowling: "Career Wickets",
+  matchPerf: "Match Performance",
 };
 
 /** Collect a player's per-innings scores from completed match history, in
@@ -82,9 +87,9 @@ export function computeConsistency(scores: number[]): {
     if (s >= 30) {
       consecutive += 1;
       if (consecutive <= 2) {
-        points += 2;
+        points += 6;
       } else {
-        points += 10;
+        points += 6 + 12;
         bonusInnings += 1;
       }
       if (consecutive > longest) longest = consecutive;
@@ -99,48 +104,59 @@ export function computeOvertakeScore(player: Player, matches: Match[]): Overtake
   const c = player.career;
   const sr = c.balls ? (c.runs / c.balls) * 100 : 0;
 
-  // 1. Batting Quality
-  const battingPts = Math.round(sr);
-  const battingDetail = `SR ${sr.toFixed(1)} (${c.runs} runs from ${c.balls} balls)`;
+  // 1. Strike Rate Points — 2 pts per SR unit (§3). Runs never affect this.
+  const battingPts = Math.round(sr * 2);
+  const battingDetail = `SR ${sr.toFixed(1)} × 2 = ${battingPts} pts`;
 
-  // 2. Big Innings
+  // 2. Big Innings (§4) — 20 per 100, 10 per 50.
   const bigPts =
-    c.hundreds * 10 +
-    c.fifties * 5 +
-    (c.hundred50s ?? 0) * 5 +
-    (c.doubleHundreds ?? 0) * 10;
-  const bigDetail = `100s×10=${c.hundreds * 10}, 50s×5=${c.fifties * 5}, 150 bonus×5=${(c.hundred50s ?? 0) * 5}, 200 bonus×10=${(c.doubleHundreds ?? 0) * 10}`;
+    c.hundreds * 20 +
+    c.fifties * 10 +
+    (c.hundred50s ?? 0) * 10 +
+    (c.doubleHundreds ?? 0) * 20;
+  const bigDetail = `${c.hundreds}×100=${c.hundreds * 20}, ${c.fifties}×50=${c.fifties * 10}`;
 
-  // 3. Consistency
+  // 3. Consistency Bonus (§5)
   const scores = playerInningsScores(matches, player.id);
   const cons = computeConsistency(scores);
   const consDetail = `${scores.filter((s) => s >= 30).length} innings of 30+, streak ${cons.currentStreak} (best ${cons.longestStreak})`;
 
-  // 4. Awards
+  // 4. Awards (§6)
   const pom = c.pomAwards ?? 0;
   const bat = c.batsmanAwards ?? 0;
   const bowl = c.bowlerAwards ?? 0;
   const fld = c.fielderAwards ?? 0;
   const ftr = c.fighterAwards ?? 0;
   const wor = c.worstAwards ?? 0;
-  const awardPts = pom * 3 + bat * 2 + bowl * 2 + fld * 1 + ftr * 1 - wor * 1;
+  const awardPts = pom * 6 + bat * 4 + bowl * 4 + fld * 2 + ftr * 2 - wor * 3;
   const awardDetail = `POM ${pom}·BOTM ${bat}·BOWLTM ${bowl}·FOTM ${fld}·Fighter ${ftr}·Worst ${wor}`;
 
-  // 5. Boundaries
-  const fourGroups = Math.floor((c.fours ?? 0) / 10);
-  const boundaryDetail = `${c.fours} career fours → ${fourGroups} × 10s`;
+  // 5. Fours (§7) — historic snapshot rounded to nearest 10 (÷10 pts).
+  //    Every new four earns +1 pt immediately.
+  const historicFours = player.historicFours ?? c.fours ?? 0;
+  const histFourPts = historicFoursPoints(historicFours);
+  const newFours = Math.max(0, (c.fours ?? 0) - historicFours);
+  const fourPts = histFourPts + newFours;
+  const boundaryDetail = `Historic ${historicFours} → ${histFourPts} pts · New +${newFours}`;
 
-  // 6. Bowling
-  const wktGroups = Math.floor((c.wickets ?? 0) / 5);
-  const bowlingDetail = `${c.wickets} career wickets → ${wktGroups} × 5s`;
+  // 6. Career Wickets (§8) — historic rounded to nearest 5 (÷5 pts).
+  //    New wickets earn quality points via match performance.
+  const historicWickets = player.historicWickets ?? c.wickets ?? 0;
+  const histWktPts = historicWicketsPoints(historicWickets);
+  const bowlingDetail = `Historic ${historicWickets} → ${histWktPts} pts`;
+
+  // 7. Match Performance (§12) — accumulated Net Match Points.
+  const matchPerfPts = player.matchPoints ?? 0;
+  const matchPerfDetail = `Accumulated across ${scores.length} innings`;
 
   const categories: Record<OvertakeCategoryKey, OvertakeCategory> = {
     batting: { key: "batting", label: CATEGORY_LABELS.batting, points: battingPts, detail: battingDetail },
     bigInnings: { key: "bigInnings", label: CATEGORY_LABELS.bigInnings, points: bigPts, detail: bigDetail },
     consistency: { key: "consistency", label: CATEGORY_LABELS.consistency, points: cons.points, detail: consDetail },
     awards: { key: "awards", label: CATEGORY_LABELS.awards, points: awardPts, detail: awardDetail },
-    boundaries: { key: "boundaries", label: CATEGORY_LABELS.boundaries, points: fourGroups, detail: boundaryDetail },
-    bowling: { key: "bowling", label: CATEGORY_LABELS.bowling, points: wktGroups, detail: bowlingDetail },
+    boundaries: { key: "boundaries", label: CATEGORY_LABELS.boundaries, points: fourPts, detail: boundaryDetail },
+    bowling: { key: "bowling", label: CATEGORY_LABELS.bowling, points: histWktPts, detail: bowlingDetail },
+    matchPerf: { key: "matchPerf", label: CATEGORY_LABELS.matchPerf, points: matchPerfPts, detail: matchPerfDetail },
   };
 
   const total = Object.values(categories).reduce((a, b) => a + b.points, 0);
@@ -202,77 +218,55 @@ export function buildOvertakePlan(
   // Suggestions per category — concrete, quality-first
   const s: OvertakePlan["suggestions"] = [];
 
-  // Batting SR
-  const srGap = leader.strikeRate - trailer.strikeRate;
-  if (srGap > 0) {
-    const target = Math.ceil(leader.strikeRate + 1);
-    s.push({
-      key: "batting",
-      label: "Strike Rate",
-      points: Math.max(0, Math.round(srGap)),
-      text: `Lift career strike rate from ${trailer.strikeRate.toFixed(1)} to ~${target} (+${Math.round(srGap)} pts).`,
-    });
-  }
+  const need = gap; // exact points needed to overtake (already includes +1)
+  const leaderName = leader.player.name;
+  const trailerName = trailer.player.name;
 
-  // Big innings
-  const bigDiff = leader.categories.bigInnings.points - trailer.categories.bigInnings.points;
-  if (bigDiff > 0) {
-    const centuriesNeeded = Math.ceil(bigDiff / 10);
-    const fiftiesNeeded = Math.ceil(bigDiff / 5);
-    s.push({
-      key: "bigInnings",
-      label: "Big Innings",
-      points: bigDiff,
-      text: `Add ~${centuriesNeeded} more century or ${fiftiesNeeded} more fifties to close the ${bigDiff}-pt gap.`,
-    });
-  }
+  // Exact single-lever paths (§1 requires mathematically exact numbers).
+  s.push({
+    key: "bigInnings", label: "Centuries",
+    points: Math.ceil(need / 20) * 20,
+    text: `${trailerName} needs exactly ${Math.ceil(need / 20)} century${Math.ceil(need / 20) === 1 ? "" : "ies"} to overtake ${leaderName}.`,
+  });
+  s.push({
+    key: "bigInnings", label: "Fifties",
+    points: Math.ceil(need / 10) * 10,
+    text: `${trailerName} needs exactly ${Math.ceil(need / 10)} fifty${Math.ceil(need / 10) === 1 ? "" : "ies"} to overtake ${leaderName}.`,
+  });
+  s.push({
+    key: "awards", label: "Player of the Match",
+    points: Math.ceil(need / 6) * 6,
+    text: `${trailerName} needs exactly ${Math.ceil(need / 6)} Player of the Match award${Math.ceil(need / 6) === 1 ? "" : "s"} to overtake ${leaderName}.`,
+  });
+  s.push({
+    key: "boundaries", label: "Fours",
+    points: need,
+    text: `${trailerName} needs exactly ${need} more four${need === 1 ? "" : "s"} to overtake ${leaderName}.`,
+  });
+  // Wickets assumed middle-order tier @ 4 pts each.
+  s.push({
+    key: "bowling", label: "Wickets",
+    points: Math.ceil(need / 4) * 4,
+    text: `${trailerName} needs exactly ${Math.ceil(need / 4)} more wickets (middle-order) to overtake ${leaderName}.`,
+  });
+  // SR — need Δ = ceil(need/2)
+  const srDelta = Math.ceil(need / 2);
+  s.push({
+    key: "batting", label: "Strike Rate",
+    points: srDelta * 2,
+    text: `${trailerName} needs exactly +${srDelta} career strike rate (${trailer.strikeRate.toFixed(1)} → ${(trailer.strikeRate + srDelta).toFixed(1)}) to overtake ${leaderName}.`,
+  });
+  // Consistency streak — +12 per extra 30+ once streak ≥ 3.
+  const streakLeft = trailer.currentStreak >= 2
+    ? Math.ceil(need / 12)
+    : Math.ceil((need + 12) / 12) + (2 - trailer.currentStreak);
+  s.push({
+    key: "consistency", label: "Consistency Streak",
+    points: need,
+    text: `${trailerName} needs exactly ${streakLeft} more consecutive 30+ innings${trailer.currentStreak < 2 ? " (first two build the streak)" : ""} to overtake ${leaderName}.`,
+  });
 
-  // Consistency
-  const consDiff = leader.categories.consistency.points - trailer.categories.consistency.points;
-  if (consDiff > 0) {
-    const needed = trailer.currentStreak >= 2 ? Math.ceil(consDiff / 10) : Math.ceil((consDiff - 4) / 10) + 2;
-    s.push({
-      key: "consistency",
-      label: "Consistency Streak",
-      points: consDiff,
-      text: `Chain ~${Math.max(2, needed)} more 30+ scores${trailer.currentStreak < 2 ? " (build a 2-innings streak first)" : ""} for +${consDiff} pts.`,
-    });
-  }
-
-  // Awards
-  const awdDiff = leader.categories.awards.points - trailer.categories.awards.points;
-  if (awdDiff > 0) {
-    s.push({
-      key: "awards",
-      label: "Match Awards",
-      points: awdDiff,
-      text: `Win ~${Math.ceil(awdDiff / 3)} more Player-of-the-Match awards (+${awdDiff} pts).`,
-    });
-  }
-
-  // Boundaries
-  const bDiff = leader.categories.boundaries.points - trailer.categories.boundaries.points;
-  if (bDiff > 0) {
-    s.push({
-      key: "boundaries",
-      label: "Boundaries",
-      points: bDiff,
-      text: `Hit ~${bDiff * 10} more fours (+${bDiff} pts).`,
-    });
-  }
-
-  // Bowling
-  const wDiff = leader.categories.bowling.points - trailer.categories.bowling.points;
-  if (wDiff > 0) {
-    s.push({
-      key: "bowling",
-      label: "Wickets",
-      points: wDiff,
-      text: `Take ~${wDiff * 5} more wickets (+${wDiff} pts).`,
-    });
-  }
-
-  s.sort((a, b) => b.points - a.points);
+  s.sort((a, b) => a.points - b.points);
 
   // Projected rank if trailer closes gap
   const projectedTotal = trailer.total + gap;
@@ -319,6 +313,7 @@ function categoryPhrase(k: OvertakeCategoryKey): string {
     case "awards": return "winning more match awards";
     case "boundaries": return "hitting more boundaries";
     case "bowling": return "picking up more wickets";
+    case "matchPerf": return "compiling stronger match-by-match performances";
   }
 }
 

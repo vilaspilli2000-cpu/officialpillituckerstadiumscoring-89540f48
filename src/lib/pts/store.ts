@@ -12,6 +12,7 @@ import { buildStory } from "./story";
 import { computeProbability } from "./probability";
 import { generateCommentaryFor } from "./commentary";
 import { MILESTONE_STEPS, totalAwards } from "./milestones";
+import { computeMatchPoints, buildStreakSnapshot } from "./matchPoints";
 
 function teamOfPlayer(m: Match, playerId: string): "A" | "B" {
   if (m.teamA.playerIds.includes(playerId)) return "A";
@@ -196,6 +197,8 @@ export const usePtsStore = create<State>()(
         if (!current) return;
         // Snapshot pre-match career values (for milestone/personal-best detection).
         const preById = new Map(players.map((p) => [p.id, structuredClone(p)]));
+        // Streak snapshot BEFORE this match (needed to award +12 consistency).
+        const priorStreaks = buildStreakSnapshot(matches);
         // credit career stats
         const updated = players.map((p) => ({ ...p, career: { ...p.career } }));
         const counted = new Set<string>();
@@ -360,6 +363,13 @@ export const usePtsStore = create<State>()(
           });
         }
 
+        // --- Net Match Points → accumulate on player.matchPoints -----------
+        const mp = computeMatchPoints(current, updated, priorStreaks);
+        for (const pl of updated) {
+          const pm = mp.get(pl.id);
+          if (pm) pl.matchPoints = (pl.matchPoints ?? 0) + pm.net;
+        }
+
         set({
           matches: [current, ...matches],
           players: updated,
@@ -463,12 +473,12 @@ export const usePtsStore = create<State>()(
     }),
     {
       name: "pts-scorer-v1",
-      version: 6,
+      version: 7,
       migrate: (persisted: unknown) => {
         const s = (persisted ?? {}) as {
           players?: Player[]; milestoneFeed?: MilestoneEntry[];
           recordFeed?: RecordEntry[]; awardFeed?: AwardFeedEntry[];
-          awardsSeededV6?: boolean;
+          awardsSeededV6?: boolean; historicRankingFrozenV7?: boolean;
         };
         s.milestoneFeed = s.milestoneFeed ?? [];
         s.recordFeed = s.recordFeed ?? [];
@@ -551,6 +561,16 @@ export const usePtsStore = create<State>()(
           s.awardsSeededV6 = true;
         }
         s.players = Array.from(byId.values());
+        // v7: freeze historic four/wicket snapshot & init matchPoints.
+        if (!s.historicRankingFrozenV7) {
+          s.players = s.players.map((p) => ({
+            ...p,
+            historicFours: p.historicFours ?? p.career?.fours ?? 0,
+            historicWickets: p.historicWickets ?? p.career?.wickets ?? 0,
+            matchPoints: p.matchPoints ?? 0,
+          }));
+          s.historicRankingFrozenV7 = true;
+        }
         return s as never;
       },
     },
