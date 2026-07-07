@@ -197,6 +197,8 @@ export const usePtsStore = create<State>()(
         if (!current) return;
         // Snapshot pre-match career values (for milestone/personal-best detection).
         const preById = new Map(players.map((p) => [p.id, structuredClone(p)]));
+        // Streak snapshot BEFORE this match (needed to award +12 consistency).
+        const priorStreaks = buildStreakSnapshot(matches);
         // credit career stats
         const updated = players.map((p) => ({ ...p, career: { ...p.career } }));
         const counted = new Set<string>();
