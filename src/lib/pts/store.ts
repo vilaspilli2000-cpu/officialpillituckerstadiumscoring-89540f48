@@ -363,6 +363,13 @@ export const usePtsStore = create<State>()(
           });
         }
 
+        // --- Net Match Points → accumulate on player.matchPoints -----------
+        const mp = computeMatchPoints(current, updated, priorStreaks);
+        for (const pl of updated) {
+          const pm = mp.get(pl.id);
+          if (pm) pl.matchPoints = (pl.matchPoints ?? 0) + pm.net;
+        }
+
         set({
           matches: [current, ...matches],
           players: updated,
