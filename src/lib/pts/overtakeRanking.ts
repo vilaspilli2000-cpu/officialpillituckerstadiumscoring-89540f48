@@ -218,75 +218,53 @@ export function buildOvertakePlan(
   // Suggestions per category — concrete, quality-first
   const s: OvertakePlan["suggestions"] = [];
 
-  // Batting SR
-  const srGap = leader.strikeRate - trailer.strikeRate;
-  if (srGap > 0) {
-    const target = Math.ceil(leader.strikeRate + 1);
-    s.push({
-      key: "batting",
-      label: "Strike Rate",
-      points: Math.max(0, Math.round(srGap)),
-      text: `Lift career strike rate from ${trailer.strikeRate.toFixed(1)} to ~${target} (+${Math.round(srGap)} pts).`,
-    });
-  }
+  const need = gap; // exact points needed to overtake (already includes +1)
+  const leaderName = leader.player.name;
+  const trailerName = trailer.player.name;
 
-  // Big innings
-  const bigDiff = leader.categories.bigInnings.points - trailer.categories.bigInnings.points;
-  if (bigDiff > 0) {
-    const centuriesNeeded = Math.ceil(bigDiff / 10);
-    const fiftiesNeeded = Math.ceil(bigDiff / 5);
-    s.push({
-      key: "bigInnings",
-      label: "Big Innings",
-      points: bigDiff,
-      text: `Add ~${centuriesNeeded} more century or ${fiftiesNeeded} more fifties to close the ${bigDiff}-pt gap.`,
-    });
-  }
-
-  // Consistency
-  const consDiff = leader.categories.consistency.points - trailer.categories.consistency.points;
-  if (consDiff > 0) {
-    const needed = trailer.currentStreak >= 2 ? Math.ceil(consDiff / 10) : Math.ceil((consDiff - 4) / 10) + 2;
-    s.push({
-      key: "consistency",
-      label: "Consistency Streak",
-      points: consDiff,
-      text: `Chain ~${Math.max(2, needed)} more 30+ scores${trailer.currentStreak < 2 ? " (build a 2-innings streak first)" : ""} for +${consDiff} pts.`,
-    });
-  }
-
-  // Awards
-  const awdDiff = leader.categories.awards.points - trailer.categories.awards.points;
-  if (awdDiff > 0) {
-    s.push({
-      key: "awards",
-      label: "Match Awards",
-      points: awdDiff,
-      text: `Win ~${Math.ceil(awdDiff / 3)} more Player-of-the-Match awards (+${awdDiff} pts).`,
-    });
-  }
-
-  // Boundaries
-  const bDiff = leader.categories.boundaries.points - trailer.categories.boundaries.points;
-  if (bDiff > 0) {
-    s.push({
-      key: "boundaries",
-      label: "Boundaries",
-      points: bDiff,
-      text: `Hit ~${bDiff * 10} more fours (+${bDiff} pts).`,
-    });
-  }
-
-  // Bowling
-  const wDiff = leader.categories.bowling.points - trailer.categories.bowling.points;
-  if (wDiff > 0) {
-    s.push({
-      key: "bowling",
-      label: "Wickets",
-      points: wDiff,
-      text: `Take ~${wDiff * 5} more wickets (+${wDiff} pts).`,
-    });
-  }
+  // Exact single-lever paths (§1 requires mathematically exact numbers).
+  s.push({
+    key: "bigInnings", label: "Centuries",
+    points: Math.ceil(need / 20) * 20,
+    text: `${trailerName} needs exactly ${Math.ceil(need / 20)} century${Math.ceil(need / 20) === 1 ? "" : "ies"} to overtake ${leaderName}.`,
+  });
+  s.push({
+    key: "bigInnings", label: "Fifties",
+    points: Math.ceil(need / 10) * 10,
+    text: `${trailerName} needs exactly ${Math.ceil(need / 10)} fifty${Math.ceil(need / 10) === 1 ? "" : "ies"} to overtake ${leaderName}.`,
+  });
+  s.push({
+    key: "awards", label: "Player of the Match",
+    points: Math.ceil(need / 6) * 6,
+    text: `${trailerName} needs exactly ${Math.ceil(need / 6)} Player of the Match award${Math.ceil(need / 6) === 1 ? "" : "s"} to overtake ${leaderName}.`,
+  });
+  s.push({
+    key: "boundaries", label: "Fours",
+    points: need,
+    text: `${trailerName} needs exactly ${need} more four${need === 1 ? "" : "s"} to overtake ${leaderName}.`,
+  });
+  // Wickets assumed middle-order tier @ 4 pts each.
+  s.push({
+    key: "bowling", label: "Wickets",
+    points: Math.ceil(need / 4) * 4,
+    text: `${trailerName} needs exactly ${Math.ceil(need / 4)} more wickets (middle-order) to overtake ${leaderName}.`,
+  });
+  // SR — need Δ = ceil(need/2)
+  const srDelta = Math.ceil(need / 2);
+  s.push({
+    key: "batting", label: "Strike Rate",
+    points: srDelta * 2,
+    text: `${trailerName} needs exactly +${srDelta} career strike rate (${trailer.strikeRate.toFixed(1)} → ${(trailer.strikeRate + srDelta).toFixed(1)}) to overtake ${leaderName}.`,
+  });
+  // Consistency streak — +12 per extra 30+ once streak ≥ 3.
+  const streakLeft = trailer.currentStreak >= 2
+    ? Math.ceil(need / 12)
+    : Math.ceil((need + 12) / 12) + (2 - trailer.currentStreak);
+  s.push({
+    key: "consistency", label: "Consistency Streak",
+    points: need,
+    text: `${trailerName} needs exactly ${streakLeft} more consecutive 30+ innings${trailer.currentStreak < 2 ? " (first two build the streak)" : ""} to overtake ${leaderName}.`,
+  });
 
   s.sort((a, b) => b.points - a.points);
 
