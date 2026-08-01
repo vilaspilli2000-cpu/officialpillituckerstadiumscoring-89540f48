@@ -293,6 +293,14 @@ export const usePtsStore = create<State>()(
           const pl = updated.find((x) => x.id === id);
           if (pl) pl.career.matches += 1;
         }
+        // Fielding extras: dropped catches & boundary saves.
+        for (const fe of current.fieldingEvents ?? []) {
+          const pl = updated.find((x) => x.id === fe.playerId);
+          if (!pl) continue;
+          if (fe.kind === "catch-drop") pl.career.catchDrops = (pl.career.catchDrops ?? 0) + 1;
+          else pl.career.boundarySaves = (pl.career.boundarySaves ?? 0) + 1;
+          counted.add(fe.playerId);
+        }
         // Per-award-type counters + total.
         for (const aw of current.awards ?? []) {
           const pl = updated.find((x) => x.id === aw.playerId);
