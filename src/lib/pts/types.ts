@@ -27,6 +27,10 @@ export interface Player {
     bowlRuns: number;
     catches: number;
     runOuts: number;
+    /** Dropped catches (fielding negative). */
+    catchDrops?: number;
+    /** Boundaries saved in the field (fielding positive). */
+    boundarySaves?: number;
     awards: number;
     notOuts: number;
     innings?: number;
@@ -160,7 +164,19 @@ export interface Innings {
   events: BallEvent[];
   closed: boolean;
   closeReason?: "all-out" | "overs-done" | "target" | "declared";
+  /** Innings ended by a captain's declaration. */
+  declared?: boolean;
   followOnApplied?: boolean;
+}
+
+export type FieldingEventKind = "catch-drop" | "boundary-save";
+
+export interface FieldingEvent {
+  id: string;
+  ts: number;
+  inningsIndex: number;
+  playerId: string;
+  kind: FieldingEventKind;
 }
 
 export interface Team {
@@ -204,6 +220,8 @@ export interface Match {
   story?: string;
   probability: ProbabilityPoint[];
   superOver?: Match["innings"]; // optional super-over innings reused shape
+  /** Non-ball fielding events: dropped catches and boundary saves. */
+  fieldingEvents?: FieldingEvent[];
   pendingNoBall?: boolean; // awaiting runs-from-no-ball selection
   pendingCatchSelection?: { dismissalType: DismissalType }; // awaiting catcher select
   commentary?: CommentaryEntry[];
