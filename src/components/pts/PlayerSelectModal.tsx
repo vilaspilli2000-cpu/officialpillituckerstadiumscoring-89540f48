@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 
 export function PlayerSelectModal({
-  open, title, options, onPick, excludeIds, lockReason,
+  open, title, options, onPick, excludeIds, lockReason, onClose,
 }: {
   open: boolean;
   title: string;
@@ -10,9 +10,10 @@ export function PlayerSelectModal({
   onPick: (id: string) => void;
   excludeIds?: string[];
   lockReason?: (id: string) => string | undefined;
+  onClose?: () => void;
 }) {
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose?.(); }}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="text-gradient-gold">{title}</DialogTitle>
@@ -35,6 +36,11 @@ export function PlayerSelectModal({
               </Button>
             );
           })}
+          {onClose && (
+            <Button variant="ghost" onClick={onClose} className="justify-center">
+              Cancel
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
