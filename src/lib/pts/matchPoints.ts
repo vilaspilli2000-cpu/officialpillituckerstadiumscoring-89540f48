@@ -7,7 +7,7 @@ import type { Match, Player } from "./types";
  */
 const TOP_ORDER = new Set(["sunny", "rithu", "sathvik", "himmu"]);
 const MIDDLE_ORDER = new Set(["atharv", "karthik", "deva", "mahesh"]);
-const LOWER_ORDER = new Set(["karunya", "madhu", "nishant", "vir"]);
+const LOWER_ORDER = new Set(["karunya", "madhu", "chitti", "vir"]);
 
 export type BatterTier = "top" | "middle" | "lower";
 
