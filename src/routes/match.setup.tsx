@@ -43,8 +43,8 @@ function Setup() {
   const bowlingIds = firstBattingTeam === "A" ? lineupB : lineupA;
 
   const valid =
-    teamAIds.length >= 3 &&
-    teamBIds.length >= 3 &&
+    teamAIds.length >= 2 &&
+    teamBIds.length >= 2 &&
     battingIds.includes(openingBatterId) &&
     bowlingIds.includes(openingBowlerId);
 
@@ -189,7 +189,7 @@ function Setup() {
         <Button variant="hero" size="xl" disabled={!valid} onClick={submit}>
           Start Match
         </Button>
-        {!valid && <p className="text-xs text-muted-foreground mt-2">Pick at least 3 players per team, plus opening batter and bowler.</p>}
+        {!valid && <p className="text-xs text-muted-foreground mt-2">Pick at least 2 players per team, plus opening batter and bowler.</p>}
       </div>
     </AppShell>
   );
@@ -219,7 +219,7 @@ function TeamCard({
     <div className="card-gold rounded-xl p-4">
       <Label className="text-xs uppercase tracking-widest text-primary/80">{label} Name</Label>
       <Input value={name} onChange={(e) => onName(e.target.value)} className="mt-1 mb-3" />
-      <div className="text-xs text-muted-foreground mb-2">Select 3–7 players</div>
+      <div className="text-xs text-muted-foreground mb-2">Select 2–7 players</div>
       <div className="grid grid-cols-2 gap-2">
         {allPlayers.map((p) => (
           <button

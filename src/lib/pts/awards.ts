@@ -175,8 +175,13 @@ function buildBowlingImpact(line: BowlLine, match: Match): number {
   return line.wickets * 18 + crucialBonus + econImpact + dotImpact + maidenImpact + bigHaul;
 }
 
-function buildFieldingImpact(catches: number, runOuts: number): number {
-  return catches * 12 + runOuts * 16;
+function buildFieldingImpact(
+  catches: number,
+  runOuts: number,
+  saves = 0,
+  drops = 0,
+): number {
+  return catches * 12 + runOuts * 16 + saves * 7 - drops * 10;
 }
 
 function winningContribution(playerTeam: Side, winner: Side | undefined, base: number): number {
@@ -208,18 +213,19 @@ export function computeAwards(match: Match, players: Player[]): MatchAward[] {
     e.bowlI = buildBowlingImpact(b, match);
     e.total += e.bowlI;
   }
-  for (const [id, n] of field.catches) {
-    const ro = field.runOuts.get(id) ?? 0;
+  const fieldIds = new Set<string>([
+    ...field.catches.keys(), ...field.runOuts.keys(),
+    ...field.saves.keys(), ...field.drops.keys(),
+  ]);
+  for (const id of fieldIds) {
     const team = field.team.get(id) ?? (bat.get(id)?.team ?? bowl.get(id)?.team ?? "A");
     const e = ensure(id, team);
-    e.fldI = buildFieldingImpact(n, ro);
-    e.total += e.fldI;
-  }
-  for (const [id, ro] of field.runOuts) {
-    if (field.catches.has(id)) continue;
-    const team = field.team.get(id) ?? (bat.get(id)?.team ?? bowl.get(id)?.team ?? "A");
-    const e = ensure(id, team);
-    e.fldI = buildFieldingImpact(0, ro);
+    e.fldI = buildFieldingImpact(
+      field.catches.get(id) ?? 0,
+      field.runOuts.get(id) ?? 0,
+      field.saves.get(id) ?? 0,
+      field.drops.get(id) ?? 0,
+    );
     e.total += e.fldI;
   }
 
@@ -258,8 +264,13 @@ export function computeAwards(match: Match, players: Player[]): MatchAward[] {
   if (bestField) {
     const c = field.catches.get(bestField.id) ?? 0;
     const ro = field.runOuts.get(bestField.id) ?? 0;
+    const sv = field.saves.get(bestField.id) ?? 0;
     const team = field.team.get(bestField.id) ?? "A";
-    const bits = [c ? `${c} catch${c === 1 ? "" : "es"}` : null, ro ? `${ro} run-out${ro === 1 ? "" : "s"}` : null].filter(Boolean).join(" · ");
+    const bits = [
+      c ? `${c} catch${c === 1 ? "" : "es"}` : null,
+      ro ? `${ro} run-out${ro === 1 ? "" : "s"}` : null,
+      sv ? `${sv} boundary save${sv === 1 ? "" : "s"}` : null,
+    ].filter(Boolean).join(" · ");
     awards.push({
       type: "fielder", playerId: bestField.id, team,
       headline: `${nameOf(bestField.id, players)} — ${bits || "Sharp in the field"}`,
