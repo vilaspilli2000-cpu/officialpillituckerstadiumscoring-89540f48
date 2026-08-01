@@ -248,6 +248,38 @@ function Live() {
         onPress={press}
       />
 
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <button
+          disabled={scoringBlocked}
+          onClick={() => setFieldingPick("boundary-save")}
+          className="rounded-2xl border border-emerald-600/50 bg-emerald-600/10 px-3 py-3 text-center text-emerald-400 transition active:scale-[0.97] disabled:opacity-40"
+        >
+          <div className="text-sm font-black leading-none">SAVE</div>
+          <div className="mt-1 text-[10px] uppercase tracking-[0.15em] opacity-80">Boundary Save</div>
+        </button>
+        <button
+          disabled={scoringBlocked}
+          onClick={() => setFieldingPick("catch-drop")}
+          className="rounded-2xl border border-orange-600/50 bg-orange-600/10 px-3 py-3 text-center text-orange-400 transition active:scale-[0.97] disabled:opacity-40"
+        >
+          <div className="text-sm font-black leading-none">DROP</div>
+          <div className="mt-1 text-[10px] uppercase tracking-[0.15em] opacity-80">Catch Drop</div>
+        </button>
+      </div>
+
+      {canDeclare(current) && (
+        <Button
+          variant="score"
+          className="mt-2 w-full"
+          onClick={() => {
+            declareInnings();
+            toast.success(`${battingTeam.name} declared at ${innings.runs}/${innings.wickets}`);
+          }}
+        >
+          Declare Innings
+        </Button>
+      )}
+
       <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-center text-sm text-primary">
         {situation}
       </div>
@@ -264,17 +296,33 @@ function Live() {
 
       <PlayerSelectModal
         open={needNextBatter}
-        title="Select next batter"
+        title={innings.legalBalls === 0 && innings.batters.length === 0 ? "Select opening batter" : "Select next batter"}
         options={batterOptions}
         onPick={setNextBatter}
       />
       <PlayerSelectModal
         open={needNextBowler}
-        title="Select next bowler"
+        title={innings.legalBalls === 0 ? "Select opening bowler" : "Select next bowler"}
         options={bowlerOptions}
         onPick={setNextBowler}
         lockReason={(id) => (id === innings.lastOverBowlerId ? "bowled last over" : undefined)}
         excludeIds={innings.lastOverBowlerId ? [innings.lastOverBowlerId] : []}
+      />
+      <PlayerSelectModal
+        open={!!fieldingPick}
+        title={fieldingPick === "catch-drop" ? "Who dropped the catch?" : "Who saved the boundary?"}
+        options={fielderOptions}
+        onClose={() => setFieldingPick(false)}
+        onPick={(id) => {
+          const kind = fieldingPick as FieldingEventKind;
+          setFieldingPick(false);
+          addFieldingEvent(kind, id);
+          toast.success(
+            kind === "catch-drop"
+              ? `Dropped catch — ${playerName(players, id)}`
+              : `Boundary saved — ${playerName(players, id)}`,
+          );
+        }}
       />
       <NoBallRunsModal
         open={pendingNoBall}
