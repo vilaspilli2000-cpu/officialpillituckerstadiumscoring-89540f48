@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
   Achievement, AwardFeedEntry, BallEventType, FormatId, Match, MilestoneEntry,
-  Player, RecordEntry, Team,
+  Player, RecordEntry, Team, FieldingEventKind,
 } from "./types";
 import { SEED_PLAYERS, OFFICIAL_AWARD_SPLITS } from "./seed";
 import { applyEvent, type ApplyOptions } from "./engine";
@@ -52,6 +52,8 @@ interface State {
   undo: () => void;
   setNextBatter: (id: string) => void;
   setNextBowler: (id: string) => void;
+  declareInnings: () => void;
+  addFieldingEvent: (kind: FieldingEventKind, playerId: string) => void;
   completeMatch: () => void;
   resetAll: () => void;
   addPlayer: (name: string, role?: Player["role"]) => void;
@@ -190,6 +192,41 @@ export const usePtsStore = create<State>()(
         const innings = m.innings[m.currentInnings];
         innings.currentBowlerId = id;
         set({ current: m });
+      },
+
+      declareInnings: () => {
+        const { current, players, undoStack } = get();
+        if (!current || current.result) return;
+        const snapshot = structuredClone(current);
+        let m = structuredClone(current);
+        const inn = m.innings[m.currentInnings];
+        if (!inn || inn.closed) return;
+        inn.closed = true;
+        inn.declared = true;
+        inn.closeReason = "declared";
+        inn.currentBatterId = undefined;
+        inn.currentBowlerId = undefined;
+        m = advanceInnings(m, { A: m.teamA, B: m.teamB }, m.followOnMargin ?? 200);
+        const result = detectResult(m);
+        if (result) {
+          m.result = result;
+          m.completedAt = Date.now();
+          m.awards = computeAwards(m, players);
+          m.story = buildStory(m, players);
+        }
+        set({ current: m, undoStack: [...undoStack, snapshot].slice(-50) });
+      },
+
+      addFieldingEvent: (kind, playerId) => {
+        const { current, undoStack } = get();
+        if (!current || current.result) return;
+        const snapshot = structuredClone(current);
+        const m = structuredClone(current);
+        m.fieldingEvents = [
+          ...(m.fieldingEvents ?? []),
+          { id: uid(), ts: Date.now(), inningsIndex: m.currentInnings, playerId, kind },
+        ];
+        set({ current: m, undoStack: [...undoStack, snapshot].slice(-50) });
       },
 
       completeMatch: () => {
