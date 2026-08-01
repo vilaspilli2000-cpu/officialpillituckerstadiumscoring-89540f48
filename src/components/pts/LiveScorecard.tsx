@@ -176,6 +176,21 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
         </table>
       </div>
 
+      {fieldingRows.length > 0 && (
+        <div className="card-gold rounded-xl p-3 text-xs">
+          <div className="text-[10px] uppercase tracking-widest text-primary/80 mb-1">Fielding</div>
+          <div className="flex flex-wrap gap-2 tabular-nums">
+            {fieldingRows.map(([id, r]) => (
+              <span key={id} className="rounded-md border border-border/60 px-2 py-1">
+                {playerName(players, id)}
+                {r.saves ? <span className="text-emerald-500"> · {r.saves} saved</span> : null}
+                {r.drops ? <span className="text-orange-400"> · {r.drops} dropped</span> : null}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {fow.length > 0 && (
         <div className="card-gold rounded-xl p-3 text-xs">
           <div className="text-[10px] uppercase tracking-widest text-primary/80 mb-1">Fall of Wickets</div>
