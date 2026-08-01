@@ -56,7 +56,6 @@ export function detectResult(match: Match):
   | undefined {
   const inns = match.innings;
   const last = inns[inns.length - 1];
-  const allClosed = inns.length === totalInningsFor(match.format) && inns.every((i) => i.closed);
 
   // Format A: chasing innings
   if (match.format === "A") {
@@ -229,7 +228,25 @@ export function chaseStatus(match: Match): string {
     const ballsLeft = innings.oversCap - innings.legalBalls;
     return `Need ${need} runs in ${ballsLeft} balls`;
   }
+  if (match.format === "C") {
+    const squad = innings.battingTeam === "A" ? match.teamA : match.teamB;
+    const wktsLeft = squad.playerIds.length - innings.wickets;
+    return `Need ${need} runs · ${wktsLeft} wicket${wktsLeft === 1 ? "" : "s"} in hand`;
+  }
   return `Need ${need} runs to win`;
+}
+
+/** Label for an innings total, e.g. "325/6 d". */
+export function inningsTotalLabel(innings: Innings): string {
+  return `${innings.runs}/${innings.wickets}${innings.declared ? " d" : ""}`;
+}
+
+/** Can the current innings be declared? Test format only, while live. */
+export function canDeclare(match: Match): boolean {
+  if (match.format !== "C") return false;
+  const inn = match.innings[match.currentInnings];
+  if (!inn || inn.closed || match.result) return false;
+  return inn.legalBalls > 0;
 }
 
 export function leadTrailStatus(match: Match): string {
