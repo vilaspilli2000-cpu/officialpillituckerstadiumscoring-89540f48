@@ -72,6 +72,18 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
   const ps = partnerships(innings);
   const fow = fallOfWickets(innings, players);
   const hp = highestPartnership(innings);
+  const inningsIndex = match.innings.indexOf(innings);
+  const fieldingRows = (() => {
+    const map = new Map<string, { saves: number; drops: number }>();
+    for (const fe of match.fieldingEvents ?? []) {
+      if (fe.inningsIndex !== inningsIndex) continue;
+      const row = map.get(fe.playerId) ?? { saves: 0, drops: 0 };
+      if (fe.kind === "catch-drop") row.drops += 1;
+      else row.saves += 1;
+      map.set(fe.playerId, row);
+    }
+    return [...map.entries()];
+  })();
   return (
     <section className="space-y-3">
       <div className="flex items-baseline justify-between">
