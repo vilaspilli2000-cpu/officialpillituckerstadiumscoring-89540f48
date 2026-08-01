@@ -5,7 +5,7 @@ import { AppShell } from "@/components/pts/AppShell";
 import { Button } from "@/components/ui/button";
 import { usePtsStore, playerName } from "@/lib/pts/store";
 import { oversString } from "@/lib/pts/engine";
-import { chaseStatus, leadTrailStatus } from "@/lib/pts/formats";
+import { chaseStatus, leadTrailStatus, canDeclare } from "@/lib/pts/formats";
 import { ProbabilityBar } from "@/components/pts/ProbabilityBar";
 import { PlayerSelectModal } from "@/components/pts/PlayerSelectModal";
 import { NoBallRunsModal } from "@/components/pts/NoBallRunsModal";
@@ -15,7 +15,7 @@ import { MatchAnalytics } from "@/components/pts/MatchAnalytics";
 import { CommentaryFeed } from "@/components/pts/CommentaryFeed";
 import { RecordAlerts } from "@/components/pts/RecordAlerts";
 import { PlayerRivalries } from "@/components/pts/PlayerRivalries";
-import type { BallEvent, BallEventType, DismissalType } from "@/lib/pts/types";
+import type { BallEvent, BallEventType, DismissalType, FieldingEventKind } from "@/lib/pts/types";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/match/live")({
@@ -31,10 +31,13 @@ function Live() {
   const undo = usePtsStore((s) => s.undo);
   const setNextBatter = usePtsStore((s) => s.setNextBatter);
   const setNextBowler = usePtsStore((s) => s.setNextBowler);
+  const declareInnings = usePtsStore((s) => s.declareInnings);
+  const addFieldingEvent = usePtsStore((s) => s.addFieldingEvent);
   const navigate = useNavigate();
 
   const [pendingNoBall, setPendingNoBall] = useState(false);
   const [wicketOpen, setWicketOpen] = useState<false | { preselect?: DismissalType }>(false);
+  const [fieldingPick, setFieldingPick] = useState<false | FieldingEventKind>(false);
   const [tab, setTab] = useState<"scoring" | "scorecard" | "analytics">("scoring");
 
   useEffect(() => {
@@ -173,6 +176,9 @@ function Live() {
         <div className="mt-2 flex items-baseline gap-1 tabular-nums">
           <span className="text-6xl font-black text-gradient-gold leading-none">{innings.runs}</span>
           <span className="text-2xl text-muted-foreground">/ {innings.wickets}</span>
+          {innings.declared && (
+            <span className="ml-2 text-sm font-bold uppercase tracking-widest text-primary">Declared</span>
+          )}
         </div>
         <div className="mt-4 grid grid-cols-4 gap-2 text-xs">
           <Meta label="OVERS" value={oversString(innings.legalBalls)} />
