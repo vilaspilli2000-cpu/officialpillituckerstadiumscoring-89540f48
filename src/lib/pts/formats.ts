@@ -19,6 +19,8 @@ export function newInnings(
   bowling: "A" | "B",
   lineup: string[],
   format: FormatId,
+  /** Format C requires manual opening batter selection every innings. */
+  autoOpen = true,
 ): Innings {
   return {
     battingTeam: batting,
@@ -31,10 +33,21 @@ export function newInnings(
     bowlers: [],
     lineup,
     nextBatterIndex: 1,
-    currentBatterId: lineup[0],
+    currentBatterId: autoOpen ? lineup[0] : undefined,
     events: [],
     closed: false,
   };
+}
+
+/** Aggregate runs scored by each side across every innings so far. */
+export function teamAggregates(match: Match) {
+  const A = match.innings.filter((i) => i.battingTeam === "A").reduce((s, i) => s + i.runs, 0);
+  const B = match.innings.filter((i) => i.battingTeam === "B").reduce((s, i) => s + i.runs, 0);
+  return { A, B };
+}
+
+function teamNameOf(match: Match, side: "A" | "B") {
+  return side === "A" ? match.teamA.name : match.teamB.name;
 }
 
 /** Detect & describe the result. Returns undefined while still live. */
