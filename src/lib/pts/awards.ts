@@ -94,6 +94,8 @@ function aggregateBowling(match: Match) {
 function aggregateFielding(match: Match) {
   const catches = new Map<string, number>();
   const runOuts = new Map<string, number>();
+  const drops = new Map<string, number>();
+  const saves = new Map<string, number>();
   const team = new Map<string, Side>();
   for (const inn of match.innings) {
     for (const ev of inn.events) {
@@ -107,7 +109,13 @@ function aggregateFielding(match: Match) {
       }
     }
   }
-  return { catches, runOuts, team };
+  for (const fe of match.fieldingEvents ?? []) {
+    const inn = match.innings[fe.inningsIndex];
+    if (inn) team.set(fe.playerId, inn.bowlingTeam);
+    if (fe.kind === "catch-drop") drops.set(fe.playerId, (drops.get(fe.playerId) ?? 0) + 1);
+    else saves.set(fe.playerId, (saves.get(fe.playerId) ?? 0) + 1);
+  }
+  return { catches, runOuts, drops, saves, team };
 }
 
 /** Team totals & match situation context. */
