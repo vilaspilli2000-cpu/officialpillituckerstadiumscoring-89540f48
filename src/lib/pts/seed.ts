@@ -147,7 +147,7 @@ const ROWS: SeedRow[] = [
     ratings: { overall: 50, batting: 50, bowling: 50, fielding: 50, pressure: 50, matchWinning: 50, wicketTaking: 50, sixHitting: 50, deathBat: 50, deathBowl: 50, recentForm: 50 },
   },
   {
-    id: "nishant", name: "Nishant", role: "—",
+    id: "chitti", name: "Chitti", role: "—",
     notes: "New PTS entrant. Career yet to begin.",
     matches: 0, innings: 0, runs: 0, balls: 0, highest: 0,
     fifties: 0, hundreds: 0, hundred50s: 0, doubleHundreds: 0,
