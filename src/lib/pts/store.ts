@@ -299,7 +299,6 @@ export const usePtsStore = create<State>()(
           if (!pl) continue;
           if (fe.kind === "catch-drop") pl.career.catchDrops = (pl.career.catchDrops ?? 0) + 1;
           else pl.career.boundarySaves = (pl.career.boundarySaves ?? 0) + 1;
-          counted.add(fe.playerId);
         }
         // Per-award-type counters + total.
         for (const aw of current.awards ?? []) {
@@ -518,10 +517,10 @@ export const usePtsStore = create<State>()(
     }),
     {
       name: "pts-scorer-v1",
-      version: 7,
+      version: 8,
       migrate: (persisted: unknown) => {
         const s = (persisted ?? {}) as {
-          players?: Player[]; milestoneFeed?: MilestoneEntry[];
+          players?: Player[]; matches?: Match[]; milestoneFeed?: MilestoneEntry[];
           recordFeed?: RecordEntry[]; awardFeed?: AwardFeedEntry[];
           awardsSeededV6?: boolean; historicRankingFrozenV7?: boolean;
         };
@@ -553,21 +552,24 @@ export const usePtsStore = create<State>()(
               innings: 0, ducks: 0, hundred50s: 0, doubleHundreds: 0,
               maidens: 0, dots: 0, wides: 0, noBalls: 0,
               bestBowlingWkts: 0, bestBowlingRuns: 0,
+              catchDrops: 0, boundarySaves: 0,
               pomAwards: 0, batsmanAwards: 0, bowlerAwards: 0,
               fielderAwards: 0, fighterAwards: 0, worstAwards: 0,
               ...p.career,
             },
           });
         }
-        // Ensure every official seed player exists (adds Himmu/Madhu/Nishant).
-        // Never overwrite manually-edited player careers.
+        // Ensure every official seed player exists (adds Himmu/Madhu/Chitti).
+        // Never overwrite manually-edited careers, and never overwrite once
+        // real match history exists.
+        const hasHistory = (s.matches?.length ?? 0) > 0;
         for (const seed of SEED_PLAYERS) {
           const cur = byId.get(seed.id);
           if (!cur) {
             byId.set(seed.id, seed);
             continue;
           }
-          if (cur.manualOverride) continue;
+          if (cur.manualOverride || hasHistory) continue;
           byId.set(seed.id, {
             ...cur,
             role: seed.role,
