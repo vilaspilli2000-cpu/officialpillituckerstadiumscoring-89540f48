@@ -5,7 +5,7 @@ import { AppShell } from "@/components/pts/AppShell";
 import { Button } from "@/components/ui/button";
 import { usePtsStore, playerName } from "@/lib/pts/store";
 import { oversString } from "@/lib/pts/engine";
-import { chaseStatus, leadTrailStatus } from "@/lib/pts/formats";
+import { chaseStatus, leadTrailStatus, canDeclare } from "@/lib/pts/formats";
 import { ProbabilityBar } from "@/components/pts/ProbabilityBar";
 import { PlayerSelectModal } from "@/components/pts/PlayerSelectModal";
 import { NoBallRunsModal } from "@/components/pts/NoBallRunsModal";
@@ -15,7 +15,7 @@ import { MatchAnalytics } from "@/components/pts/MatchAnalytics";
 import { CommentaryFeed } from "@/components/pts/CommentaryFeed";
 import { RecordAlerts } from "@/components/pts/RecordAlerts";
 import { PlayerRivalries } from "@/components/pts/PlayerRivalries";
-import type { BallEvent, BallEventType, DismissalType } from "@/lib/pts/types";
+import type { BallEvent, BallEventType, DismissalType, FieldingEventKind } from "@/lib/pts/types";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/match/live")({
@@ -31,10 +31,13 @@ function Live() {
   const undo = usePtsStore((s) => s.undo);
   const setNextBatter = usePtsStore((s) => s.setNextBatter);
   const setNextBowler = usePtsStore((s) => s.setNextBowler);
+  const declareInnings = usePtsStore((s) => s.declareInnings);
+  const addFieldingEvent = usePtsStore((s) => s.addFieldingEvent);
   const navigate = useNavigate();
 
   const [pendingNoBall, setPendingNoBall] = useState(false);
   const [wicketOpen, setWicketOpen] = useState<false | { preselect?: DismissalType }>(false);
+  const [fieldingPick, setFieldingPick] = useState<false | FieldingEventKind>(false);
   const [tab, setTab] = useState<"scoring" | "scorecard" | "analytics">("scoring");
 
   useEffect(() => {
@@ -173,6 +176,9 @@ function Live() {
         <div className="mt-2 flex items-baseline gap-1 tabular-nums">
           <span className="text-6xl font-black text-gradient-gold leading-none">{innings.runs}</span>
           <span className="text-2xl text-muted-foreground">/ {innings.wickets}</span>
+          {innings.declared && (
+            <span className="ml-2 text-sm font-bold uppercase tracking-widest text-primary">Declared</span>
+          )}
         </div>
         <div className="mt-4 grid grid-cols-4 gap-2 text-xs">
           <Meta label="OVERS" value={oversString(innings.legalBalls)} />
@@ -242,6 +248,38 @@ function Live() {
         onPress={press}
       />
 
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <button
+          disabled={scoringBlocked}
+          onClick={() => setFieldingPick("boundary-save")}
+          className="rounded-2xl border border-emerald-600/50 bg-emerald-600/10 px-3 py-3 text-center text-emerald-400 transition active:scale-[0.97] disabled:opacity-40"
+        >
+          <div className="text-sm font-black leading-none">SAVE</div>
+          <div className="mt-1 text-[10px] uppercase tracking-[0.15em] opacity-80">Boundary Save</div>
+        </button>
+        <button
+          disabled={scoringBlocked}
+          onClick={() => setFieldingPick("catch-drop")}
+          className="rounded-2xl border border-orange-600/50 bg-orange-600/10 px-3 py-3 text-center text-orange-400 transition active:scale-[0.97] disabled:opacity-40"
+        >
+          <div className="text-sm font-black leading-none">DROP</div>
+          <div className="mt-1 text-[10px] uppercase tracking-[0.15em] opacity-80">Catch Drop</div>
+        </button>
+      </div>
+
+      {canDeclare(current) && (
+        <Button
+          variant="score"
+          className="mt-2 w-full"
+          onClick={() => {
+            declareInnings();
+            toast.success(`${battingTeam.name} declared at ${innings.runs}/${innings.wickets}`);
+          }}
+        >
+          Declare Innings
+        </Button>
+      )}
+
       <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-center text-sm text-primary">
         {situation}
       </div>
@@ -258,17 +296,33 @@ function Live() {
 
       <PlayerSelectModal
         open={needNextBatter}
-        title="Select next batter"
+        title={innings.legalBalls === 0 && innings.batters.length === 0 ? "Select opening batter" : "Select next batter"}
         options={batterOptions}
         onPick={setNextBatter}
       />
       <PlayerSelectModal
         open={needNextBowler}
-        title="Select next bowler"
+        title={innings.legalBalls === 0 ? "Select opening bowler" : "Select next bowler"}
         options={bowlerOptions}
         onPick={setNextBowler}
         lockReason={(id) => (id === innings.lastOverBowlerId ? "bowled last over" : undefined)}
         excludeIds={innings.lastOverBowlerId ? [innings.lastOverBowlerId] : []}
+      />
+      <PlayerSelectModal
+        open={!!fieldingPick}
+        title={fieldingPick === "catch-drop" ? "Who dropped the catch?" : "Who saved the boundary?"}
+        options={fielderOptions}
+        onClose={() => setFieldingPick(false)}
+        onPick={(id) => {
+          const kind = fieldingPick as FieldingEventKind;
+          setFieldingPick(false);
+          addFieldingEvent(kind, id);
+          toast.success(
+            kind === "catch-drop"
+              ? `Dropped catch — ${playerName(players, id)}`
+              : `Boundary saved — ${playerName(players, id)}`,
+          );
+        }}
       />
       <NoBallRunsModal
         open={pendingNoBall}

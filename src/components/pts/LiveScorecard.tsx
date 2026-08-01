@@ -72,11 +72,25 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
   const ps = partnerships(innings);
   const fow = fallOfWickets(innings, players);
   const hp = highestPartnership(innings);
+  const inningsIndex = match.innings.indexOf(innings);
+  const fieldingRows = (() => {
+    const map = new Map<string, { saves: number; drops: number }>();
+    for (const fe of match.fieldingEvents ?? []) {
+      if (fe.inningsIndex !== inningsIndex) continue;
+      const row = map.get(fe.playerId) ?? { saves: 0, drops: 0 };
+      if (fe.kind === "catch-drop") row.drops += 1;
+      else row.saves += 1;
+      map.set(fe.playerId, row);
+    }
+    return [...map.entries()];
+  })();
   return (
     <section className="space-y-3">
       <div className="flex items-baseline justify-between">
         <h3 className="text-sm uppercase tracking-widest text-primary/80">
           {battingName} — {innings.runs}/{innings.wickets}
+          {innings.declared && <span className="ml-1 text-primary">d</span>}
+          {innings.followOnApplied && <span className="ml-1 normal-case text-[10px] text-muted-foreground">(f/o)</span>}
         </h3>
         <div className="text-xs text-muted-foreground tabular-nums">
           {oversString(innings.legalBalls)} ov · CRR {fmt(currentRunRate(innings), 2)}
@@ -161,6 +175,21 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
           </tbody>
         </table>
       </div>
+
+      {fieldingRows.length > 0 && (
+        <div className="card-gold rounded-xl p-3 text-xs">
+          <div className="text-[10px] uppercase tracking-widest text-primary/80 mb-1">Fielding</div>
+          <div className="flex flex-wrap gap-2 tabular-nums">
+            {fieldingRows.map(([id, r]) => (
+              <span key={id} className="rounded-md border border-border/60 px-2 py-1">
+                {playerName(players, id)}
+                {r.saves ? <span className="text-emerald-500"> · {r.saves} saved</span> : null}
+                {r.drops ? <span className="text-orange-400"> · {r.drops} dropped</span> : null}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {fow.length > 0 && (
         <div className="card-gold rounded-xl p-3 text-xs">

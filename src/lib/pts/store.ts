@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
   Achievement, AwardFeedEntry, BallEventType, FormatId, Match, MilestoneEntry,
-  Player, RecordEntry, Team,
+  Player, RecordEntry, Team, FieldingEventKind,
 } from "./types";
 import { SEED_PLAYERS, OFFICIAL_AWARD_SPLITS } from "./seed";
 import { applyEvent, type ApplyOptions } from "./engine";
@@ -52,6 +52,8 @@ interface State {
   undo: () => void;
   setNextBatter: (id: string) => void;
   setNextBowler: (id: string) => void;
+  declareInnings: () => void;
+  addFieldingEvent: (kind: FieldingEventKind, playerId: string) => void;
   completeMatch: () => void;
   resetAll: () => void;
   addPlayer: (name: string, role?: Player["role"]) => void;
@@ -192,6 +194,41 @@ export const usePtsStore = create<State>()(
         set({ current: m });
       },
 
+      declareInnings: () => {
+        const { current, players, undoStack } = get();
+        if (!current || current.result) return;
+        const snapshot = structuredClone(current);
+        let m = structuredClone(current);
+        const inn = m.innings[m.currentInnings];
+        if (!inn || inn.closed) return;
+        inn.closed = true;
+        inn.declared = true;
+        inn.closeReason = "declared";
+        inn.currentBatterId = undefined;
+        inn.currentBowlerId = undefined;
+        m = advanceInnings(m, { A: m.teamA, B: m.teamB }, m.followOnMargin ?? 200);
+        const result = detectResult(m);
+        if (result) {
+          m.result = result;
+          m.completedAt = Date.now();
+          m.awards = computeAwards(m, players);
+          m.story = buildStory(m, players);
+        }
+        set({ current: m, undoStack: [...undoStack, snapshot].slice(-50) });
+      },
+
+      addFieldingEvent: (kind, playerId) => {
+        const { current, undoStack } = get();
+        if (!current || current.result) return;
+        const snapshot = structuredClone(current);
+        const m = structuredClone(current);
+        m.fieldingEvents = [
+          ...(m.fieldingEvents ?? []),
+          { id: uid(), ts: Date.now(), inningsIndex: m.currentInnings, playerId, kind },
+        ];
+        set({ current: m, undoStack: [...undoStack, snapshot].slice(-50) });
+      },
+
       completeMatch: () => {
         const { current, matches, players, milestoneFeed, recordFeed, awardFeed } = get();
         if (!current) return;
@@ -255,6 +292,13 @@ export const usePtsStore = create<State>()(
         for (const id of counted) {
           const pl = updated.find((x) => x.id === id);
           if (pl) pl.career.matches += 1;
+        }
+        // Fielding extras: dropped catches & boundary saves.
+        for (const fe of current.fieldingEvents ?? []) {
+          const pl = updated.find((x) => x.id === fe.playerId);
+          if (!pl) continue;
+          if (fe.kind === "catch-drop") pl.career.catchDrops = (pl.career.catchDrops ?? 0) + 1;
+          else pl.career.boundarySaves = (pl.career.boundarySaves ?? 0) + 1;
         }
         // Per-award-type counters + total.
         for (const aw of current.awards ?? []) {
@@ -473,10 +517,10 @@ export const usePtsStore = create<State>()(
     }),
     {
       name: "pts-scorer-v1",
-      version: 7,
+      version: 8,
       migrate: (persisted: unknown) => {
         const s = (persisted ?? {}) as {
-          players?: Player[]; milestoneFeed?: MilestoneEntry[];
+          players?: Player[]; matches?: Match[]; milestoneFeed?: MilestoneEntry[];
           recordFeed?: RecordEntry[]; awardFeed?: AwardFeedEntry[];
           awardsSeededV6?: boolean; historicRankingFrozenV7?: boolean;
         };
@@ -508,21 +552,24 @@ export const usePtsStore = create<State>()(
               innings: 0, ducks: 0, hundred50s: 0, doubleHundreds: 0,
               maidens: 0, dots: 0, wides: 0, noBalls: 0,
               bestBowlingWkts: 0, bestBowlingRuns: 0,
+              catchDrops: 0, boundarySaves: 0,
               pomAwards: 0, batsmanAwards: 0, bowlerAwards: 0,
               fielderAwards: 0, fighterAwards: 0, worstAwards: 0,
               ...p.career,
             },
           });
         }
-        // Ensure every official seed player exists (adds Himmu/Madhu/Nishant).
-        // Never overwrite manually-edited player careers.
+        // Ensure every official seed player exists (adds Himmu/Madhu/Chitti).
+        // Never overwrite manually-edited careers, and never overwrite once
+        // real match history exists.
+        const hasHistory = (s.matches?.length ?? 0) > 0;
         for (const seed of SEED_PLAYERS) {
           const cur = byId.get(seed.id);
           if (!cur) {
             byId.set(seed.id, seed);
             continue;
           }
-          if (cur.manualOverride) continue;
+          if (cur.manualOverride || hasHistory) continue;
           byId.set(seed.id, {
             ...cur,
             role: seed.role,

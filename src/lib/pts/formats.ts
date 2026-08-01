@@ -19,6 +19,8 @@ export function newInnings(
   bowling: "A" | "B",
   lineup: string[],
   format: FormatId,
+  /** Format C requires manual opening batter selection every innings. */
+  autoOpen = true,
 ): Innings {
   return {
     battingTeam: batting,
@@ -31,10 +33,21 @@ export function newInnings(
     bowlers: [],
     lineup,
     nextBatterIndex: 1,
-    currentBatterId: lineup[0],
+    currentBatterId: autoOpen ? lineup[0] : undefined,
     events: [],
     closed: false,
   };
+}
+
+/** Aggregate runs scored by each side across every innings so far. */
+export function teamAggregates(match: Match) {
+  const A = match.innings.filter((i) => i.battingTeam === "A").reduce((s, i) => s + i.runs, 0);
+  const B = match.innings.filter((i) => i.battingTeam === "B").reduce((s, i) => s + i.runs, 0);
+  return { A, B };
+}
+
+function teamNameOf(match: Match, side: "A" | "B") {
+  return side === "A" ? match.teamA.name : match.teamB.name;
 }
 
 /** Detect & describe the result. Returns undefined while still live. */
@@ -43,7 +56,6 @@ export function detectResult(match: Match):
   | undefined {
   const inns = match.innings;
   const last = inns[inns.length - 1];
-  const allClosed = inns.length === totalInningsFor(match.format) && inns.every((i) => i.closed);
 
   // Format A: chasing innings
   if (match.format === "A") {
@@ -84,33 +96,45 @@ export function detectResult(match: Match):
     return { winner: winnerSide, summary: `${team} won by ${diff} runs` };
   }
 
-  // Format C: test, 4 innings, with follow-on possible (collapses to 3 innings then)
+  // Format C: classic Test — 4 innings, declarations, follow-on, innings victory.
   if (match.format === "C") {
-    if (!allClosed && inns.length < 3) return undefined;
-    const teamARuns = inns.filter((i) => i.battingTeam === "A").reduce((s, i) => s + i.runs, 0);
-    const teamBRuns = inns.filter((i) => i.battingTeam === "B").reduce((s, i) => s + i.runs, 0);
-    // innings victory check after 3 innings if follow-on enforced
-    if (inns.length === 3 && inns[2].closed && inns[2].followOnApplied) {
-      // Team B has now batted twice; compare
-      if (teamARuns > teamBRuns) {
+    const agg = teamAggregates(match);
+
+    // After the 3rd innings: the side that has batted twice may still trail,
+    // which ends the match immediately as an innings victory.
+    if (inns.length === 3) {
+      const third = inns[2];
+      if (!third.closed) return undefined;
+      const twice = third.battingTeam;
+      const other: "A" | "B" = twice === "A" ? "B" : "A";
+      const twiceRuns = twice === "A" ? agg.A : agg.B;
+      const otherRuns = other === "A" ? agg.A : agg.B;
+      if (twiceRuns < otherRuns) {
         return {
-          winner: "A",
-          summary: `${match.teamA.name} won by an innings and ${teamARuns - teamBRuns} runs`,
+          winner: other,
+          summary: `${teamNameOf(match, other)} won by an innings and ${otherRuns - twiceRuns} runs`,
         };
       }
+      return undefined; // 4th innings to come
     }
-    if (!allClosed) return undefined;
+
+    if (inns.length < 4 || !last.closed) return undefined;
+
+    // 4th innings chase completed successfully.
     if (last.closeReason === "target") {
-      const team = last.battingTeam === "A" ? match.teamA.name : match.teamB.name;
+      const team = teamNameOf(match, last.battingTeam);
       const wktsLeft =
         (last.battingTeam === "A" ? match.teamA : match.teamB).playerIds.length - last.wickets;
       return { winner: last.battingTeam, summary: `${team} won by ${wktsLeft} wickets` };
     }
-    if (teamARuns === teamBRuns) return { winner: "tie", summary: "Match tied" };
-    const diff = Math.abs(teamARuns - teamBRuns);
-    const winnerSide: "A" | "B" = teamARuns > teamBRuns ? "A" : "B";
-    const team = winnerSide === "A" ? match.teamA.name : match.teamB.name;
-    return { winner: winnerSide, summary: `${team} won by ${diff} runs` };
+    // Chasing side declared without reaching the target → drawn match.
+    if (last.declared || last.closeReason === "declared") {
+      return { winner: "draw", summary: "Match drawn" };
+    }
+    if (agg.A === agg.B) return { winner: "tie", summary: "Match tied" };
+    const winnerSide: "A" | "B" = agg.A > agg.B ? "A" : "B";
+    const diff = Math.abs(agg.A - agg.B);
+    return { winner: winnerSide, summary: `${teamNameOf(match, winnerSide)} won by ${diff} runs` };
   }
   return undefined;
 }
@@ -150,67 +174,45 @@ export function advanceInnings(
     return m;
   }
 
-  // Format C
+  // Format C — classic Test with declarations, follow-on and innings victories.
   if (m.format === "C") {
+    const open = (batting: "A" | "B", followOn = false) => {
+      const bowling: "A" | "B" = batting === "A" ? "B" : "A";
+      const team = batting === "A" ? teams.A : teams.B;
+      // Manual opening batter AND bowler selection every innings.
+      const next = newInnings(batting, bowling, [...team.playerIds], m.format, false);
+      next.currentBowlerId = undefined;
+      if (followOn) next.followOnApplied = true;
+      m.innings.push(next);
+      m.currentInnings = m.innings.length - 1;
+    };
+
     if (idx === 0) {
-      // Team B first innings
-      const battingSide = prev.bowlingTeam;
-      const bowlingSide = prev.battingTeam;
-      const team = battingSide === "A" ? teams.A : teams.B;
-      m.innings.push(newInnings(battingSide, bowlingSide, [...team.playerIds], m.format));
-      m.currentInnings = 1;
+      // 2nd innings: the other side bats.
+      open(prev.bowlingTeam);
     } else if (idx === 1) {
-      // After Team B 1st innings: check follow-on
-      const teamAfirst = m.innings[0].runs;
-      const teamBfirst = m.innings[1].runs;
-      const trail = teamAfirst - teamBfirst;
-      if (trail >= followOnMargin) {
-        // enforce follow-on: Team B bats again
-        const battingSide = prev.battingTeam; // Team B again
-        const bowlingSide = prev.bowlingTeam;
-        const team = battingSide === "A" ? teams.A : teams.B;
-        const next = newInnings(battingSide, bowlingSide, [...team.playerIds], m.format);
-        next.followOnApplied = true;
-        m.innings.push(next);
-        m.currentInnings = 2;
+      const firstSide = m.innings[0].battingTeam;
+      const secondSide = m.innings[1].battingTeam;
+      const lead = m.innings[0].runs - m.innings[1].runs;
+      if (lead >= followOnMargin) {
+        // Follow-on enforced: the trailing side bats again immediately.
+        open(secondSide, true);
       } else {
-        // Team A 2nd innings
-        const battingSide = prev.bowlingTeam; // Team A
-        const bowlingSide = prev.battingTeam;
-        const team = battingSide === "A" ? teams.A : teams.B;
-        m.innings.push(newInnings(battingSide, bowlingSide, [...team.playerIds], m.format));
-        m.currentInnings = 2;
+        open(firstSide);
       }
     } else if (idx === 2) {
-      // After 3rd innings, set up final innings + target
-      // target depends on who's batting next
-      const teamARuns = m.innings.filter((i) => i.battingTeam === "A").reduce((s, i) => s + i.runs, 0);
-      const teamBRuns = m.innings.filter((i) => i.battingTeam === "B").reduce((s, i) => s + i.runs, 0);
-      // The team that just batted is `prev.battingTeam`. Next batting is the opposite,
-      // unless follow-on was applied (then it's Team A's turn next).
-      let battingSide: "A" | "B";
-      if (prev.followOnApplied) {
-        // After follow-on, Team A bats only if they need to chase
-        // Check innings result: if Team B's combined > Team A's first, Team A bats
-        if (teamBRuns > teamARuns) {
-          battingSide = "A";
-        } else {
-          // Team A already leads — match ends by innings (no 4th innings)
-          return m;
-        }
-      } else {
-        battingSide = prev.bowlingTeam;
+      const agg = teamAggregates(m);
+      const twice = m.innings[2].battingTeam; // side that has now batted twice
+      const other: "A" | "B" = twice === "A" ? "B" : "A";
+      const twiceRuns = twice === "A" ? agg.A : agg.B;
+      const otherRuns = other === "A" ? agg.A : agg.B;
+      if (twiceRuns < otherRuns) {
+        // Innings victory — no 4th innings is played.
+        return m;
       }
-      const bowlingSide = battingSide === "A" ? "B" : "A";
-      const leadOfBattingSide =
-        battingSide === "A" ? teamARuns - teamBRuns : teamBRuns - teamARuns;
-      // target = opponent's aggregate + 1
-      m.target =
-        (battingSide === "A" ? teamBRuns : teamARuns) + 1;
-      const team = battingSide === "A" ? teams.A : teams.B;
-      m.innings.push(newInnings(battingSide, bowlingSide, [...team.playerIds], m.format));
-      m.currentInnings = 3;
-      void leadOfBattingSide;
+      // 4th innings: `other` chases what is left.
+      m.target = twiceRuns - otherRuns + 1;
+      open(other);
     }
     return m;
   }
@@ -226,7 +228,25 @@ export function chaseStatus(match: Match): string {
     const ballsLeft = innings.oversCap - innings.legalBalls;
     return `Need ${need} runs in ${ballsLeft} balls`;
   }
+  if (match.format === "C") {
+    const squad = innings.battingTeam === "A" ? match.teamA : match.teamB;
+    const wktsLeft = squad.playerIds.length - innings.wickets;
+    return `Need ${need} runs · ${wktsLeft} wicket${wktsLeft === 1 ? "" : "s"} in hand`;
+  }
   return `Need ${need} runs to win`;
+}
+
+/** Label for an innings total, e.g. "325/6 d". */
+export function inningsTotalLabel(innings: Innings): string {
+  return `${innings.runs}/${innings.wickets}${innings.declared ? " d" : ""}`;
+}
+
+/** Can the current innings be declared? Test format only, while live. */
+export function canDeclare(match: Match): boolean {
+  if (match.format !== "C") return false;
+  const inn = match.innings[match.currentInnings];
+  if (!inn || inn.closed || match.result) return false;
+  return inn.legalBalls > 0;
 }
 
 export function leadTrailStatus(match: Match): string {

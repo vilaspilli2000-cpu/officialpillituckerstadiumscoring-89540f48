@@ -161,6 +161,8 @@ function Profile() {
         <div className="grid grid-cols-3 gap-3">
           <Stat label="Catches" value={player.career.catches} />
           <Stat label="Run Outs" value={player.career.runOuts} />
+          <Stat label="Boundary Saves" value={player.career.boundarySaves ?? 0} />
+          <Stat label="Catch Drops" value={player.career.catchDrops ?? 0} />
           <Stat label="Stumpings" value={0} />
         </div>
       </Section>
