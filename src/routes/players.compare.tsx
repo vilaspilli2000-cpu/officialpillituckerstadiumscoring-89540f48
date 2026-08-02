@@ -3,7 +3,6 @@ import { useMemo, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { AppShell } from "@/components/pts/AppShell";
 import { usePtsStore } from "@/lib/pts/store";
-import { rankPlayers } from "@/lib/pts/rankings";
 import { batterVsBowler } from "@/lib/pts/rivalries";
 import {
   computeOvertakeScore,
@@ -36,8 +35,8 @@ function markBetter(rows: Row[]): Row[] {
 function Compare() {
   const players = usePtsStore((s) => s.players);
   const matches = usePtsStore((s) => s.matches);
-  const ranked = useMemo(() => rankPlayers(players), [players]);
   const overtakeRanked = useMemo(() => rankAllOvertake(players, matches), [players, matches]);
+  const ranked = overtakeRanked;
   const [aId, setAId] = useState<string>(players[0]?.id ?? "");
   const [bId, setBId] = useState<string>(players[1]?.id ?? "");
   const [mode, setMode] = useState<"compare" | "overtake">("compare");
@@ -110,7 +109,7 @@ function PlayerPicker({ label, value, onChange, players }: {
 
 function Comparison({ a, b, ranked, matches }: {
   a: Player; b: Player;
-  ranked: ReturnType<typeof rankPlayers>;
+  ranked: ReturnType<typeof rankAllOvertake>;
   matches: ReturnType<typeof usePtsStore.getState>["matches"];
 }) {
   const rankOf = (id: string, sel: (p: Player) => number) => {
