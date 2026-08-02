@@ -25,7 +25,8 @@ export type OvertakeCategoryKey =
   | "awards"
   | "boundaries"
   | "bowling"
-  | "matchPerf";
+  | "matchPerf"
+  | "historic";
 
 export interface OvertakeCategory {
   key: OvertakeCategoryKey;
@@ -52,6 +53,7 @@ const CATEGORY_LABELS: Record<OvertakeCategoryKey, string> = {
   boundaries: "Career Fours",
   bowling: "Career Wickets",
   matchPerf: "Match Performance",
+  historic: "Historic Contribution",
 };
 
 /** Collect a player's per-innings scores from completed match history, in
@@ -149,6 +151,12 @@ export function computeOvertakeScore(player: Player, matches: Match[]): Overtake
   const matchPerfPts = player.matchPoints ?? 0;
   const matchPerfDetail = `Accumulated across ${scores.length} innings`;
 
+  // 8. Historic contribution — legacy pre-tracking ranking points.
+  const historicPts = player.historicRankingPoints ?? 0;
+  const historicDetail = historicPts
+    ? `Legacy league record → ${historicPts} pts`
+    : "No legacy contribution";
+
   const categories: Record<OvertakeCategoryKey, OvertakeCategory> = {
     batting: { key: "batting", label: CATEGORY_LABELS.batting, points: battingPts, detail: battingDetail },
     bigInnings: { key: "bigInnings", label: CATEGORY_LABELS.bigInnings, points: bigPts, detail: bigDetail },
@@ -157,6 +165,7 @@ export function computeOvertakeScore(player: Player, matches: Match[]): Overtake
     boundaries: { key: "boundaries", label: CATEGORY_LABELS.boundaries, points: fourPts, detail: boundaryDetail },
     bowling: { key: "bowling", label: CATEGORY_LABELS.bowling, points: histWktPts, detail: bowlingDetail },
     matchPerf: { key: "matchPerf", label: CATEGORY_LABELS.matchPerf, points: matchPerfPts, detail: matchPerfDetail },
+    historic: { key: "historic", label: CATEGORY_LABELS.historic, points: historicPts, detail: historicDetail },
   };
 
   const total = Object.values(categories).reduce((a, b) => a + b.points, 0);
