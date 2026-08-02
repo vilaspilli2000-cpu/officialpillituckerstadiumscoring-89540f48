@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { usePtsStore } from "@/lib/pts/store";
 import { combinedCareer } from "@/lib/pts/seed";
 import { playerAwardCounts, careerImpactScore } from "@/lib/pts/insights";
-import { rankPlayers } from "@/lib/pts/rankings";
+import { rankAllOvertake } from "@/lib/pts/overtakeRanking";
 import { allMilestoneCards } from "@/lib/pts/milestones";
 
 export const Route = createFileRoute("/players/$id")({
@@ -57,7 +57,7 @@ function Profile() {
   );
   const cards = allMilestoneCards(player);
   const impact = careerImpactScore(player, matches);
-  const rankings = rankPlayers(players);
+  const rankings = rankAllOvertake(players, matches);
   const rankIdx = rankings.findIndex((r) => r.player.id === player.id);
   const rankLabel = rankIdx >= 0 ? `#${rankIdx + 1} of ${rankings.length}` : "—";
   const milestones = [
