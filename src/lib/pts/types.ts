@@ -74,6 +74,9 @@ export interface Player {
   historicWickets?: number;
   /** Accumulated Net Match Points from every future completed match. */
   matchPoints?: number;
+  /** Legacy pre-tracking ranking contribution that predates the points
+   *  engine (historic league performances not captured in career stats). */
+  historicRankingPoints?: number;
 }
 
 export type DismissalType =
@@ -225,6 +228,10 @@ export interface Match {
   pendingNoBall?: boolean; // awaiting runs-from-no-ball selection
   pendingCatchSelection?: { dismissalType: DismissalType }; // awaiting catcher select
   commentary?: CommentaryEntry[];
+  /** Permanent Points Breakdown snapshot, saved when the match is completed. */
+  pointsBreakdown?: import("./pointsBreakdown").PointsBreakdownEntry[];
+  /** Set when a side declared the win (WIN-D) and the opponent accepted. */
+  winDeclared?: { declaringTeam: "A" | "B"; ts: number };
 }
 
 export interface CommentaryEntry {

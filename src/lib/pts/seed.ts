@@ -32,6 +32,8 @@ type SeedRow = {
   catches: number;
   runOuts: number;
   awards: number;
+  /** Legacy ranking contribution from the pre-tracking era. */
+  historicRankingPoints?: number;
   ratings: NonNullable<Player["ratings"]>;
 };
 
@@ -78,6 +80,7 @@ const ROWS: SeedRow[] = [
     wickets: 132, bowlRuns: 2765, bowlBalls: 3894, maidens: 8, dots: 2158,
     wides: 26, noBalls: 5, bestBowlingWkts: 4, bestBowlingRuns: 15,
     catches: 109, runOuts: 18, awards: 143,
+    historicRankingPoints: 393,
     ratings: { overall: 93, batting: 95, bowling: 86, fielding: 88, pressure: 91, matchWinning: 93, wicketTaking: 84, sixHitting: 96, deathBat: 95, deathBowl: 83, recentForm: 92 },
   },
   {
@@ -221,6 +224,7 @@ function toPlayer(r: SeedRow): Player {
       notOuts: r.notOuts,
       ducks: r.ducks,
     },
+    historicRankingPoints: r.historicRankingPoints ?? 0,
   };
 }
 

@@ -9,6 +9,7 @@ import { CommentaryFeed } from "@/components/pts/CommentaryFeed";
 import { ProbabilityBar } from "@/components/pts/ProbabilityBar";
 import { MatchTimeline } from "@/components/pts/MatchTimeline";
 import { MatchInsights } from "@/components/pts/MatchInsights";
+import { PointsBreakdown } from "@/components/pts/PointsBreakdown";
 
 export const Route = createFileRoute("/match/$id")({
   head: () => ({ meta: [{ title: "Full Scorecard — PTS Scorer" }] }),
@@ -29,9 +30,10 @@ function MatchView() {
   const current = usePtsStore((s) => s.current);
   const saved = usePtsStore((s) => s.matches.find((m) => m.id === id));
   const players = usePtsStore((s) => s.players);
+  const matches = usePtsStore((s) => s.matches);
   const match = current?.id === id ? current : saved;
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"scorecard" | "analytics" | "commentary">("scorecard");
+  const [tab, setTab] = useState<"scorecard" | "analytics" | "commentary" | "points">("scorecard");
 
   if (!match) {
     return (
@@ -63,7 +65,10 @@ function MatchView() {
           {match.innings.map((inn, i) => (
             <div key={i} className="bg-secondary/40 rounded-lg p-3">
               <div className="text-xs text-muted-foreground">{inn.battingTeam === "A" ? match.teamA.name : match.teamB.name}</div>
-              <div className="text-xl font-bold tabular-nums">{inn.runs}/{inn.wickets}</div>
+              <div className="text-xl font-bold tabular-nums">
+                {inn.runs}/{inn.wickets}
+                {inn.declared && <span className="ml-1 text-[10px] uppercase tracking-widest text-primary">Declared</span>}
+              </div>
             </div>
           ))}
         </div>
@@ -81,8 +86,14 @@ function MatchView() {
         <MatchInsights match={match} players={players} />
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-1 p-1 rounded-xl border border-border/60 bg-secondary/40 text-xs uppercase tracking-widest">
-        {(["scorecard", "analytics", "commentary"] as const).map((t) => (
+      {match.winDeclared && (
+        <p className="mt-4 rounded-xl border border-red-600/40 bg-red-600/10 p-3 text-center text-sm text-red-400">
+          The opposing team accepted the win declaration and conceded the match.
+        </p>
+      )}
+
+      <div className="mt-4 grid grid-cols-4 gap-1 p-1 rounded-xl border border-border/60 bg-secondary/40 text-[10px] uppercase tracking-widest">
+        {(["scorecard", "analytics", "commentary", "points"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -99,6 +110,7 @@ function MatchView() {
         {tab === "scorecard" && <LiveScorecard match={match} players={players} />}
         {tab === "analytics" && <MatchAnalytics match={match} />}
         {tab === "commentary" && <CommentaryFeed entries={match.commentary ?? []} />}
+        {tab === "points" && <PointsBreakdown match={match} players={players} priorMatches={matches} />}
       </div>
 
       {match.story && (
