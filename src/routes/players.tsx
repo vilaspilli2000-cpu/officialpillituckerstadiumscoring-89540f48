@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/pts/AppShell";
 import { usePtsStore } from "@/lib/pts/store";
 import { combinedCareer } from "@/lib/pts/seed";
-import { rankPlayers } from "@/lib/pts/rankings";
+import { rankAllOvertake } from "@/lib/pts/overtakeRanking";
 
 export const Route = createFileRoute("/players")({
   head: () => ({ meta: [{ title: "Players — PTS Scorer" }] }),
@@ -16,13 +16,15 @@ function Players() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   if (pathname !== "/players") return <Outlet />;
   const players = usePtsStore((s) => s.players);
+  const matches = usePtsStore((s) => s.matches);
   const addPlayer = usePtsStore((s) => s.addPlayer);
   const deletePlayer = usePtsStore((s) => s.deletePlayer);
   const resetPlayer = usePtsStore((s) => s.resetPlayerToCalculated);
   const [q, setQ] = useState("");
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
-  const ranked = rankPlayers(players);
+  // Single shared ranking source — identical to Records & Overtake pages.
+  const ranked = useMemo(() => rankAllOvertake(players, matches), [players, matches]);
   const filtered = useMemo(() => {
     const t = q.trim().toLowerCase();
     if (!t) return ranked;
@@ -93,9 +95,7 @@ function Players() {
                 {c.hundreds} × 100 · {c.fifties} × 50 · HS {c.highest}{c.highestNotOut ? "*" : ""}
               </div>
               <div className="text-xs mt-1">Matches {c.matches} · Runs {c.runs} · Wkts {c.wickets} · Awards {c.awards}</div>
-              {r.player.manualOverride && (
-                <div className="mt-2 inline-block rounded-full border border-primary/40 px-2 py-0.5 text-[9px] uppercase tracking-wider text-primary">Edited</div>
-              )}
+              <div className="mt-2 text-[11px] font-bold text-primary tabular-nums">{r.total} ranking pts</div>
               </Link>
               <div className="absolute top-2 right-2 flex gap-1">
                 <button
