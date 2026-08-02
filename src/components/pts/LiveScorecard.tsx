@@ -88,7 +88,7 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
     <section className="space-y-3">
       <div className="flex items-baseline justify-between">
         <h3 className="text-sm uppercase tracking-widest text-primary/80">
-          {battingName} — {innings.runs}/{innings.wickets}
+          {battingName} — {innings.runs}/{innings.wickets}{innings.declared ? " Declared" : ""}
           {innings.declared && <span className="ml-1 text-primary">d</span>}
           {innings.followOnApplied && <span className="ml-1 normal-case text-[10px] text-muted-foreground">(f/o)</span>}
         </h3>
