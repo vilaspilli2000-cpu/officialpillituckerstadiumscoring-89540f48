@@ -43,8 +43,8 @@ function Setup() {
   const bowlingIds = firstBattingTeam === "A" ? lineupB : lineupA;
 
   const valid =
-    teamAIds.length >= 2 &&
-    teamBIds.length >= 2 &&
+    teamAIds.length >= 1 &&
+    teamBIds.length >= 1 &&
     battingIds.includes(openingBatterId) &&
     bowlingIds.includes(openingBowlerId);
 
@@ -189,7 +189,7 @@ function Setup() {
         <Button variant="hero" size="xl" disabled={!valid} onClick={submit}>
           Start Match
         </Button>
-        {!valid && <p className="text-xs text-muted-foreground mt-2">Pick at least 2 players per team, plus opening batter and bowler.</p>}
+        {!valid && <p className="text-xs text-muted-foreground mt-2">Pick at least 1 player per team, plus opening batter and bowler.</p>}
       </div>
     </AppShell>
   );
