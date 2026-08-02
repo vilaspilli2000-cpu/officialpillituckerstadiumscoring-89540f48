@@ -13,6 +13,7 @@ import { computeProbability } from "./probability";
 import { generateCommentaryFor } from "./commentary";
 import { MILESTONE_STEPS, totalAwards } from "./milestones";
 import { computeMatchPoints, buildStreakSnapshot } from "./matchPoints";
+import { buildPointsBreakdown } from "./pointsBreakdown";
 
 function teamOfPlayer(m: Match, playerId: string): "A" | "B" {
   if (m.teamA.playerIds.includes(playerId)) return "A";
@@ -53,6 +54,7 @@ interface State {
   setNextBatter: (id: string) => void;
   setNextBowler: (id: string) => void;
   declareInnings: () => void;
+  concedeMatch: (declaringTeam: "A" | "B") => void;
   addFieldingEvent: (kind: FieldingEventKind, playerId: string) => void;
   completeMatch: () => void;
   resetAll: () => void;
@@ -204,6 +206,17 @@ export const usePtsStore = create<State>()(
         inn.closed = true;
         inn.declared = true;
         inn.closeReason = "declared";
+        const battingName = inn.battingTeam === "A" ? m.teamA.name : m.teamB.name;
+        m.commentary = [
+          ...(m.commentary ?? []),
+          {
+            id: uid(), ts: Date.now(), inningsIndex: m.currentInnings,
+            ballIndex: inn.events.length,
+            overLabel: `${Math.floor(inn.legalBalls / 6)}.${inn.legalBalls % 6}`,
+            text: `${battingName} declare at ${inn.runs}/${inn.wickets}.`,
+            kind: "phase",
+          },
+        ];
         inn.currentBatterId = undefined;
         inn.currentBowlerId = undefined;
         m = advanceInnings(m, { A: m.teamA, B: m.teamB }, m.followOnMargin ?? 200);
@@ -214,6 +227,44 @@ export const usePtsStore = create<State>()(
           m.awards = computeAwards(m, players);
           m.story = buildStory(m, players);
         }
+        set({ current: m, undoStack: [...undoStack, snapshot].slice(-50) });
+      },
+
+      /** WIN-D: `declaringTeam` declared the win to the opponent and the
+       *  opponent accepted defeat — the declaring team therefore LOSES. */
+      concedeMatch: (declaringTeam) => {
+        const { current, players, undoStack } = get();
+        if (!current || current.result) return;
+        const snapshot = structuredClone(current);
+        const m = structuredClone(current);
+        const inn = m.innings[m.currentInnings];
+        if (inn && !inn.closed) {
+          inn.closed = true;
+          inn.closeReason = "declared";
+          inn.currentBatterId = undefined;
+          inn.currentBowlerId = undefined;
+        }
+        const winner: "A" | "B" = declaringTeam === "A" ? "B" : "A";
+        const winnerName = winner === "A" ? m.teamA.name : m.teamB.name;
+        const loserName = declaringTeam === "A" ? m.teamA.name : m.teamB.name;
+        m.winDeclared = { declaringTeam, ts: Date.now() };
+        m.result = {
+          winner,
+          summary: `${winnerName} won — ${loserName} declared the win (WIN-D)`,
+        };
+        m.completedAt = Date.now();
+        m.commentary = [
+          ...(m.commentary ?? []),
+          {
+            id: uid(), ts: Date.now(), inningsIndex: m.currentInnings,
+            ballIndex: inn?.events.length ?? 0,
+            overLabel: inn ? `${Math.floor(inn.legalBalls / 6)}.${inn.legalBalls % 6}` : "0.0",
+            text: `${loserName} declared the win to ${winnerName}. The opposing team accepted the win declaration and conceded the match.`,
+            kind: "phase",
+          },
+        ];
+        m.awards = computeAwards(m, players);
+        m.story = buildStory(m, players);
         set({ current: m, undoStack: [...undoStack, snapshot].slice(-50) });
       },
 
@@ -408,14 +459,22 @@ export const usePtsStore = create<State>()(
         }
 
         // --- Net Match Points → accumulate on player.matchPoints -----------
+        // Decimals are allowed while calculating; only the final net total is
+        // rounded before it is added to the career ranking.
         const mp = computeMatchPoints(current, updated, priorStreaks);
         for (const pl of updated) {
           const pm = mp.get(pl.id);
-          if (pm) pl.matchPoints = (pl.matchPoints ?? 0) + pm.net;
+          if (pm) pl.matchPoints = (pl.matchPoints ?? 0) + Math.round(pm.net);
         }
 
+        // Permanent Points Breakdown saved with the scorecard.
+        const completed: Match = {
+          ...current,
+          pointsBreakdown: buildPointsBreakdown(current, players, matches),
+        };
+
         set({
-          matches: [current, ...matches],
+          matches: [completed, ...matches],
           players: updated,
           current: undefined,
           undoStack: [],
@@ -486,7 +545,11 @@ export const usePtsStore = create<State>()(
         if (!seed) return;
         const players = get().players.map((p) =>
           p.id === id
-            ? { ...p, seed: seed.seed, career: seed.career, ratings: undefined, manualOverride: false, edits: [] }
+            ? {
+                ...p, seed: seed.seed, career: seed.career, ratings: undefined,
+                manualOverride: false, edits: [],
+                historicRankingPoints: seed.historicRankingPoints ?? 0,
+              }
             : p,
         );
         set({ players });
@@ -517,12 +580,13 @@ export const usePtsStore = create<State>()(
     }),
     {
       name: "pts-scorer-v1",
-      version: 8,
+      version: 9,
       migrate: (persisted: unknown) => {
         const s = (persisted ?? {}) as {
           players?: Player[]; matches?: Match[]; milestoneFeed?: MilestoneEntry[];
           recordFeed?: RecordEntry[]; awardFeed?: AwardFeedEntry[];
           awardsSeededV6?: boolean; historicRankingFrozenV7?: boolean;
+          historicBonusV9?: boolean;
         };
         s.milestoneFeed = s.milestoneFeed ?? [];
         s.recordFeed = s.recordFeed ?? [];
@@ -617,6 +681,17 @@ export const usePtsStore = create<State>()(
             matchPoints: p.matchPoints ?? 0,
           }));
           s.historicRankingFrozenV7 = true;
+        }
+        // v9: restore legacy historic ranking contributions from the seed.
+        if (!s.historicBonusV9) {
+          const bonusById = new Map(
+            SEED_PLAYERS.map((p) => [p.id, p.historicRankingPoints ?? 0]),
+          );
+          s.players = s.players.map((p) => ({
+            ...p,
+            historicRankingPoints: p.historicRankingPoints ?? bonusById.get(p.id) ?? 0,
+          }));
+          s.historicBonusV9 = true;
         }
         return s as never;
       },
