@@ -56,6 +56,12 @@ export function economyPenalty(runs: number, balls: number): number {
   return -Math.floor(econ - 6);
 }
 
+export interface PointLine {
+  label: string;
+  detail?: string;
+  value: number;
+}
+
 export interface PlayerMatchPoints {
   playerId: string;
   batting: number;
@@ -63,9 +69,25 @@ export interface PlayerMatchPoints {
   fielding: number;
   awards: number;
   consistencyBonus: number;
+  /** Exact (decimal) net match points. Round only when adding to career. */
   net: number;
   breakdown: string[];
+  lines: {
+    batting: PointLine[];
+    bowling: PointLine[];
+    fielding: PointLine[];
+    awards: PointLine[];
+  };
 }
+
+/** Fielding point values (decimals allowed). */
+export const FIELDING_POINTS = {
+  directCatch: 4,
+  oneBounceCatch: 2,
+  runOut: 3,
+  boundarySave: 0.5,
+  catchDrop: -1,
+} as const;
 
 /**
  * Compute Net Match Points for every player who appeared in `match`.
@@ -86,6 +108,7 @@ export function computeMatchPoints(
       m = {
         playerId: id, batting: 0, bowling: 0, fielding: 0,
         awards: 0, consistencyBonus: 0, net: 0, breakdown: [],
+        lines: { batting: [], bowling: [], fielding: [], awards: [] },
       };
       out.set(id, m);
     }
@@ -101,6 +124,13 @@ export function computeMatchPoints(
       const sp = strikeRatePoints(b.runs, b.balls);
       const fp = b.fours; // +1 per four
       m.batting += rp + sp + fp;
+      m.lines.batting.push({ label: "Runs Points", detail: `${b.runs} runs off ${b.balls} balls`, value: rp });
+      m.lines.batting.push({
+        label: "Strike Rate Points",
+        detail: `SR ${b.balls ? ((b.runs / b.balls) * 100).toFixed(1) : "0.0"} → ceil(SR ÷ 10)`,
+        value: sp,
+      });
+      m.lines.batting.push({ label: "Four Points", detail: `${b.fours} × 1`, value: fp });
       m.breakdown.push(
         `Bat ${b.runs}(${b.balls}): runs +${rp}, SR +${sp}, 4s +${fp}`,
       );
@@ -111,6 +141,11 @@ export function computeMatchPoints(
         const idx = prior + 1; // this innings' streak position
         if (idx >= 3) {
           m.consistencyBonus += 12;
+          m.lines.batting.push({
+            label: "Consistency Bonus",
+            detail: `${idx}th consecutive 30+ innings`,
+            value: 12,
+          });
           m.breakdown.push(`Consistency streak +12 (innings ${idx})`);
         }
         priorStreakByPlayer.set(b.playerId, idx);
@@ -139,9 +174,25 @@ export function computeMatchPoints(
       }
       if (bw.wickets === 0) {
         m.bowling += -1;
+        m.lines.bowling.push({ label: "Wicket Points", detail: "Wicketless spell", value: -1 });
+        m.lines.bowling.push({
+          label: "Economy Points",
+          detail: `${bw.runs} runs off ${bw.balls} balls`,
+          value: eco,
+        });
         m.breakdown.push(`Bowl 0/${bw.runs}: econ ${eco}, wicketless -1`);
       } else {
         m.bowling += wktPts;
+        m.lines.bowling.push({
+          label: "Wicket Points",
+          detail: `${bw.wickets} wicket${bw.wickets === 1 ? "" : "s"} (quality tiered)`,
+          value: wktPts,
+        });
+        m.lines.bowling.push({
+          label: "Economy Points",
+          detail: `${bw.runs} runs off ${bw.balls} balls`,
+          value: eco,
+        });
         m.breakdown.push(`Bowl ${bw.wickets}/${bw.runs}: econ ${eco}, wickets +${wktPts}`);
       }
     }
@@ -154,15 +205,30 @@ export function computeMatchPoints(
       if (!ev.catcherId) continue;
       const m = ensure(ev.catcherId);
       if (ev.dismissalType === "caught") {
-        m.fielding += 4;
+        m.fielding += FIELDING_POINTS.directCatch;
+        m.lines.fielding.push({ label: "Direct Catch", detail: "+4 each", value: FIELDING_POINTS.directCatch });
         m.breakdown.push("Direct catch +4");
       } else if (ev.dismissalType === "caught-one-bounce") {
-        m.fielding += 2;
+        m.fielding += FIELDING_POINTS.oneBounceCatch;
+        m.lines.fielding.push({ label: "One Bounce Catch", detail: "+2 each", value: FIELDING_POINTS.oneBounceCatch });
         m.breakdown.push("One-bounce catch +2");
       } else if (ev.dismissalType === "run-out") {
-        m.fielding += 3;
+        m.fielding += FIELDING_POINTS.runOut;
+        m.lines.fielding.push({ label: "Run Out", detail: "+3 each", value: FIELDING_POINTS.runOut });
         m.breakdown.push("Run out +3");
       }
+    }
+  }
+
+  // Fielding extras: boundary saves (+0.5) and dropped catches (-1).
+  for (const fe of match.fieldingEvents ?? []) {
+    const m = ensure(fe.playerId);
+    if (fe.kind === "boundary-save") {
+      m.fielding += FIELDING_POINTS.boundarySave;
+      m.lines.fielding.push({ label: "Boundary Save", detail: "+0.5 each", value: FIELDING_POINTS.boundarySave });
+    } else {
+      m.fielding += FIELDING_POINTS.catchDrop;
+      m.lines.fielding.push({ label: "Catch Drop", detail: "-1 each", value: FIELDING_POINTS.catchDrop });
     }
   }
 
@@ -170,10 +236,16 @@ export function computeMatchPoints(
   const awardPts: Record<string, number> = {
     pom: 6, batsman: 4, bowler: 4, fielder: 2, fighter: 2, worst: -3,
   };
+  const awardLabels: Record<string, string> = {
+    pom: "Player of the Match", batsman: "Batsman of the Match",
+    bowler: "Bowler of the Match", fielder: "Fielder of the Match",
+    fighter: "Fighter of the Match", worst: "Worst Player",
+  };
   for (const aw of match.awards ?? []) {
     const m = ensure(aw.playerId);
     const pts = awardPts[aw.type] ?? 0;
     m.awards += pts;
+    m.lines.awards.push({ label: awardLabels[aw.type] ?? aw.type, value: pts });
     m.breakdown.push(`${aw.type.toUpperCase()} ${pts >= 0 ? "+" : ""}${pts}`);
   }
 
