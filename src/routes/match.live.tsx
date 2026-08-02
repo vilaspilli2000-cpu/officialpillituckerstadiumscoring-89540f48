@@ -32,6 +32,7 @@ function Live() {
   const setNextBatter = usePtsStore((s) => s.setNextBatter);
   const setNextBowler = usePtsStore((s) => s.setNextBowler);
   const declareInnings = usePtsStore((s) => s.declareInnings);
+  const concedeMatch = usePtsStore((s) => s.concedeMatch);
   const addFieldingEvent = usePtsStore((s) => s.addFieldingEvent);
   const navigate = useNavigate();
 
@@ -39,6 +40,7 @@ function Live() {
   const [wicketOpen, setWicketOpen] = useState<false | { preselect?: DismissalType }>(false);
   const [fieldingPick, setFieldingPick] = useState<false | FieldingEventKind>(false);
   const [tab, setTab] = useState<"scoring" | "scorecard" | "analytics">("scoring");
+  const [winDStep, setWinDStep] = useState<null | { step: "pick" } | { step: "confirm"; team: "A" | "B" }>(null);
 
   useEffect(() => {
     if (current?.result) {
@@ -278,6 +280,68 @@ function Live() {
         >
           Declare Innings
         </Button>
+      )}
+
+      {!current.result && (
+        <button
+          onClick={() => setWinDStep({ step: "pick" })}
+          className="mt-2 w-full rounded-xl border border-red-600 bg-red-600 px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white transition active:scale-[0.98] hover:bg-red-700"
+        >
+          WIN-D
+        </button>
+      )}
+
+      {winDStep && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-card p-5">
+            {winDStep.step === "pick" ? (
+              <>
+                <div className="text-sm font-bold">Which team is declaring the win to the opponent?</div>
+                <div className="mt-4 grid gap-2">
+                  {(["A", "B"] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setWinDStep({ step: "confirm", team: t })}
+                      className="rounded-xl border border-border/60 bg-secondary/60 px-4 py-3 text-sm font-bold hover:border-primary"
+                    >
+                      {t === "A" ? current.teamA.name : current.teamB.name}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => setWinDStep(null)} className="mt-4 w-full text-xs text-muted-foreground">
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="text-sm font-bold">
+                  {(winDStep.team === "A" ? current.teamA.name : current.teamB.name)} declared the win to{" "}
+                  {(winDStep.team === "A" ? current.teamB.name : current.teamA.name)}.
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">Have you accepted defeat?</p>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => {
+                      const team = winDStep.team;
+                      setWinDStep(null);
+                      concedeMatch(team);
+                      toast.success("Win declaration accepted — match concluded");
+                    }}
+                    className="rounded-xl bg-red-600 px-4 py-3 text-sm font-black text-white hover:bg-red-700"
+                  >
+                    🟥 YES
+                  </button>
+                  <button
+                    onClick={() => setWinDStep(null)}
+                    className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-700"
+                  >
+                    🟩 NO
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       )}
 
       <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-center text-sm text-primary">
