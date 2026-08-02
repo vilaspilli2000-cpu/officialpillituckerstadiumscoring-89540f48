@@ -241,9 +241,8 @@ export function inningsTotalLabel(innings: Innings): string {
   return `${innings.runs}/${innings.wickets}${innings.declared ? " d" : ""}`;
 }
 
-/** Can the current innings be declared? Test format only, while live. */
+/** Can the current innings be declared? Available in every format while live. */
 export function canDeclare(match: Match): boolean {
-  if (match.format !== "C") return false;
   const inn = match.innings[match.currentInnings];
   if (!inn || inn.closed || match.result) return false;
   return inn.legalBalls > 0;
