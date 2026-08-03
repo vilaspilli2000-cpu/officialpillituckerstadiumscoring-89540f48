@@ -1,7 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { AuthGate } from "./AuthGate";
+import { CloudBar } from "./CloudBar";
 
 export function AppShell({ children, title }: { children: ReactNode; title?: string }) {
+  return (
+    <AuthGate>
+      <Shell title={title}>{children}</Shell>
+    </AuthGate>
+  );
+}
+
+function Shell({ children, title }: { children: ReactNode; title?: string }) {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-30 backdrop-blur-md bg-background/80 border-b border-primary/20">
@@ -17,6 +27,7 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
           </Link>
           {title && <div className="text-xs uppercase tracking-widest text-primary/80 truncate">{title}</div>}
         </div>
+        <CloudBar />
       </header>
       <main className="flex-1 mx-auto w-full max-w-5xl px-4 py-6 pb-24">{children}</main>
       <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-md bg-background/90 border-t border-primary/20 md:hidden">
