@@ -17,6 +17,7 @@ import { RecordAlerts } from "@/components/pts/RecordAlerts";
 import { PlayerRivalries } from "@/components/pts/PlayerRivalries";
 import type { BallEvent, BallEventType, DismissalType, FieldingEventKind } from "@/lib/pts/types";
 import { toast } from "sonner";
+import { canScoreHere, claimScoring, deviceId, useCloud } from "@/lib/pts/cloud";
 
 export const Route = createFileRoute("/match/live")({
   head: () => ({ meta: [{ title: "Live Scoring — PTS Scorer" }] }),
@@ -35,6 +36,8 @@ function Live() {
   const concedeMatch = usePtsStore((s) => s.concedeMatch);
   const addFieldingEvent = usePtsStore((s) => s.addFieldingEvent);
   const navigate = useNavigate();
+  const cloud = useCloud();
+  const canWrite = canScoreHere(cloud);
 
   const [pendingNoBall, setPendingNoBall] = useState(false);
   const [wicketOpen, setWicketOpen] = useState<false | { preselect?: DismissalType }>(false);
@@ -65,9 +68,9 @@ function Live() {
   const battingTeam = innings.battingTeam === "A" ? current.teamA : current.teamB;
   const bowlingTeam = innings.battingTeam === "A" ? current.teamB : current.teamA;
 
-  const needNextBatter = !innings.closed && !innings.currentBatterId;
-  const needNextBowler = !innings.closed && !innings.currentBowlerId && !needNextBatter;
-  const scoringBlocked = needNextBatter || needNextBowler;
+  const needNextBatter = canWrite && !innings.closed && !innings.currentBatterId;
+  const needNextBowler = canWrite && !innings.closed && !innings.currentBowlerId && !needNextBatter;
+  const scoringBlocked = !canWrite || needNextBatter || needNextBowler;
 
   const remainingBatters = innings.lineup.filter(
     (id) => !innings.batters.find((b) => b.playerId === id && b.out),
@@ -165,6 +168,26 @@ function Live() {
       )}
       {tab === "scoring" && (
       <>
+      {!canWrite && (
+        <div className="mb-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-400">
+          {cloud.role === "admin"
+            ? "Another device is scoring this match — you are watching live."
+            : "Viewer mode — live updates only."}
+          {cloud.role === "admin" && cloud.scoringDevice !== deviceId() && (
+            <button
+              onClick={async () => {
+                const r = await claimScoring(true);
+                toast[r.ok ? "success" : "error"](
+                  r.ok ? "You now control scoring" : "Could not take control",
+                );
+              }}
+              className="ml-2 underline font-bold"
+            >
+              Take control
+            </button>
+          )}
+        </div>
+      )}
       <section className="rounded-2xl border border-border/60 bg-card/70 p-5 mb-4 relative overflow-hidden">
         <div className="flex items-start justify-between">
           <div className="text-[11px] font-bold tracking-[0.15em] text-primary uppercase">
