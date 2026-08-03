@@ -112,7 +112,7 @@ async function doPush() {
     const { data, error } = await supabase.rpc("pts_push_state", {
       _expected_version: -1,
       _data: snapshot() as never,
-      _device: claiming ? deviceId() : null,
+      _device: (claiming ? deviceId() : null) as unknown as string,
     });
     if (error) throw error;
     const row = (Array.isArray(data) ? data[0] : data) as
