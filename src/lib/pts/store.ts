@@ -23,6 +23,17 @@ function teamOfPlayer(m: Match, playerId: string): "A" | "B" {
 const uid = () =>
   globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
 
+export interface SyncedState {
+  players: Player[];
+  matches: Match[];
+  current?: Match;
+  achievements: Achievement[];
+  settings: { defaultFollowOn: number; commentaryEnabled?: boolean };
+  milestoneFeed: MilestoneEntry[];
+  recordFeed: RecordEntry[];
+  awardFeed: AwardFeedEntry[];
+}
+
 interface SetupInput {
   format: FormatId;
   teamA: Team;
