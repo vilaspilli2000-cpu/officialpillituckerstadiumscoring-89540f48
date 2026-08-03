@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { initCloud, teardownCloud, useCloud } from "@/lib/pts/cloud";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -78,10 +77,11 @@ function SignIn() {
   }
 
   async function google() {
-    const res = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
     });
-    if (res.error) toast.error("Google sign-in failed");
+    if (error) toast.error("Google sign-in failed");
   }
 
   return (
