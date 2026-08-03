@@ -48,6 +48,7 @@ interface State {
   awardFeed: AwardFeedEntry[];
 
 
+
   startMatch: (input: SetupInput) => void;
   setCurrent: (m: Match | undefined) => void;
   scoreEvent: (type: BallEventType, opts?: ApplyOptions) => void;
