@@ -179,12 +179,6 @@ function watchStore() {
   });
 }
 
-async function loadRole(userId: string) {
-  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-  const roles = (data ?? []).map((r) => r.role);
-  return roles.includes("admin") ? "admin" : "viewer";
-}
-
 async function pullState() {
   const { data, error } = await supabase
     .from("pts_state")
