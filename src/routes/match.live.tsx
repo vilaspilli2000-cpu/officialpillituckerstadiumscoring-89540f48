@@ -247,6 +247,10 @@ function Live() {
         <ProbabilityBar match={current} />
       </div>
 
+      <div className="mb-3">
+        <TeamMomentumMeter match={current} />
+      </div>
+
       <div className="mb-4">
         <CommentaryFeed entries={current.commentary ?? []} />
       </div>

@@ -79,6 +79,10 @@ function MatchView() {
       </div>
 
       <div className="mt-4">
+        <TeamMomentumMeter match={match} />
+      </div>
+
+      <div className="mt-4">
         <MatchTimeline match={match} players={players} />
       </div>
 
