@@ -92,6 +92,8 @@ function Profile() {
         {player.notes && <p className="mt-3 text-sm text-muted-foreground">{player.notes}</p>}
       </header>
 
+      <FormPressureCard player={player} matches={matches} />
+
       <Section title="Career Summary">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Stat label="Matches" value={c.matches} />
