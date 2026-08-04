@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import { usePtsStore, type SyncedState } from "./store";
+import { applyHistoricBaselineAll } from "./historicBaseline";
 
 const DEVICE_KEY = "pts-device-id";
 
@@ -83,7 +84,7 @@ function applyRemote(data: unknown) {
   applyingRemote = true;
   try {
     usePtsStore.setState({
-      players: d.players ?? [],
+      players: applyHistoricBaselineAll(d.players ?? []),
       matches: d.matches ?? [],
       current: d.current,
       achievements: d.achievements ?? [],
