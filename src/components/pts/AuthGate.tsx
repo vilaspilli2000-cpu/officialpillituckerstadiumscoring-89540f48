@@ -128,48 +128,66 @@ function AccessScreen() {
             Every Touch Counts
           </p>
         </div>
-        <form
-          onSubmit={submit}
-          className="rounded-2xl border border-border/60 bg-card/70 p-5 space-y-3"
-        >
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="w-full rounded-xl border border-border/60 bg-secondary/50 px-4 py-3 text-sm outline-none focus:border-primary"
-          />
-          <input
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className="w-full rounded-xl border border-border/60 bg-secondary/50 px-4 py-3 text-sm outline-none focus:border-primary"
-          />
-          <Button type="submit" variant="gold" className="w-full" disabled={busy}>
-            {mode === "in" ? "Sign in" : "Create account"}
-          </Button>
-          <button
-            type="button"
-            onClick={google}
-            className="w-full rounded-xl border border-border/60 bg-secondary/60 px-4 py-3 text-sm font-semibold hover:border-primary"
+        {showLogin ? (
+          <form
+            onSubmit={loginAdmin}
+            className="rounded-2xl border border-border/60 bg-card/70 p-5 space-y-3"
           >
-            Continue with Google
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode(mode === "in" ? "up" : "in")}
-            className="w-full text-xs text-muted-foreground hover:text-primary"
-          >
-            {mode === "in" ? "No account? Create one" : "Already have an account? Sign in"}
-          </button>
-        </form>
-        <p className="mt-4 text-center text-[11px] text-muted-foreground">
-          The first account becomes Admin. Everyone else joins as a live Viewer.
-        </p>
+            <div className="text-[11px] uppercase tracking-[0.2em] text-primary/80">
+              Admin Login
+            </div>
+            <input
+              autoFocus
+              required
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+              className="w-full rounded-xl border border-border/60 bg-secondary/50 px-4 py-3 text-sm outline-none focus:border-primary"
+            />
+            <input
+              type="password"
+              required
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full rounded-xl border border-border/60 bg-secondary/50 px-4 py-3 text-sm outline-none focus:border-primary"
+            />
+            <Button type="submit" variant="gold" className="w-full" disabled={busy}>
+              {busy ? "Signing in…" : "Login as Admin"}
+            </Button>
+            <button
+              type="button"
+              onClick={() => setShowLogin(false)}
+              className="w-full text-xs text-muted-foreground hover:text-primary"
+            >
+              Back
+            </button>
+          </form>
+        ) : (
+          <div className="rounded-2xl border border-border/60 bg-card/70 p-5 space-y-3">
+            <Button
+              variant="gold"
+              className="w-full"
+              disabled={busy}
+              onClick={() => setShowLogin(true)}
+            >
+              Login as Admin
+            </Button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={viewer}
+              className="w-full rounded-xl border border-border/60 bg-secondary/60 px-4 py-3 text-sm font-semibold hover:border-primary disabled:opacity-60"
+            >
+              Enter PTS
+            </button>
+            <p className="text-center text-[11px] text-muted-foreground">
+              Admins score live matches. Everyone else follows along in read-only Viewer mode.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
