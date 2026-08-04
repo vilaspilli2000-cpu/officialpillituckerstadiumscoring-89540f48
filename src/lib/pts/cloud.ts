@@ -5,6 +5,11 @@ import { applyHistoricBaselineAll } from "./historicBaseline";
 
 const DEVICE_KEY = "pts-device-id";
 
+/** Official PTS admin credentials (single shared scoring account). */
+export const PTS_ADMIN_USERNAME = "Pillitucker030421";
+export const PTS_ADMIN_PASSWORD = "tucker@@3";
+const ADMIN_EMAIL = "pillitucker030421@pts.local";
+
 export function deviceId(): string {
   if (typeof window === "undefined") return "ssr";
   let id = window.localStorage.getItem(DEVICE_KEY);
