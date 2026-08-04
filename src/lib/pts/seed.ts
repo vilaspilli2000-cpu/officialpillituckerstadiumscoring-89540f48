@@ -1,4 +1,5 @@
 import type { Player } from "./types";
+import { applyHistoricBaseline } from "./historicBaseline";
 
 // Official PTS player database. IDs preserved from previous seed so
 // existing edits, matches, and history keep referencing the same players.
@@ -228,7 +229,7 @@ function toPlayer(r: SeedRow): Player {
   };
 }
 
-export const SEED_PLAYERS: Player[] = ROWS.map(toPlayer);
+export const SEED_PLAYERS: Player[] = ROWS.map(toPlayer).map(applyHistoricBaseline);
 
 /** Combined career view = seed + accrued career stats (for display only). */
 export function combinedCareer(p: Player) {
