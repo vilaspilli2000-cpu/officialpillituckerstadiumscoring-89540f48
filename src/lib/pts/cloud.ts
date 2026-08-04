@@ -320,6 +320,44 @@ export async function releaseScoring() {
   await refresh();
 }
 
+/** Sign in with the hardcoded PTS admin credentials. */
+export async function enterAsAdmin(username: string, password: string) {
+  if (username !== PTS_ADMIN_USERNAME || password !== PTS_ADMIN_PASSWORD) {
+    throw new Error("Incorrect username or password");
+  }
+  let { data, error } = await supabase.auth.signInWithPassword({
+    email: ADMIN_EMAIL, password: PTS_ADMIN_PASSWORD,
+  });
+  if (error) {
+    const up = await supabase.auth.signUp({ email: ADMIN_EMAIL, password: PTS_ADMIN_PASSWORD });
+    if (up.error) throw up.error;
+    if (!up.data.session) {
+      const retry = await supabase.auth.signInWithPassword({
+        email: ADMIN_EMAIL, password: PTS_ADMIN_PASSWORD,
+      });
+      if (retry.error) throw retry.error;
+      data = retry.data;
+    } else {
+      data = up.data as typeof data;
+    }
+  }
+  const user = data?.user;
+  if (!user) throw new Error("Could not start the PTS admin session");
+  await supabase.rpc("pts_grant_self_admin");
+  await initCloud({ userId: user.id, email: user.email ?? null, role: "admin" });
+}
+
+/** Read-only access — no account required. */
+export async function enterAsViewer() {
+  await supabase.auth.signOut().catch(() => undefined);
+  await initCloud({ userId: null, email: null, role: "viewer" });
+}
+
+export async function ptsSignOut() {
+  teardownCloud();
+  await supabase.auth.signOut().catch(() => undefined);
+}
+
 export function teardownCloud() {
   if (channel) {
     void supabase.removeChannel(channel);
