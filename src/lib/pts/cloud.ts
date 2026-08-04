@@ -218,11 +218,14 @@ function subscribeRealtime() {
     .subscribe();
 }
 
-/** Boot the cloud layer for the signed-in user. */
-export async function initCloud(userId: string, email: string | null) {
-  useCloud.setState({ status: "loading", userId, email });
-  const role = await loadRole(userId);
-  useCloud.setState({ role });
+/** Boot the cloud layer. Admins hold a session; viewers read anonymously. */
+export async function initCloud(opts: {
+  userId: string | null;
+  email: string | null;
+  role: "admin" | "viewer";
+}) {
+  const { userId, email, role } = opts;
+  useCloud.setState({ status: "loading", userId, email, role });
 
   try {
     const row = await pullState();
