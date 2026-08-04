@@ -27,6 +27,8 @@ export interface Player {
     bowlRuns: number;
     catches: number;
     runOuts: number;
+    /** One-bounce catches taken (historic + live). */
+    oneBounceCatches?: number;
     /** Dropped catches (fielding negative). */
     catchDrops?: number;
     /** Boundaries saved in the field (fielding positive). */
@@ -77,6 +79,14 @@ export interface Player {
   /** Legacy pre-tracking ranking contribution that predates the points
    *  engine (historic league performances not captured in career stats). */
   historicRankingPoints?: number;
+  /** Tiered points earned from historic wickets (Top 7 / Mid 4 / Lower 3). */
+  historicWicketBonus?: number;
+  /** Historic wicket tier split, kept for profile display. */
+  historicWicketTiers?: { top: number; middle: number; lower: number };
+  /** Number of historic consecutive-30+ consistency bonuses (+12 each). */
+  historicConsistency?: number;
+  /** Marker: official PTS historic baseline (v10) has been applied. */
+  ptsBaselineV10?: boolean;
 }
 
 export type DismissalType =
