@@ -593,7 +593,7 @@ export const usePtsStore = create<State>()(
     }),
     {
       name: "pts-scorer-v1",
-      version: 9,
+      version: 10,
       migrate: (persisted: unknown) => {
         const s = (persisted ?? {}) as {
           players?: Player[]; matches?: Match[]; milestoneFeed?: MilestoneEntry[];
@@ -706,6 +706,9 @@ export const usePtsStore = create<State>()(
           }));
           s.historicBonusV9 = true;
         }
+        // v10: official PTS historic baseline (fours, wickets, catches,
+        // awards & consistency streaks restored + calibrated totals).
+        s.players = applyHistoricBaselineAll(s.players);
         return s as never;
       },
     },
