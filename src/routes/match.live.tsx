@@ -15,6 +15,7 @@ import { MatchAnalytics } from "@/components/pts/MatchAnalytics";
 import { CommentaryFeed } from "@/components/pts/CommentaryFeed";
 import { RecordAlerts } from "@/components/pts/RecordAlerts";
 import { PlayerRivalries } from "@/components/pts/PlayerRivalries";
+import { TeamMomentumMeter } from "@/components/pts/TeamMomentumMeter";
 import type { BallEvent, BallEventType, DismissalType, FieldingEventKind } from "@/lib/pts/types";
 import { toast } from "sonner";
 import { canScoreHere, claimScoring, deviceId, useCloud } from "@/lib/pts/cloud";
