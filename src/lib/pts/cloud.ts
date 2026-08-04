@@ -1,8 +1,14 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import { usePtsStore, type SyncedState } from "./store";
+import { applyHistoricBaselineAll } from "./historicBaseline";
 
 const DEVICE_KEY = "pts-device-id";
+
+/** Official PTS admin credentials (single shared scoring account). */
+export const PTS_ADMIN_USERNAME = "Pillitucker030421";
+export const PTS_ADMIN_PASSWORD = "tucker@@3";
+const ADMIN_EMAIL = "pillitucker030421@pts.local";
 
 export function deviceId(): string {
   if (typeof window === "undefined") return "ssr";
@@ -83,7 +89,7 @@ function applyRemote(data: unknown) {
   applyingRemote = true;
   try {
     usePtsStore.setState({
-      players: d.players ?? [],
+      players: applyHistoricBaselineAll(d.players ?? []),
       matches: d.matches ?? [],
       current: d.current,
       achievements: d.achievements ?? [],
@@ -178,12 +184,6 @@ function watchStore() {
   });
 }
 
-async function loadRole(userId: string) {
-  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-  const roles = (data ?? []).map((r) => r.role);
-  return roles.includes("admin") ? "admin" : "viewer";
-}
-
 async function pullState() {
   const { data, error } = await supabase
     .from("pts_state")
@@ -223,11 +223,14 @@ function subscribeRealtime() {
     .subscribe();
 }
 
-/** Boot the cloud layer for the signed-in user. */
-export async function initCloud(userId: string, email: string | null) {
-  useCloud.setState({ status: "loading", userId, email });
-  const role = await loadRole(userId);
-  useCloud.setState({ role });
+/** Boot the cloud layer. Admins hold a session; viewers read anonymously. */
+export async function initCloud(opts: {
+  userId: string | null;
+  email: string | null;
+  role: "admin" | "viewer";
+}) {
+  const { userId, email, role } = opts;
+  useCloud.setState({ status: "loading", userId, email, role });
 
   try {
     const row = await pullState();
@@ -315,6 +318,44 @@ export async function claimScoring(force = false) {
 export async function releaseScoring() {
   await supabase.rpc("pts_release_scoring", { _device: deviceId() });
   await refresh();
+}
+
+/** Sign in with the hardcoded PTS admin credentials. */
+export async function enterAsAdmin(username: string, password: string) {
+  if (username !== PTS_ADMIN_USERNAME || password !== PTS_ADMIN_PASSWORD) {
+    throw new Error("Incorrect username or password");
+  }
+  let { data, error } = await supabase.auth.signInWithPassword({
+    email: ADMIN_EMAIL, password: PTS_ADMIN_PASSWORD,
+  });
+  if (error) {
+    const up = await supabase.auth.signUp({ email: ADMIN_EMAIL, password: PTS_ADMIN_PASSWORD });
+    if (up.error) throw up.error;
+    if (!up.data.session) {
+      const retry = await supabase.auth.signInWithPassword({
+        email: ADMIN_EMAIL, password: PTS_ADMIN_PASSWORD,
+      });
+      if (retry.error) throw retry.error;
+      data = retry.data;
+    } else {
+      data = up.data as typeof data;
+    }
+  }
+  const user = data?.user;
+  if (!user) throw new Error("Could not start the PTS admin session");
+  await supabase.rpc("pts_grant_self_admin");
+  await initCloud({ userId: user.id, email: user.email ?? null, role: "admin" });
+}
+
+/** Read-only access — no account required. */
+export async function enterAsViewer() {
+  await supabase.auth.signOut().catch(() => undefined);
+  await initCloud({ userId: null, email: null, role: "viewer" });
+}
+
+export async function ptsSignOut() {
+  teardownCloud();
+  await supabase.auth.signOut().catch(() => undefined);
 }
 
 export function teardownCloud() {

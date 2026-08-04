@@ -1,5 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
 import { canScoreHere, claimScoring, deviceId, useCloud } from "@/lib/pts/cloud";
+import { leavePts } from "@/components/pts/AuthGate";
 import { toast } from "sonner";
 
 export function CloudBar() {
@@ -52,11 +52,11 @@ export function CloudBar() {
         )}
       </div>
       <button
-        onClick={() => supabase.auth.signOut()}
+        onClick={() => void leavePts()}
         className="text-muted-foreground hover:text-primary shrink-0"
         title={email ?? undefined}
       >
-        Sign out
+        {role === "admin" ? "Sign out" : "Exit"}
       </button>
     </div>
   );

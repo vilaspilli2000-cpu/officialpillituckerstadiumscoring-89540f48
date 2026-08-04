@@ -7,6 +7,7 @@ import { combinedCareer } from "@/lib/pts/seed";
 import { playerAwardCounts, careerImpactScore } from "@/lib/pts/insights";
 import { rankAllOvertake } from "@/lib/pts/overtakeRanking";
 import { allMilestoneCards } from "@/lib/pts/milestones";
+import { FormPressureCard } from "@/components/pts/FormPressureCard";
 
 export const Route = createFileRoute("/players/$id")({
   head: ({ params }) => ({ meta: [{ title: `Profile · ${params.id} — PTS Scorer` }] }),
@@ -91,6 +92,8 @@ function Profile() {
         {player.beginner && player.career.matches === 0 && <p className="text-xs text-muted-foreground mt-2">Beginner — pinned last until earning stats.</p>}
         {player.notes && <p className="mt-3 text-sm text-muted-foreground">{player.notes}</p>}
       </header>
+
+      <FormPressureCard player={player} matches={matches} />
 
       <Section title="Career Summary">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

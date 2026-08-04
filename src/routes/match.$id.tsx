@@ -9,6 +9,7 @@ import { CommentaryFeed } from "@/components/pts/CommentaryFeed";
 import { ProbabilityBar } from "@/components/pts/ProbabilityBar";
 import { MatchTimeline } from "@/components/pts/MatchTimeline";
 import { MatchInsights } from "@/components/pts/MatchInsights";
+import { TeamMomentumMeter } from "@/components/pts/TeamMomentumMeter";
 import { PointsBreakdown } from "@/components/pts/PointsBreakdown";
 
 export const Route = createFileRoute("/match/$id")({
@@ -76,6 +77,10 @@ function MatchView() {
 
       <div className="mt-4">
         <ProbabilityBar match={match} />
+      </div>
+
+      <div className="mt-4">
+        <TeamMomentumMeter match={match} />
       </div>
 
       <div className="mt-4">

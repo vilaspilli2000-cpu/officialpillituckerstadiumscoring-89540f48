@@ -127,6 +127,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      pts_grant_self_admin: { Args: never; Returns: boolean }
       pts_push_state: {
         Args: { _data: Json; _device: string; _expected_version: number }
         Returns: {

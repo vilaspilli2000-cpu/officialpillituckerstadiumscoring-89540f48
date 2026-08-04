@@ -121,7 +121,9 @@ export function computeOvertakeScore(player: Player, matches: Match[]): Overtake
   // 3. Consistency Bonus (§5)
   const scores = playerInningsScores(matches, player.id);
   const cons = computeConsistency(scores);
-  const consDetail = `${scores.filter((s) => s >= 30).length} innings of 30+, streak ${cons.currentStreak} (best ${cons.longestStreak})`;
+  const histCons = player.historicConsistency ?? 0;
+  const consPts = cons.points + histCons * 12;
+  const consDetail = `${scores.filter((s) => s >= 30).length} innings of 30+, streak ${cons.currentStreak} (best ${cons.longestStreak})${histCons ? ` · ${histCons} historic streak bonuses` : ""}`;
 
   // 4. Awards (§6)
   const pom = c.pomAwards ?? 0;
@@ -144,8 +146,11 @@ export function computeOvertakeScore(player: Player, matches: Match[]): Overtake
   // 6. Career Wickets (§8) — historic rounded to nearest 5 (÷5 pts).
   //    New wickets earn quality points via match performance.
   const historicWickets = player.historicWickets ?? c.wickets ?? 0;
-  const histWktPts = historicWicketsPoints(historicWickets);
-  const bowlingDetail = `Historic ${historicWickets} → ${histWktPts} pts`;
+  const wktBonus = player.historicWicketBonus ?? 0;
+  const histWktPts = historicWicketsPoints(historicWickets) + wktBonus;
+  const t = player.historicWicketTiers;
+  const bowlingDetail = `Historic ${historicWickets} → ${historicWicketsPoints(historicWickets)} pts` +
+    (t ? ` · restored ${t.top}×7 + ${t.middle}×4 + ${t.lower}×3 = ${wktBonus} pts` : "");
 
   // 7. Match Performance (§12) — accumulated Net Match Points.
   const matchPerfPts = player.matchPoints ?? 0;
@@ -160,7 +165,7 @@ export function computeOvertakeScore(player: Player, matches: Match[]): Overtake
   const categories: Record<OvertakeCategoryKey, OvertakeCategory> = {
     batting: { key: "batting", label: CATEGORY_LABELS.batting, points: battingPts, detail: battingDetail },
     bigInnings: { key: "bigInnings", label: CATEGORY_LABELS.bigInnings, points: bigPts, detail: bigDetail },
-    consistency: { key: "consistency", label: CATEGORY_LABELS.consistency, points: cons.points, detail: consDetail },
+    consistency: { key: "consistency", label: CATEGORY_LABELS.consistency, points: consPts, detail: consDetail },
     awards: { key: "awards", label: CATEGORY_LABELS.awards, points: awardPts, detail: awardDetail },
     boundaries: { key: "boundaries", label: CATEGORY_LABELS.boundaries, points: fourPts, detail: boundaryDetail },
     bowling: { key: "bowling", label: CATEGORY_LABELS.bowling, points: histWktPts, detail: bowlingDetail },

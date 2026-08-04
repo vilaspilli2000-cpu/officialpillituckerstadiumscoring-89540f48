@@ -14,6 +14,7 @@ import { generateCommentaryFor } from "./commentary";
 import { MILESTONE_STEPS, totalAwards } from "./milestones";
 import { computeMatchPoints, buildStreakSnapshot } from "./matchPoints";
 import { buildPointsBreakdown } from "./pointsBreakdown";
+import { applyHistoricBaselineAll } from "./historicBaseline";
 
 function teamOfPlayer(m: Match, playerId: string): "A" | "B" {
   if (m.teamA.playerIds.includes(playerId)) return "A";
@@ -593,7 +594,7 @@ export const usePtsStore = create<State>()(
     }),
     {
       name: "pts-scorer-v1",
-      version: 9,
+      version: 10,
       migrate: (persisted: unknown) => {
         const s = (persisted ?? {}) as {
           players?: Player[]; matches?: Match[]; milestoneFeed?: MilestoneEntry[];
@@ -706,6 +707,9 @@ export const usePtsStore = create<State>()(
           }));
           s.historicBonusV9 = true;
         }
+        // v10: official PTS historic baseline (fours, wickets, catches,
+        // awards & consistency streaks restored + calibrated totals).
+        s.players = applyHistoricBaselineAll(s.players);
         return s as never;
       },
     },
