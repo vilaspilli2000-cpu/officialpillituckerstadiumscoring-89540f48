@@ -167,7 +167,7 @@ export function computePressure(player: Player, matches: Match[]): PressureProfi
         const inDeath = ev.isLegal && (inn.legalBalls ?? 0) > 0 && deathFrom !== Infinity
           ? (ev.overNumber ?? 0) * 6 + (ev.ballInOver ?? 0) >= deathFrom
           : false;
-        if (inDeath && ev.strikerId === player.id) {
+        if (inDeath && ev.batterId === player.id) {
           deathRuns += ev.runsToBatter; deathBalls += 1;
         }
         if (ev.isWicket && ev.bowlerId === player.id && (chasing || inDeath)) {
