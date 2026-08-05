@@ -394,12 +394,35 @@ export const usePtsStore = create<State>()(
             if (!b.out) pl.career.notOuts += 1;
             pl.career.innings = (pl.career.innings ?? 0) + 1;
             if (b.runs === 0 && b.out) pl.career.ducks = (pl.career.ducks ?? 0) + 1;
+            if (b.runs === 0 && b.out && b.balls <= 1) pl.career.goldenDucks = (pl.career.goldenDucks ?? 0) + 1;
+            if (b.dismissalType === "six-and-out") pl.career.sixOuts = (pl.career.sixOuts ?? 0) + 1;
+            if (b.dismissalType === "hit-wicket") pl.career.hitWickets = (pl.career.hitWickets ?? 0) + 1;
+            if (b.dismissalType === "caught" || b.dismissalType === "caught-one-bounce") {
+              pl.career.caughtOuts = (pl.career.caughtOuts ?? 0) + 1;
+            }
+            if (b.balls >= 20) {
+              const isr = (b.runs / b.balls) * 100;
+              if (isr > (pl.career.bestMatchSR ?? 0)) pl.career.bestMatchSR = isr;
+            }
+            // Consistency streak (consecutive innings of 30+).
+            if (b.runs >= 30) {
+              pl.career.streak30Current = (pl.career.streak30Current ?? 0) + 1;
+              pl.career.streak30Best = Math.max(pl.career.streak30Best ?? 0, pl.career.streak30Current);
+            } else {
+              pl.career.streak30Current = 0;
+            }
             counted.add(b.playerId);
           }
           for (const ev of inn.events) {
             if (ev.catcherId && ev.dismissalType !== "run-out") {
               const pl = updated.find((x) => x.id === ev.catcherId);
-              if (pl) pl.career.catches += 1;
+              if (pl) {
+                if (ev.dismissalType === "caught-one-bounce") {
+                  pl.career.oneBounceCatches = (pl.career.oneBounceCatches ?? 0) + 1;
+                } else {
+                  pl.career.catches += 1;
+                }
+              }
             }
             if (ev.isWicket && ev.dismissalType === "run-out" && ev.catcherId) {
               const pl = updated.find((x) => x.id === ev.catcherId);
@@ -421,6 +444,10 @@ export const usePtsStore = create<State>()(
             } else if (bw.wickets === (pl.career.bestBowlingWkts ?? 0) && bw.wickets > 0 &&
                        bw.runs < (pl.career.bestBowlingRuns ?? Infinity)) {
               pl.career.bestBowlingRuns = bw.runs;
+            }
+            // Expensive match (§12) — final economy above 10.00, once per match.
+            if (bw.balls > 0 && (bw.runs / bw.balls) * 6 > 10) {
+              pl.career.expensiveMatches = (pl.career.expensiveMatches ?? 0) + 1;
             }
             counted.add(bw.playerId);
           }
