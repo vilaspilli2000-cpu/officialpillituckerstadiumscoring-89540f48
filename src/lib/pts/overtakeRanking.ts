@@ -26,6 +26,7 @@ export type OvertakeCategoryKey =
   | "boundaries"
   | "bowling"
   | "matchPerf"
+  | "ach"
   | "historic";
 
 export interface OvertakeCategory {
@@ -53,6 +54,7 @@ const CATEGORY_LABELS: Record<OvertakeCategoryKey, string> = {
   boundaries: "Career Fours",
   bowling: "Career Wickets",
   matchPerf: "Match Performance",
+  ach: "Achievement Points",
   historic: "Historic Contribution",
 };
 
@@ -156,6 +158,13 @@ export function computeOvertakeScore(player: Player, matches: Match[]): Overtake
   const matchPerfPts = player.matchPoints ?? 0;
   const matchPerfDetail = `Accumulated across ${scores.length} innings`;
 
+  // 7b. Achievement Points (ACH) — permanent, includes Hall Of Shame penalties.
+  const achPts = player.achPoints ?? 0;
+  const achUnlocks = (player.achievements ?? []).filter((u) => !u.baseline);
+  const achDetail = achUnlocks.length
+    ? `${achUnlocks.length} achievement${achUnlocks.length === 1 ? "" : "s"} earned`
+    : "No achievement points yet";
+
   // 8. Historic contribution — legacy pre-tracking ranking points.
   const historicPts = player.historicRankingPoints ?? 0;
   const historicDetail = historicPts
@@ -170,6 +179,7 @@ export function computeOvertakeScore(player: Player, matches: Match[]): Overtake
     boundaries: { key: "boundaries", label: CATEGORY_LABELS.boundaries, points: fourPts, detail: boundaryDetail },
     bowling: { key: "bowling", label: CATEGORY_LABELS.bowling, points: histWktPts, detail: bowlingDetail },
     matchPerf: { key: "matchPerf", label: CATEGORY_LABELS.matchPerf, points: matchPerfPts, detail: matchPerfDetail },
+    ach: { key: "ach", label: CATEGORY_LABELS.ach, points: achPts, detail: achDetail },
     historic: { key: "historic", label: CATEGORY_LABELS.historic, points: historicPts, detail: historicDetail },
   };
 
