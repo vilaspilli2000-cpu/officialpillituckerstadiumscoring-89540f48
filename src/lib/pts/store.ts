@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
   Achievement, AwardFeedEntry, BallEventType, FormatId, Match, MilestoneEntry,
-  Player, RecordEntry, Team, FieldingEventKind,
+  Player, RecordEntry, Team, FieldingEventKind, AchUnlock,
 } from "./types";
 import { SEED_PLAYERS, OFFICIAL_AWARD_SPLITS } from "./seed";
 import { applyEvent, type ApplyOptions } from "./engine";
@@ -15,20 +15,55 @@ import { MILESTONE_STEPS, totalAwards } from "./milestones";
 import { computeMatchPoints, buildStreakSnapshot } from "./matchPoints";
 import { buildPointsBreakdown } from "./pointsBreakdown";
 import { applyHistoricBaselineAll } from "./historicBaseline";
+import {
+  achievementCommentary, applyUnlocks, careerAchStats, evaluateAchievements,
+  grandfatherAchievements, liveAchStats, RESULT_ONLY_STATS, type StatKey,
+} from "./achievements";
 
 function teamOfPlayer(m: Match, playerId: string): "A" | "B" {
   if (m.teamA.playerIds.includes(playerId)) return "A";
   return "B";
 }
 
+/** Run the achievement engine for a set of players and return the new state. */
+function runAchievements(
+  players: Player[],
+  targets: Array<{ id: string; only?: StatKey[] }>,
+  ctx: { matchId?: string; matchLabel?: string; opponent?: (t: "A" | "B") => string; match?: Match },
+  mode: "live" | "final",
+): { players: Player[]; unlocks: AchUnlock[] } {
+  let out = players;
+  const unlocks: AchUnlock[] = [];
+  for (const t of targets) {
+    const p = out.find((x) => x.id === t.id);
+    if (!p) continue;
+    const stats = mode === "live" ? liveAchStats(p, ctx.match) : careerAchStats(p);
+    const team = ctx.match ? teamOfPlayer(ctx.match, p.id) : "A";
+    const u = evaluateAchievements(
+      p, stats, out,
+      { matchId: ctx.matchId, matchLabel: ctx.matchLabel, opponent: ctx.opponent?.(team) },
+      t.only,
+    );
+    if (u.length === 0) continue;
+    const np = applyUnlocks(p, u);
+    out = out.map((x) => (x.id === p.id ? np : x));
+    unlocks.push(...u);
+  }
+  return { players: out, unlocks };
+}
+
 const uid = () =>
   globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
+
+/** Seed players with the v3.3 achievement baseline grandfathered (ACH = 0). */
+const BASE_PLAYERS: Player[] = grandfatherAchievements(SEED_PLAYERS);
 
 export interface SyncedState {
   players: Player[];
   matches: Match[];
   current?: Match;
   achievements: Achievement[];
+  achFeed: AchUnlock[];
   settings: { defaultFollowOn: number; commentaryEnabled?: boolean };
   milestoneFeed: MilestoneEntry[];
   recordFeed: RecordEntry[];
@@ -53,6 +88,7 @@ interface State {
   matches: Match[];
   current?: Match;
   achievements: Achievement[];
+  achFeed: AchUnlock[];
   undoStack: Match[];
   settings: { defaultFollowOn: number; commentaryEnabled?: boolean };
   milestoneFeed: MilestoneEntry[];
@@ -84,9 +120,10 @@ interface State {
 export const usePtsStore = create<State>()(
   persist(
     (set, get) => ({
-      players: SEED_PLAYERS,
+      players: BASE_PLAYERS,
       matches: [],
       achievements: [],
+      achFeed: [],
       undoStack: [],
       settings: { defaultFollowOn: 200 },
       milestoneFeed: [],
@@ -177,9 +214,46 @@ export const usePtsStore = create<State>()(
           m.story = buildStory(m, players);
         }
 
+        // ── Live Achievement Engine (§10) — only the stats this ball touched.
+        let playersOut = players;
+        let newUnlocks: AchUnlock[] = [];
+        if (lastEv) {
+          const matchLabel = `${m.teamA.name} vs ${m.teamB.name}`;
+          const opponent = (t: "A" | "B") => (t === "A" ? m.teamB.name : m.teamA.name);
+          const targets: Array<{ id: string; only?: StatKey[] }> = [];
+          if (lastEv.batterId) {
+            targets.push({
+              id: lastEv.batterId,
+              only: ["runs", "fours", "fifties", "hundreds", "matchSR", "streak30"],
+            });
+          }
+          if (lastEv.isWicket && lastEv.bowlerId) targets.push({ id: lastEv.bowlerId, only: ["wickets"] });
+          if (lastEv.catcherId) targets.push({ id: lastEv.catcherId, only: ["catches", "oneBounceCatches"] });
+          const ran = runAchievements(players, targets, { matchId: m.id, matchLabel, opponent, match: m }, "live");
+          playersOut = ran.players;
+          newUnlocks = ran.unlocks;
+          for (const u of newUnlocks) {
+            const nm = playerName(playersOut, u.playerId);
+            const first = true;
+            const innAt = m.innings[m.currentInnings];
+            m.commentary = [
+              ...(m.commentary ?? []),
+              {
+                id: uid(), ts: Date.now(), inningsIndex: m.currentInnings,
+                ballIndex: innAt?.events.length ?? 0,
+                overLabel: innAt ? `${Math.floor(innAt.legalBalls / 6)}.${innAt.legalBalls % 6}` : "0.0",
+                text: achievementCommentary(nm, u.achId, first),
+                kind: "milestone",
+              },
+            ];
+          }
+        }
+
         set({
           current: m,
+          players: playersOut,
           achievements: [...acks, ...get().achievements].slice(0, 500),
+          achFeed: [...newUnlocks, ...get().achFeed].slice(0, 5000),
           undoStack: [...undoStack, snapshot].slice(-50),
         });
       },
@@ -323,12 +397,35 @@ export const usePtsStore = create<State>()(
             if (!b.out) pl.career.notOuts += 1;
             pl.career.innings = (pl.career.innings ?? 0) + 1;
             if (b.runs === 0 && b.out) pl.career.ducks = (pl.career.ducks ?? 0) + 1;
+            if (b.runs === 0 && b.out && b.balls <= 1) pl.career.goldenDucks = (pl.career.goldenDucks ?? 0) + 1;
+            if (b.dismissalType === "six-and-out") pl.career.sixOuts = (pl.career.sixOuts ?? 0) + 1;
+            if (b.dismissalType === "hit-wicket") pl.career.hitWickets = (pl.career.hitWickets ?? 0) + 1;
+            if (b.dismissalType === "caught" || b.dismissalType === "caught-one-bounce") {
+              pl.career.caughtOuts = (pl.career.caughtOuts ?? 0) + 1;
+            }
+            if (b.balls >= 20) {
+              const isr = (b.runs / b.balls) * 100;
+              if (isr > (pl.career.bestMatchSR ?? 0)) pl.career.bestMatchSR = isr;
+            }
+            // Consistency streak (consecutive innings of 30+).
+            if (b.runs >= 30) {
+              pl.career.streak30Current = (pl.career.streak30Current ?? 0) + 1;
+              pl.career.streak30Best = Math.max(pl.career.streak30Best ?? 0, pl.career.streak30Current);
+            } else {
+              pl.career.streak30Current = 0;
+            }
             counted.add(b.playerId);
           }
           for (const ev of inn.events) {
             if (ev.catcherId && ev.dismissalType !== "run-out") {
               const pl = updated.find((x) => x.id === ev.catcherId);
-              if (pl) pl.career.catches += 1;
+              if (pl) {
+                if (ev.dismissalType === "caught-one-bounce") {
+                  pl.career.oneBounceCatches = (pl.career.oneBounceCatches ?? 0) + 1;
+                } else {
+                  pl.career.catches += 1;
+                }
+              }
             }
             if (ev.isWicket && ev.dismissalType === "run-out" && ev.catcherId) {
               const pl = updated.find((x) => x.id === ev.catcherId);
@@ -357,6 +454,22 @@ export const usePtsStore = create<State>()(
         for (const id of counted) {
           const pl = updated.find((x) => x.id === id);
           if (pl) pl.career.matches += 1;
+        }
+        // Expensive match (§12): ONE entry per player per match when the
+        // final economy across the whole match is greater than 10.00.
+        const bowlAgg = new Map<string, { balls: number; runs: number }>();
+        for (const inn of current.innings) {
+          for (const bw of inn.bowlers) {
+            const a = bowlAgg.get(bw.playerId) ?? { balls: 0, runs: 0 };
+            a.balls += bw.balls; a.runs += bw.runs;
+            bowlAgg.set(bw.playerId, a);
+          }
+        }
+        for (const [pid, a] of bowlAgg) {
+          if (a.balls <= 0) continue;
+          if ((a.runs / a.balls) * 6 <= 10) continue;
+          const pl = updated.find((x) => x.id === pid);
+          if (pl) pl.career.expensiveMatches = (pl.career.expensiveMatches ?? 0) + 1;
         }
         // Fielding extras: dropped catches & boundary saves.
         for (const fe of current.fieldingEvents ?? []) {
@@ -481,17 +594,43 @@ export const usePtsStore = create<State>()(
           if (pm) pl.matchPoints = (pl.matchPoints ?? 0) + Math.round(pm.net);
         }
 
+        // --- Result Achievement Engine (§11 / §12) -------------------------
+        // Awards, expensive matches and every Hall Of Shame achievement are
+        // only checked once the match is officially over. Live categories are
+        // re-checked too so nothing is ever skipped.
+        const participants = Array.from(counted).map((id) => ({
+          id,
+          only: [...RESULT_ONLY_STATS, "runs", "fifties", "hundreds", "matchSR",
+                 "wickets", "fours", "catches", "oneBounceCatches", "streak30"] as StatKey[],
+        }));
+        const finalRun = runAchievements(
+          updated, participants,
+          { matchId: current.id, matchLabel, opponent, match: current },
+          "final",
+        );
+        const finalPlayers = finalRun.players;
+
         // Permanent Points Breakdown saved with the scorecard.
         const completed: Match = {
           ...current,
           pointsBreakdown: buildPointsBreakdown(current, players, matches),
+          commentary: [
+            ...(current.commentary ?? []),
+            ...finalRun.unlocks.map((u, i) => ({
+              id: `ach-${u.id}-${i}`, ts: u.ts, inningsIndex: current.currentInnings,
+              ballIndex: 0, overLabel: "—",
+              text: achievementCommentary(playerName(finalPlayers, u.playerId), u.achId, true),
+              kind: "milestone" as const,
+            })),
+          ],
         };
 
         set({
           matches: [completed, ...matches],
-          players: updated,
+          players: finalPlayers,
           current: undefined,
           undoStack: [],
+          achFeed: [...finalRun.unlocks, ...get().achFeed].slice(0, 5000),
           milestoneFeed: [...newMilestones, ...milestoneFeed].slice(0, 2000),
           recordFeed: [...newRecords, ...recordFeed].slice(0, 2000),
           awardFeed: [...newAwards, ...awardFeed].slice(0, 2000),
@@ -499,8 +638,8 @@ export const usePtsStore = create<State>()(
       },
 
       resetAll: () => set({
-        players: SEED_PLAYERS, matches: [], current: undefined,
-        achievements: [], undoStack: [],
+        players: BASE_PLAYERS, matches: [], current: undefined,
+        achievements: [], achFeed: [], undoStack: [],
         milestoneFeed: [], recordFeed: [], awardFeed: [],
       }),
 
@@ -594,17 +733,19 @@ export const usePtsStore = create<State>()(
     }),
     {
       name: "pts-scorer-v1",
-      version: 10,
+      version: 11,
       migrate: (persisted: unknown) => {
         const s = (persisted ?? {}) as {
           players?: Player[]; matches?: Match[]; milestoneFeed?: MilestoneEntry[];
           recordFeed?: RecordEntry[]; awardFeed?: AwardFeedEntry[];
+          achFeed?: AchUnlock[];
           awardsSeededV6?: boolean; historicRankingFrozenV7?: boolean;
           historicBonusV9?: boolean;
         };
         s.milestoneFeed = s.milestoneFeed ?? [];
         s.recordFeed = s.recordFeed ?? [];
         s.awardFeed = s.awardFeed ?? [];
+        s.achFeed = s.achFeed ?? [];
         const existing = s.players ?? [];
         const seedIds = new Set(SEED_PLAYERS.map((p) => p.id));
         // Upgrade existing players with any missing optional fields.
@@ -710,6 +851,9 @@ export const usePtsStore = create<State>()(
         // v10: official PTS historic baseline (fours, wickets, catches,
         // awards & consistency streaks restored + calibrated totals).
         s.players = applyHistoricBaselineAll(s.players);
+        // v11: achievement baseline — every already-satisfied tier is marked
+        // unlocked for display but awards 0 points, so ACH starts at 0.
+        s.players = grandfatherAchievements(s.players);
         return s as never;
       },
     },

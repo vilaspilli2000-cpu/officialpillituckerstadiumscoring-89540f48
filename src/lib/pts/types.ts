@@ -45,6 +45,17 @@ export interface Player {
     noBalls?: number;
     bestBowlingWkts?: number;
     bestBowlingRuns?: number;
+    /** Best single-innings strike rate with 20+ balls faced. */
+    bestMatchSR?: number;
+    /** Live consecutive 30+ innings streak and the best streak ever. */
+    streak30Current?: number;
+    streak30Best?: number;
+    /** Hall Of Shame counters. */
+    goldenDucks?: number;
+    sixOuts?: number;
+    hitWickets?: number;
+    caughtOuts?: number;
+    expensiveMatches?: number;
     // Per-award-type career counters. `awards` remains the total.
     pomAwards?: number;
     batsmanAwards?: number;
@@ -87,6 +98,27 @@ export interface Player {
   historicConsistency?: number;
   /** Marker: official PTS historic baseline (v10) has been applied. */
   ptsBaselineV10?: boolean;
+  /** Permanent Achievement Points (ACH). Hall Of Shame deducts. */
+  achPoints?: number;
+  /** Permanent achievement unlock history (never deleted). */
+  achievements?: AchUnlock[];
+  /** Marker: v3.3 achievement baseline grandfathered. */
+  achBaselineV33?: boolean;
+}
+
+/** A permanent achievement unlock (or Hall Of Shame deduction). */
+export interface AchUnlock {
+  id: string;
+  achId: string;
+  playerId: string;
+  ts: number;
+  matchId?: string;
+  matchLabel?: string;
+  opponent?: string;
+  points: number;
+  reason: string;
+  /** True for historic-baseline grandfathered unlocks (0 points). */
+  baseline?: boolean;
 }
 
 export type DismissalType =

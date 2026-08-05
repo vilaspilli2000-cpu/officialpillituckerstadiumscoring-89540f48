@@ -52,6 +52,10 @@ function Records() {
                 <span>4s {r.categories.boundaries.points}</span>
                 <span>Wkt {r.categories.bowling.points}</span>
                 <span>Match {r.categories.matchPerf.points}</span>
+                <span className={r.categories.ach.points < 0 ? "text-red-500" : "text-primary"}>
+                  ACH {r.categories.ach.points}
+                </span>
+                <span>Total {r.total}</span>
               </div>
             </div>
           ))}
