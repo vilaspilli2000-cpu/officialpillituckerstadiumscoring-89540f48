@@ -25,6 +25,33 @@ function teamOfPlayer(m: Match, playerId: string): "A" | "B" {
   return "B";
 }
 
+/** Run the achievement engine for a set of players and return the new state. */
+function runAchievements(
+  players: Player[],
+  targets: Array<{ id: string; only?: StatKey[] }>,
+  ctx: { matchId?: string; matchLabel?: string; opponent?: (t: "A" | "B") => string; match?: Match },
+  mode: "live" | "final",
+): { players: Player[]; unlocks: AchUnlock[] } {
+  let out = players;
+  const unlocks: AchUnlock[] = [];
+  for (const t of targets) {
+    const p = out.find((x) => x.id === t.id);
+    if (!p) continue;
+    const stats = mode === "live" ? liveAchStats(p, ctx.match) : careerAchStats(p);
+    const team = ctx.match ? teamOfPlayer(ctx.match, p.id) : "A";
+    const u = evaluateAchievements(
+      p, stats, out,
+      { matchId: ctx.matchId, matchLabel: ctx.matchLabel, opponent: ctx.opponent?.(team) },
+      t.only,
+    );
+    if (u.length === 0) continue;
+    const np = applyUnlocks(p, u);
+    out = out.map((x) => (x.id === p.id ? np : x));
+    unlocks.push(...u);
+  }
+  return { players: out, unlocks };
+}
+
 const uid = () =>
   globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
 
