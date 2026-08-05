@@ -55,6 +55,9 @@ function runAchievements(
 const uid = () =>
   globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
 
+/** Seed players with the v3.3 achievement baseline grandfathered (ACH = 0). */
+const BASE_PLAYERS: Player[] = grandfatherAchievements(SEED_PLAYERS);
+
 export interface SyncedState {
   players: Player[];
   matches: Match[];
@@ -117,7 +120,7 @@ interface State {
 export const usePtsStore = create<State>()(
   persist(
     (set, get) => ({
-      players: SEED_PLAYERS,
+      players: BASE_PLAYERS,
       matches: [],
       achievements: [],
       achFeed: [],
@@ -635,7 +638,7 @@ export const usePtsStore = create<State>()(
       },
 
       resetAll: () => set({
-        players: SEED_PLAYERS, matches: [], current: undefined,
+        players: BASE_PLAYERS, matches: [], current: undefined,
         achievements: [], achFeed: [], undoStack: [],
         milestoneFeed: [], recordFeed: [], awardFeed: [],
       }),
@@ -730,17 +733,19 @@ export const usePtsStore = create<State>()(
     }),
     {
       name: "pts-scorer-v1",
-      version: 10,
+      version: 11,
       migrate: (persisted: unknown) => {
         const s = (persisted ?? {}) as {
           players?: Player[]; matches?: Match[]; milestoneFeed?: MilestoneEntry[];
           recordFeed?: RecordEntry[]; awardFeed?: AwardFeedEntry[];
+          achFeed?: AchUnlock[];
           awardsSeededV6?: boolean; historicRankingFrozenV7?: boolean;
           historicBonusV9?: boolean;
         };
         s.milestoneFeed = s.milestoneFeed ?? [];
         s.recordFeed = s.recordFeed ?? [];
         s.awardFeed = s.awardFeed ?? [];
+        s.achFeed = s.achFeed ?? [];
         const existing = s.players ?? [];
         const seedIds = new Set(SEED_PLAYERS.map((p) => p.id));
         // Upgrade existing players with any missing optional fields.
@@ -846,6 +851,9 @@ export const usePtsStore = create<State>()(
         // v10: official PTS historic baseline (fours, wickets, catches,
         // awards & consistency streaks restored + calibrated totals).
         s.players = applyHistoricBaselineAll(s.players);
+        // v11: achievement baseline — every already-satisfied tier is marked
+        // unlocked for display but awards 0 points, so ACH starts at 0.
+        s.players = grandfatherAchievements(s.players);
         return s as never;
       },
     },
