@@ -211,9 +211,46 @@ export const usePtsStore = create<State>()(
           m.story = buildStory(m, players);
         }
 
+        // ── Live Achievement Engine (§10) — only the stats this ball touched.
+        let playersOut = players;
+        let newUnlocks: AchUnlock[] = [];
+        if (lastEv) {
+          const matchLabel = `${m.teamA.name} vs ${m.teamB.name}`;
+          const opponent = (t: "A" | "B") => (t === "A" ? m.teamB.name : m.teamA.name);
+          const targets: Array<{ id: string; only?: StatKey[] }> = [];
+          if (lastEv.batterId) {
+            targets.push({
+              id: lastEv.batterId,
+              only: ["runs", "fours", "fifties", "hundreds", "matchSR", "streak30"],
+            });
+          }
+          if (lastEv.isWicket && lastEv.bowlerId) targets.push({ id: lastEv.bowlerId, only: ["wickets"] });
+          if (lastEv.catcherId) targets.push({ id: lastEv.catcherId, only: ["catches", "oneBounceCatches"] });
+          const ran = runAchievements(players, targets, { matchId: m.id, matchLabel, opponent, match: m }, "live");
+          playersOut = ran.players;
+          newUnlocks = ran.unlocks;
+          for (const u of newUnlocks) {
+            const nm = playerName(playersOut, u.playerId);
+            const first = true;
+            const innAt = m.innings[m.currentInnings];
+            m.commentary = [
+              ...(m.commentary ?? []),
+              {
+                id: uid(), ts: Date.now(), inningsIndex: m.currentInnings,
+                ballIndex: innAt?.events.length ?? 0,
+                overLabel: innAt ? `${Math.floor(innAt.legalBalls / 6)}.${innAt.legalBalls % 6}` : "0.0",
+                text: achievementCommentary(nm, u.achId, first),
+                kind: "milestone",
+              },
+            ];
+          }
+        }
+
         set({
           current: m,
+          players: playersOut,
           achievements: [...acks, ...get().achievements].slice(0, 500),
+          achFeed: [...newUnlocks, ...get().achFeed].slice(0, 5000),
           undoStack: [...undoStack, snapshot].slice(-50),
         });
       },
