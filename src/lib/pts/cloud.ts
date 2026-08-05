@@ -74,6 +74,7 @@ function snapshot(): SyncedState & { __origin: string } {
     matches: s.matches,
     current: s.current,
     achievements: s.achievements,
+    achFeed: s.achFeed,
     settings: s.settings,
     milestoneFeed: s.milestoneFeed,
     recordFeed: s.recordFeed,
@@ -93,6 +94,7 @@ function applyRemote(data: unknown) {
       matches: d.matches ?? [],
       current: d.current,
       achievements: d.achievements ?? [],
+      achFeed: d.achFeed ?? [],
       settings: d.settings ?? { defaultFollowOn: 200 },
       milestoneFeed: d.milestoneFeed ?? [],
       recordFeed: d.recordFeed ?? [],
@@ -175,6 +177,7 @@ function watchStore() {
       prev.milestoneFeed !== next.milestoneFeed ||
       prev.recordFeed !== next.recordFeed ||
       prev.awardFeed !== next.awardFeed ||
+      prev.achFeed !== next.achFeed ||
       prev.achievements !== next.achievements;
     prev = next;
     if (!changed) return;
