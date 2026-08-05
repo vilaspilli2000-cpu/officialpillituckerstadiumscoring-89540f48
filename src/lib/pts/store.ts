@@ -591,17 +591,43 @@ export const usePtsStore = create<State>()(
           if (pm) pl.matchPoints = (pl.matchPoints ?? 0) + Math.round(pm.net);
         }
 
+        // --- Result Achievement Engine (§11 / §12) -------------------------
+        // Awards, expensive matches and every Hall Of Shame achievement are
+        // only checked once the match is officially over. Live categories are
+        // re-checked too so nothing is ever skipped.
+        const participants = Array.from(counted).map((id) => ({
+          id,
+          only: [...RESULT_ONLY_STATS, "runs", "fifties", "hundreds", "matchSR",
+                 "wickets", "fours", "catches", "oneBounceCatches", "streak30"] as StatKey[],
+        }));
+        const finalRun = runAchievements(
+          updated, participants,
+          { matchId: current.id, matchLabel, opponent, match: current },
+          "final",
+        );
+        const finalPlayers = finalRun.players;
+
         // Permanent Points Breakdown saved with the scorecard.
         const completed: Match = {
           ...current,
           pointsBreakdown: buildPointsBreakdown(current, players, matches),
+          commentary: [
+            ...(current.commentary ?? []),
+            ...finalRun.unlocks.map((u, i) => ({
+              id: `ach-${u.id}-${i}`, ts: u.ts, inningsIndex: current.currentInnings,
+              ballIndex: 0, overLabel: "—",
+              text: achievementCommentary(playerName(finalPlayers, u.playerId), u.achId, true),
+              kind: "milestone" as const,
+            })),
+          ],
         };
 
         set({
           matches: [completed, ...matches],
-          players: updated,
+          players: finalPlayers,
           current: undefined,
           undoStack: [],
+          achFeed: [...finalRun.unlocks, ...get().achFeed].slice(0, 5000),
           milestoneFeed: [...newMilestones, ...milestoneFeed].slice(0, 2000),
           recordFeed: [...newRecords, ...recordFeed].slice(0, 2000),
           awardFeed: [...newAwards, ...awardFeed].slice(0, 2000),
@@ -610,7 +636,7 @@ export const usePtsStore = create<State>()(
 
       resetAll: () => set({
         players: SEED_PLAYERS, matches: [], current: undefined,
-        achievements: [], undoStack: [],
+        achievements: [], achFeed: [], undoStack: [],
         milestoneFeed: [], recordFeed: [], awardFeed: [],
       }),
 
