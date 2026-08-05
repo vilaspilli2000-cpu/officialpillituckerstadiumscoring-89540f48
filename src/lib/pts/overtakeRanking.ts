@@ -338,6 +338,7 @@ function categoryPhrase(k: OvertakeCategoryKey): string {
     case "boundaries": return "hitting more boundaries";
     case "bowling": return "picking up more wickets";
     case "matchPerf": return "compiling stronger match-by-match performances";
+    case "ach": return "unlocking more achievements";
     case "historic": return "adding to the career record";
   }
 }
