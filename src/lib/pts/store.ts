@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
   Achievement, AwardFeedEntry, BallEventType, FormatId, Match, MilestoneEntry,
-  Player, RecordEntry, Team, FieldingEventKind,
+  Player, RecordEntry, Team, FieldingEventKind, AchUnlock,
 } from "./types";
 import { SEED_PLAYERS, OFFICIAL_AWARD_SPLITS } from "./seed";
 import { applyEvent, type ApplyOptions } from "./engine";
@@ -15,6 +15,10 @@ import { MILESTONE_STEPS, totalAwards } from "./milestones";
 import { computeMatchPoints, buildStreakSnapshot } from "./matchPoints";
 import { buildPointsBreakdown } from "./pointsBreakdown";
 import { applyHistoricBaselineAll } from "./historicBaseline";
+import {
+  achievementCommentary, applyUnlocks, careerAchStats, evaluateAchievements,
+  grandfatherAchievements, liveAchStats, RESULT_ONLY_STATS, type StatKey,
+} from "./achievements";
 
 function teamOfPlayer(m: Match, playerId: string): "A" | "B" {
   if (m.teamA.playerIds.includes(playerId)) return "A";
@@ -29,6 +33,7 @@ export interface SyncedState {
   matches: Match[];
   current?: Match;
   achievements: Achievement[];
+  achFeed: AchUnlock[];
   settings: { defaultFollowOn: number; commentaryEnabled?: boolean };
   milestoneFeed: MilestoneEntry[];
   recordFeed: RecordEntry[];
@@ -53,6 +58,7 @@ interface State {
   matches: Match[];
   current?: Match;
   achievements: Achievement[];
+  achFeed: AchUnlock[];
   undoStack: Match[];
   settings: { defaultFollowOn: number; commentaryEnabled?: boolean };
   milestoneFeed: MilestoneEntry[];
@@ -87,6 +93,7 @@ export const usePtsStore = create<State>()(
       players: SEED_PLAYERS,
       matches: [],
       achievements: [],
+      achFeed: [],
       undoStack: [],
       settings: { defaultFollowOn: 200 },
       milestoneFeed: [],
