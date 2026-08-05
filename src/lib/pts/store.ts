@@ -445,16 +445,28 @@ export const usePtsStore = create<State>()(
                        bw.runs < (pl.career.bestBowlingRuns ?? Infinity)) {
               pl.career.bestBowlingRuns = bw.runs;
             }
-            // Expensive match (§12) — final economy above 10.00, once per match.
-            if (bw.balls > 0 && (bw.runs / bw.balls) * 6 > 10) {
-              pl.career.expensiveMatches = (pl.career.expensiveMatches ?? 0) + 1;
-            }
             counted.add(bw.playerId);
           }
         }
         for (const id of counted) {
           const pl = updated.find((x) => x.id === id);
           if (pl) pl.career.matches += 1;
+        }
+        // Expensive match (§12): ONE entry per player per match when the
+        // final economy across the whole match is greater than 10.00.
+        const bowlAgg = new Map<string, { balls: number; runs: number }>();
+        for (const inn of current.innings) {
+          for (const bw of inn.bowlers) {
+            const a = bowlAgg.get(bw.playerId) ?? { balls: 0, runs: 0 };
+            a.balls += bw.balls; a.runs += bw.runs;
+            bowlAgg.set(bw.playerId, a);
+          }
+        }
+        for (const [pid, a] of bowlAgg) {
+          if (a.balls <= 0) continue;
+          if ((a.runs / a.balls) * 6 <= 10) continue;
+          const pl = updated.find((x) => x.id === pid);
+          if (pl) pl.career.expensiveMatches = (pl.career.expensiveMatches ?? 0) + 1;
         }
         // Fielding extras: dropped catches & boundary saves.
         for (const fe of current.fieldingEvents ?? []) {
