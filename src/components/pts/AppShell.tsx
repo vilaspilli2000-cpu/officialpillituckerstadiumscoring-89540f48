@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { AuthGate } from "./AuthGate";
 import { CloudBar } from "./CloudBar";
+import { AchievementUnlockOverlay } from "./AchievementUnlockOverlay";
 
 export function AppShell({ children, title }: { children: ReactNode; title?: string }) {
   return (
@@ -30,11 +31,13 @@ function Shell({ children, title }: { children: ReactNode; title?: string }) {
         <CloudBar />
       </header>
       <main className="flex-1 mx-auto w-full max-w-5xl px-4 py-6 pb-24">{children}</main>
+      <AchievementUnlockOverlay />
       <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-md bg-background/90 border-t border-primary/20 md:hidden">
-        <div className="grid grid-cols-5 text-[11px]">
+        <div className="grid grid-cols-6 text-[11px]">
           <NavTab to="/" label="Home" />
           <NavTab to="/records" label="Records" />
           <NavTab to="/players" label="Players" />
+          <NavTab to="/achievements" label="Badges" />
           <NavTab to="/almanac" label="Almanac" />
           <NavTab to="/history" label="History" />
         </div>
