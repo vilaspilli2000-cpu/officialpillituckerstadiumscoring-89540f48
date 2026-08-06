@@ -403,42 +403,19 @@ export function applyUnlocks(player: Player, unlocks: AchUnlock[]): Player {
 }
 
 /**
- * Grandfather the official historic baseline: every tier a player has
- * already satisfied is marked unlocked for display but awards 0 points, so
- * ACH starts at exactly 0 for every existing player.
+ * v3.3.4 — The Achievement System officially begins now. Every achievement
+ * progress counter starts at ZERO, nothing is unlocked from historic career
+ * statistics, and every ACH bucket starts at 0. Career statistics are left
+ * completely untouched.
  */
-export function grandfatherAchievements(players: Player[]): Player[] {
-  const out: Player[] = [];
-  for (const p of players) {
-    if (p.achBaselineV33) { out.push(p); continue; }
-    const stats = careerAchStats(p);
-    const have = unlockedIds(p);
-    const unlocks: AchUnlock[] = [];
-    for (const g of ACHIEVEMENT_GROUPS) {
-      const value = stats[g.statKey] ?? 0;
-      for (const def of g.tiers) {
-        if (have.has(def.id) || value < def.requirement) continue;
-        if (def.legacy && (isLegacyTaken(def.id, out, p.id) || isLegacyTaken(def.id, players, p.id))) continue;
-        unlocks.push({
-          id: `${p.id}-${def.id}-baseline`,
-          achId: def.id,
-          playerId: p.id,
-          ts: 0,
-          points: 0,
-          reason: `Historic baseline — ${def.requirement.toLocaleString()} ${def.unit}`,
-          baseline: true,
-        });
-        have.add(def.id);
-      }
-    }
-    out.push({
-      ...p,
-      achievements: [...(p.achievements ?? []), ...unlocks],
-      achPoints: p.achPoints ?? 0,
-      achBaselineV33: true,
-    });
-  }
-  return out;
+export function resetAchievementBaseline(players: Player[]): Player[] {
+  return players.map((p) => ({
+    ...p,
+    achProgress: zeroAchProgress(),
+    achievements: [],
+    achPoints: 0,
+    achBaselineV334: true,
+  }));
 }
 
 /** Commentary line matched to the rarity of the unlock. */
