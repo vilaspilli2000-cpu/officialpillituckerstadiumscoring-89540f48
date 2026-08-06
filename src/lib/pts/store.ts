@@ -610,6 +610,77 @@ export const usePtsStore = create<State>()(
           if (pm) pl.matchPoints = (pl.matchPoints ?? 0) + Math.round(pm.net);
         }
 
+        // --- Achievement Progress (§ v3.3.4) -------------------------------
+        // Progress counters only ever grow from matches played after the
+        // achievement system was installed — never from career statistics.
+        const progress = new Map<string, Partial<AchStats>>();
+        const bump = (id: string, k: keyof AchStats, v: number, max = false) => {
+          const d = progress.get(id) ?? {};
+          d[k] = max ? Math.max(d[k] ?? 0, v) : (d[k] ?? 0) + v;
+          progress.set(id, d);
+        };
+        const consPts = new Map<string, number>();
+        const streakNow = new Map<string, number>(
+          players.map((p) => [p.id, p.career.streak30Current ?? 0]),
+        );
+        for (const inn of current.innings) {
+          for (const b of inn.batters) {
+            bump(b.playerId, "runs", b.runs);
+            bump(b.playerId, "fours", b.fours);
+            if (b.runs >= 100) bump(b.playerId, "hundreds", 1);
+            else if (b.runs >= 50) bump(b.playerId, "fifties", 1);
+            if (b.balls >= 20) bump(b.playerId, "matchSR", (b.runs / b.balls) * 100, true);
+            if (b.runs === 0 && b.out) bump(b.playerId, "ducks", 1);
+            if (b.runs === 0 && b.out && b.balls <= 1) bump(b.playerId, "goldenDucks", 1);
+            if (b.dismissalType === "six-and-out") bump(b.playerId, "sixOuts", 1);
+            if (b.dismissalType === "hit-wicket") bump(b.playerId, "hitWickets", 1);
+            if (b.dismissalType === "caught" || b.dismissalType === "caught-one-bounce") {
+              bump(b.playerId, "caughtOuts", 1);
+            }
+            // Consistency: consecutive 30+ innings only.
+            const s = b.runs >= 30 ? (streakNow.get(b.playerId) ?? 0) + 1 : 0;
+            streakNow.set(b.playerId, s);
+            if (b.runs >= 30) {
+              consPts.set(b.playerId, (consPts.get(b.playerId) ?? 0) + (s >= 3 ? 18 : 6));
+              bump(b.playerId, "streak30", s, true);
+            }
+          }
+          for (const bw of inn.bowlers) bump(bw.playerId, "wickets", bw.wickets);
+          for (const ev of inn.events) {
+            if (!ev.catcherId) continue;
+            if (ev.dismissalType === "caught") bump(ev.catcherId, "catches", 1);
+            if (ev.dismissalType === "caught-one-bounce") bump(ev.catcherId, "oneBounceCatches", 1);
+          }
+        }
+        for (const [pid, a] of bowlAgg) {
+          if (a.balls > 0 && (a.runs / a.balls) * 6 > 10) bump(pid, "expensiveMatches", 1);
+        }
+        for (const fe of current.fieldingEvents ?? []) {
+          if (fe.kind === "catch-drop") bump(fe.playerId, "catchDrops", 1);
+        }
+        for (const aw of current.awards ?? []) {
+          if (aw.type === "pom") bump(aw.playerId, "pom", 1);
+          if (aw.type === "fighter") bump(aw.playerId, "fighter", 1);
+          if (aw.type === "fielder") bump(aw.playerId, "fielder", 1);
+        }
+        for (let i = 0; i < updated.length; i++) {
+          const d = progress.get(updated[i].id);
+          if (d) updated[i] = addAchProgress(updated[i], d);
+        }
+
+        // --- Ranking buckets: never reset, only ever extended --------------
+        for (let i = 0; i < updated.length; i++) {
+          const pre = preById.get(updated[i].id);
+          if (!pre) continue;
+          const pm = mp.get(updated[i].id);
+          if (!pm && !consPts.get(updated[i].id)) continue;
+          const delta = matchBucketDeltas(pre, updated[i], {
+            consistencyPoints: consPts.get(updated[i].id) ?? 0,
+            netMatchPoints: pm?.net ?? 0,
+          });
+          updated[i] = { ...updated[i], buckets: addBuckets(playerBuckets(updated[i]), delta) };
+        }
+
         // --- Result Achievement Engine (§11 / §12) -------------------------
         // Awards, expensive matches and every Hall Of Shame achievement are
         // only checked once the match is officially over. Live categories are
