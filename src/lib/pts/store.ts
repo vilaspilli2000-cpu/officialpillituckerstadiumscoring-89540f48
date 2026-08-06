@@ -827,7 +827,7 @@ export const usePtsStore = create<State>()(
           recordFeed?: RecordEntry[]; awardFeed?: AwardFeedEntry[];
           achFeed?: AchUnlock[];
           awardsSeededV6?: boolean; historicRankingFrozenV7?: boolean;
-          historicBonusV9?: boolean;
+          historicBonusV9?: boolean; achBaselineV334?: boolean;
         };
         s.milestoneFeed = s.milestoneFeed ?? [];
         s.recordFeed = s.recordFeed ?? [];
