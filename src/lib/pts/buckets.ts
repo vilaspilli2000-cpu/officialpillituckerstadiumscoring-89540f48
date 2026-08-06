@@ -23,7 +23,7 @@ export const OFFICIAL_BUCKETS: Record<string, RankBuckets> = {
   sunny:   { sr: 335, big: 960, cons: 90, awd: 1731, fours: 730, wkt: 69, match: 1134 },
   sathvik: { sr: 302, big: 240, cons: 54, awd: 1110, fours: 430, wkt: 43, match: 1003 },
   rithu:   { sr: 240, big: 250, cons: 42, awd: 854,  fours: 296, wkt: 48, match: 513 },
-  atharv:  { sr: 275, big: 110, cons: 6,  awd: 551,  fours: 240, wkt: 27, match: 69 },
+  atharv:  { sr: 275, big: 110, cons: 6,  awd: 551,  fours: 240, wkt: 27, match: 462 },
   karthik: { sr: 256, big: 40,  cons: 30, awd: 616,  fours: 200, wkt: 39, match: 464 },
   deva:    { sr: 230, big: 10,  cons: 0,  awd: 430,  fours: 155, wkt: 30, match: 62 },
   mahesh:  { sr: 215, big: 20,  cons: 0,  awd: 164,  fours: 64,  wkt: 8,  match: -11 },
