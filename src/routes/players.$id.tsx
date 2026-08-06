@@ -8,6 +8,11 @@ import { playerAwardCounts, careerImpactScore } from "@/lib/pts/insights";
 import { rankAllOvertake } from "@/lib/pts/overtakeRanking";
 import { allMilestoneCards } from "@/lib/pts/milestones";
 import { FormPressureCard } from "@/components/pts/FormPressureCard";
+import { AchievementBadge } from "@/components/pts/AchievementBadge";
+import {
+  ACHIEVEMENT_GROUPS, CATEGORY_META, groupProgress, liveAchStats,
+  type AchCategory, type AchProgress,
+} from "@/lib/pts/achievements";
 
 export const Route = createFileRoute("/players/$id")({
   head: ({ params }) => ({ meta: [{ title: `Profile · ${params.id} — PTS Scorer` }] }),
@@ -94,6 +99,8 @@ function Profile() {
       </header>
 
       <FormPressureCard player={player} matches={matches} />
+
+      <AchievementShowcase />
 
       <Section title="Career Summary">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
