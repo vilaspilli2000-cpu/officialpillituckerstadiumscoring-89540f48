@@ -820,7 +820,7 @@ export const usePtsStore = create<State>()(
     }),
     {
       name: "pts-scorer-v1",
-      version: 11,
+      version: 12,
       migrate: (persisted: unknown) => {
         const s = (persisted ?? {}) as {
           players?: Player[]; matches?: Match[]; milestoneFeed?: MilestoneEntry[];
