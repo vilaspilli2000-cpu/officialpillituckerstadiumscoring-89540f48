@@ -232,29 +232,37 @@ export const groupById = (id: string) => ACHIEVEMENT_GROUPS.find((g) => g.id ===
 
 export type AchStats = Record<StatKey, number>;
 
+export const ALL_STAT_KEYS: StatKey[] = [
+  "runs", "hundreds", "fifties", "matchSR", "wickets", "fours",
+  "catches", "oneBounceCatches", "pom", "fighter", "fielder", "streak30",
+  "ducks", "goldenDucks", "sixOuts", "hitWickets", "caughtOuts",
+  "expensiveMatches", "catchDrops",
+];
+
+export const zeroAchProgress = (): AchStats =>
+  Object.fromEntries(ALL_STAT_KEYS.map((k) => [k, 0])) as AchStats;
+
+/**
+ * v3.3.4 — Achievement progress is a SEPARATE system from career statistics.
+ * Every counter starts at ZERO when the achievement system is installed and
+ * only grows from matches played after that point.
+ */
 export function careerAchStats(p: Player): AchStats {
-  const c = p.career;
-  return {
-    runs: c.runs ?? 0,
-    hundreds: c.hundreds ?? 0,
-    fifties: c.fifties ?? 0,
-    matchSR: c.bestMatchSR ?? 0,
-    wickets: c.wickets ?? 0,
-    fours: c.fours ?? 0,
-    catches: c.catches ?? 0,
-    oneBounceCatches: c.oneBounceCatches ?? 0,
-    pom: c.pomAwards ?? 0,
-    fighter: c.fighterAwards ?? 0,
-    fielder: c.fielderAwards ?? 0,
-    streak30: c.streak30Best ?? 0,
-    ducks: c.ducks ?? 0,
-    goldenDucks: c.goldenDucks ?? 0,
-    sixOuts: c.sixOuts ?? 0,
-    hitWickets: c.hitWickets ?? 0,
-    caughtOuts: c.caughtOuts ?? 0,
-    expensiveMatches: c.expensiveMatches ?? 0,
-    catchDrops: c.catchDrops ?? 0,
-  };
+  const src = p.achProgress ?? {};
+  const out = zeroAchProgress();
+  for (const k of ALL_STAT_KEYS) out[k] = src[k] ?? 0;
+  return out;
+}
+
+/** Achievement progress counters gained from one completed match. */
+export function addAchProgress(p: Player, delta: Partial<AchStats>): Player {
+  const base = careerAchStats(p);
+  for (const [k, v] of Object.entries(delta)) {
+    const key = k as StatKey;
+    if (key === "matchSR" || key === "streak30") base[key] = Math.max(base[key], v ?? 0);
+    else base[key] = base[key] + (v ?? 0);
+  }
+  return { ...p, achProgress: base };
 }
 
 /** Career stats + everything the player has done in the in-progress match. */
