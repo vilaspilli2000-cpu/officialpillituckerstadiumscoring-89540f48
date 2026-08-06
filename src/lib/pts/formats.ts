@@ -19,8 +19,8 @@ export function newInnings(
   bowling: "A" | "B",
   lineup: string[],
   format: FormatId,
-  /** Format C requires manual opening batter selection every innings. */
-  autoOpen = true,
+  /** Every innings requires manual opening batter selection (v3.3.4 §37). */
+  autoOpen = false,
 ): Innings {
   return {
     battingTeam: batting,
@@ -32,7 +32,7 @@ export function newInnings(
     batters: [],
     bowlers: [],
     lineup,
-    nextBatterIndex: 1,
+    nextBatterIndex: autoOpen ? 1 : 0,
     currentBatterId: autoOpen ? lineup[0] : undefined,
     events: [],
     closed: false,
