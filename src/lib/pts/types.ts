@@ -104,6 +104,26 @@ export interface Player {
   achievements?: AchUnlock[];
   /** Marker: v3.3 achievement baseline grandfathered. */
   achBaselineV33?: boolean;
+  /** Marker: v3.3.4 achievement progress reset to zero. */
+  achBaselineV334?: boolean;
+  /** v3.3.4 — Achievement progress counters. Start at ZERO for every player
+   *  and only ever increase from matches played after the update. Completely
+   *  separate from lifetime career statistics. */
+  achProgress?: Record<string, number>;
+  /** v3.3.4 — Official ranking buckets. Seeded from the historic baseline and
+   *  only ever incremented after a completed match. Never recalculated. */
+  buckets?: RankBuckets;
+}
+
+/** Official PTS ranking buckets (SR|BIG|CONS|AWD|4S|WKT|MATCH). */
+export interface RankBuckets {
+  sr: number;
+  big: number;
+  cons: number;
+  awd: number;
+  fours: number;
+  wkt: number;
+  match: number;
 }
 
 /** A permanent achievement unlock (or Hall Of Shame deduction). */
