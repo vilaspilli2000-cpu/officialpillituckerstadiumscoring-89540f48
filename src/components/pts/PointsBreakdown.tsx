@@ -8,6 +8,22 @@ const fmt = (n: number) => {
   return (r > 0 ? "+" : "") + (Number.isInteger(r) ? r.toString() : r.toFixed(2));
 };
 
+/** Animated ranking-points transition (Old → New). */
+function CountUp({ from, to }: { from: number; to: number }) {
+  const [v, setV] = useState(from);
+  useEffect(() => {
+    const start = Date.now();
+    const dur = 900;
+    const id = setInterval(() => {
+      const t = Math.min(1, (Date.now() - start) / dur);
+      setV(Math.round(from + (to - from) * (1 - Math.pow(1 - t, 3))));
+      if (t >= 1) clearInterval(id);
+    }, 40);
+    return () => clearInterval(id);
+  }, [from, to]);
+  return <span className="tabular-nums">{v}</span>;
+}
+
 function Section({ title, total, lines }: { title: string; total: number; lines: { label: string; detail?: string; value: number }[] }) {
   if (lines.length === 0) return null;
   return (
