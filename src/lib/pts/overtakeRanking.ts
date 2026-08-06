@@ -1,7 +1,4 @@
 import type { Match, Player } from "./types";
-import {
-  historicFoursPoints, historicWicketsPoints,
-} from "./matchPoints";
 import { playerBuckets } from "./buckets";
 
 /**
