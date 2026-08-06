@@ -134,18 +134,11 @@ export function computeOvertakeScore(player: Player, matches: Match[]): Overtake
   const awardPts = B.awd;
   const awardDetail = `POM ${pom}·BOTM ${bat}·BOWLTM ${bowl}·FOTM ${fld}·Fighter ${ftr}·Worst ${wor}`;
 
-  // 5. Fours (§7) — historic snapshot rounded to nearest 10 (÷10 pts).
-  //    Every new four earns +1 pt immediately.
-  const historicFours = player.historicFours ?? c.fours ?? 0;
-  const histFourPts = historicFoursPoints(historicFours);
-  const newFours = Math.max(0, (c.fours ?? 0) - historicFours);
+  // 5. Fours bucket.
   const fourPts = B.fours;
   const boundaryDetail = `${c.fours ?? 0} career fours · bucket ${fourPts} pts`;
 
-  // 6. Career Wickets (§8) — historic rounded to nearest 5 (÷5 pts).
-  //    New wickets earn quality points via match performance.
-  const historicWickets = player.historicWickets ?? c.wickets ?? 0;
-  const wktBonus = player.historicWicketBonus ?? 0;
+  // 6. Career Wickets bucket.
   const histWktPts = B.wkt;
   const bowlingDetail = `${c.wickets ?? 0} career wickets · bucket ${histWktPts} pts`;
 
