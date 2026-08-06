@@ -33,19 +33,10 @@ export const OFFICIAL_BUCKETS: Record<string, RankBuckets> = {
   chitti:  { ...ZERO_BUCKETS },
 };
 
-/** OFFICIAL CAREER DATABASE — 100s | 50s | Runs (single source of truth). */
-export const OFFICIAL_CAREER: Record<string, { hundreds: number; fifties: number; runs: number }> = {
-  sunny:   { hundreds: 23, fifties: 45, runs: 21398 },
-  sathvik: { hundreds: 12, fifties: 28, runs: 15186 },
-  rithu:   { hundreds: 6,  fifties: 15, runs: 13168 },
-  atharv:  { hundreds: 2,  fifties: 8,  runs: 8124 },
-  karthik: { hundreds: 1,  fifties: 2,  runs: 6842 },
-  deva:    { hundreds: 0,  fifties: 2,  runs: 5648 },
-  mahesh:  { hundreds: 0,  fifties: 2,  runs: 4186 },
-  karunya: { hundreds: 0,  fifties: 0,  runs: 2397 },
-  madhu:   { hundreds: 0,  fifties: 0,  runs: 0 },
-  himmu:   { hundreds: 0,  fifties: 0,  runs: 0 },
-  chitti:  { hundreds: 0,  fifties: 0,  runs: 0 },
+/** OFFICIAL CAREER CORRECTIONS — only values explicitly confirmed as official.
+ *  Everything else keeps the existing official career database untouched. */
+export const OFFICIAL_CAREER: Record<string, Partial<{ hundreds: number; fifties: number; runs: number }>> = {
+  rithu: { runs: 13168 },
 };
 
 export function playerBuckets(p: Player): RankBuckets {
