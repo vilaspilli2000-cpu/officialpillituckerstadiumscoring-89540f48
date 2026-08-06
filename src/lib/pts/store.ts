@@ -17,8 +17,13 @@ import { buildPointsBreakdown } from "./pointsBreakdown";
 import { applyHistoricBaselineAll } from "./historicBaseline";
 import {
   achievementCommentary, applyUnlocks, careerAchStats, evaluateAchievements,
-  grandfatherAchievements, liveAchStats, RESULT_ONLY_STATS, type StatKey,
+  resetAchievementBaseline, addAchProgress, liveAchStats, RESULT_ONLY_STATS,
+  type AchStats, type StatKey,
 } from "./achievements";
+import {
+  OFFICIAL_BUCKETS, playerBuckets, addBuckets, matchBucketDeltas, ZERO_BUCKETS,
+  OFFICIAL_CAREER,
+} from "./buckets";
 
 function teamOfPlayer(m: Match, playerId: string): "A" | "B" {
   if (m.teamA.playerIds.includes(playerId)) return "A";
@@ -55,8 +60,19 @@ function runAchievements(
 const uid = () =>
   globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
 
-/** Seed players with the v3.3 achievement baseline grandfathered (ACH = 0). */
-const BASE_PLAYERS: Player[] = grandfatherAchievements(SEED_PLAYERS);
+/** Seed players with official career values, official ranking buckets and a
+ *  zeroed achievement progress baseline (v3.3.4). */
+function withOfficialBaseline(players: Player[]): Player[] {
+  return resetAchievementBaseline(players).map((p) => {
+    const career = OFFICIAL_CAREER[p.id];
+    return {
+      ...p,
+      career: career ? { ...p.career, ...career } : p.career,
+      buckets: p.buckets ?? OFFICIAL_BUCKETS[p.id] ?? { ...ZERO_BUCKETS },
+    };
+  });
+}
+const BASE_PLAYERS: Player[] = withOfficialBaseline(SEED_PLAYERS);
 
 export interface SyncedState {
   players: Player[];
