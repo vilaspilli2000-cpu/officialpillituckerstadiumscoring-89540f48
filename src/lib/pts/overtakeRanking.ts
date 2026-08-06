@@ -2,6 +2,7 @@ import type { Match, Player } from "./types";
 import {
   historicFoursPoints, historicWicketsPoints,
 } from "./matchPoints";
+import { playerBuckets } from "./buckets";
 
 /**
  * Overtake Ranking Engine
@@ -107,25 +108,21 @@ export function computeConsistency(scores: number[]): {
 export function computeOvertakeScore(player: Player, matches: Match[]): OvertakeScore {
   const c = player.career;
   const sr = c.balls ? (c.runs / c.balls) * 100 : 0;
+  const B = playerBuckets(player);
 
-  // 1. Strike Rate Points — 2 pts per SR unit (§3). Runs never affect this.
-  const battingPts = Math.round(sr * 2);
-  const battingDetail = `SR ${sr.toFixed(1)} × 2 = ${battingPts} pts`;
+  // 1. Strike Rate bucket — official baseline + every match SR gain.
+  const battingPts = B.sr;
+  const battingDetail = `SR ${sr.toFixed(1)} · bucket ${battingPts} pts`;
 
-  // 2. Big Innings (§4) — 20 per 100, 10 per 50.
-  const bigPts =
-    c.hundreds * 20 +
-    c.fifties * 10 +
-    (c.hundred50s ?? 0) * 10 +
-    (c.doubleHundreds ?? 0) * 20;
+  // 2. Big Innings bucket.
+  const bigPts = B.big;
   const bigDetail = `${c.hundreds}×100=${c.hundreds * 20}, ${c.fifties}×50=${c.fifties * 10}`;
 
   // 3. Consistency Bonus (§5)
   const scores = playerInningsScores(matches, player.id);
   const cons = computeConsistency(scores);
-  const histCons = player.historicConsistency ?? 0;
-  const consPts = cons.points + histCons * 12;
-  const consDetail = `${scores.filter((s) => s >= 30).length} innings of 30+, streak ${cons.currentStreak} (best ${cons.longestStreak})${histCons ? ` · ${histCons} historic streak bonuses` : ""}`;
+  const consPts = B.cons;
+  const consDetail = `${scores.filter((s) => s >= 30).length} innings of 30+, streak ${cons.currentStreak} (best ${cons.longestStreak})`;
 
   // 4. Awards (§6)
   const pom = c.pomAwards ?? 0;
@@ -134,7 +131,7 @@ export function computeOvertakeScore(player: Player, matches: Match[]): Overtake
   const fld = c.fielderAwards ?? 0;
   const ftr = c.fighterAwards ?? 0;
   const wor = c.worstAwards ?? 0;
-  const awardPts = pom * 6 + bat * 4 + bowl * 4 + fld * 2 + ftr * 2 - wor * 3;
+  const awardPts = B.awd;
   const awardDetail = `POM ${pom}·BOTM ${bat}·BOWLTM ${bowl}·FOTM ${fld}·Fighter ${ftr}·Worst ${wor}`;
 
   // 5. Fours (§7) — historic snapshot rounded to nearest 10 (÷10 pts).
@@ -142,20 +139,18 @@ export function computeOvertakeScore(player: Player, matches: Match[]): Overtake
   const historicFours = player.historicFours ?? c.fours ?? 0;
   const histFourPts = historicFoursPoints(historicFours);
   const newFours = Math.max(0, (c.fours ?? 0) - historicFours);
-  const fourPts = histFourPts + newFours;
-  const boundaryDetail = `Historic ${historicFours} → ${histFourPts} pts · New +${newFours}`;
+  const fourPts = B.fours;
+  const boundaryDetail = `${c.fours ?? 0} career fours · bucket ${fourPts} pts`;
 
   // 6. Career Wickets (§8) — historic rounded to nearest 5 (÷5 pts).
   //    New wickets earn quality points via match performance.
   const historicWickets = player.historicWickets ?? c.wickets ?? 0;
   const wktBonus = player.historicWicketBonus ?? 0;
-  const histWktPts = historicWicketsPoints(historicWickets) + wktBonus;
-  const t = player.historicWicketTiers;
-  const bowlingDetail = `Historic ${historicWickets} → ${historicWicketsPoints(historicWickets)} pts` +
-    (t ? ` · restored ${t.top}×7 + ${t.middle}×4 + ${t.lower}×3 = ${wktBonus} pts` : "");
+  const histWktPts = B.wkt;
+  const bowlingDetail = `${c.wickets ?? 0} career wickets · bucket ${histWktPts} pts`;
 
   // 7. Match Performance (§12) — accumulated Net Match Points.
-  const matchPerfPts = player.matchPoints ?? 0;
+  const matchPerfPts = B.match;
   const matchPerfDetail = `Accumulated across ${scores.length} innings`;
 
   // 7b. Achievement Points (ACH) — permanent, includes Hall Of Shame penalties.
@@ -165,11 +160,9 @@ export function computeOvertakeScore(player: Player, matches: Match[]): Overtake
     ? `${achUnlocks.length} achievement${achUnlocks.length === 1 ? "" : "s"} earned`
     : "No achievement points yet";
 
-  // 8. Historic contribution — legacy pre-tracking ranking points.
-  const historicPts = player.historicRankingPoints ?? 0;
-  const historicDetail = historicPts
-    ? `Legacy league record → ${historicPts} pts`
-    : "No legacy contribution";
+  // 8. Historic contribution is folded into the official buckets from v3.3.4.
+  const historicPts = 0;
+  const historicDetail = "Included in the official baseline buckets";
 
   const categories: Record<OvertakeCategoryKey, OvertakeCategory> = {
     batting: { key: "batting", label: CATEGORY_LABELS.batting, points: battingPts, detail: battingDetail },
