@@ -938,9 +938,16 @@ export const usePtsStore = create<State>()(
         // v10: official PTS historic baseline (fours, wickets, catches,
         // awards & consistency streaks restored + calibrated totals).
         s.players = applyHistoricBaselineAll(s.players);
-        // v11: achievement baseline — every already-satisfied tier is marked
-        // unlocked for display but awards 0 points, so ACH starts at 0.
-        s.players = grandfatherAchievements(s.players);
+        // v12 (v3.3.4): the Achievement System starts now — every progress
+        // counter at zero, official career totals and official ranking
+        // buckets restored. Buckets are never recalculated afterwards.
+        if (!s.achBaselineV334) {
+          s.players = withOfficialBaseline(s.players).map((p) => ({
+            ...p,
+            buckets: OFFICIAL_BUCKETS[p.id] ?? p.buckets ?? { ...ZERO_BUCKETS },
+          }));
+          s.achBaselineV334 = true;
+        }
         return s as never;
       },
     },
