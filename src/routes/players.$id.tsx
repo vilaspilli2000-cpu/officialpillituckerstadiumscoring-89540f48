@@ -62,6 +62,15 @@ function Profile() {
       perTypeCareer.fielder + perTypeCareer.fighter + perTypeCareer.worst,
   );
   const cards = allMilestoneCards(player);
+  const achStats = liveAchStats(player, undefined);
+  const achAll: AchProgress[] = ACHIEVEMENT_GROUPS.flatMap(
+    (g) => groupProgress(g, achStats, player, players).all,
+  );
+  const CATS: AchCategory[] = ["batting", "bowling", "fielding", "awards", "shame"];
+  const showcase = CATS.map((cat) => {
+    const unlocked = achAll.filter((a) => a.unlocked && a.def.category === cat);
+    return { cat, top: unlocked.length ? unlocked[unlocked.length - 1] : null };
+  });
   const impact = careerImpactScore(player, matches);
   const rankings = rankAllOvertake(players, matches);
   const rankIdx = rankings.findIndex((r) => r.player.id === player.id);
@@ -100,7 +109,36 @@ function Profile() {
 
       <FormPressureCard player={player} matches={matches} />
 
-      <AchievementShowcase />
+      <section className="mt-4">
+        <div className="mb-2 flex items-baseline justify-between">
+          <h2 className="text-sm uppercase tracking-widest text-primary/80">Achievement Showcase</h2>
+          <Link
+            to="/achievements"
+            search={{ player: player.id }}
+            className="text-xs text-primary underline"
+          >
+            View All Achievements
+          </Link>
+        </div>
+        <div className="mb-2 text-[11px] text-muted-foreground">
+          Highest tier unlocked in each category · {player.achPoints ?? 0} ACH
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {showcase.map(({ cat, top }) =>
+            top ? (
+              <AchievementBadge key={cat} p={top} compact />
+            ) : (
+              <div
+                key={cat}
+                className="rounded-2xl border border-border/50 bg-secondary/30 p-3 text-xs text-muted-foreground"
+              >
+                <span className="mr-1">{CATEGORY_META[cat].icon}</span>
+                {CATEGORY_META[cat].label} — nothing unlocked yet
+              </div>
+            ),
+          )}
+        </div>
+      </section>
 
       <Section title="Career Summary">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
