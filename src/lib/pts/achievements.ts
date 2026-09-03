@@ -24,7 +24,7 @@ export interface RarityStyle {
 export const RARITIES: Record<Rarity, RarityStyle> = {
   common:    { key: "common",    label: "Common",    emoji: "🧢", points: 5,  duration: 12000, accent: "#D9A928", accent2: "#F4C542", border: "#D9A92899", particles: "Golden sparkles · soft glow" },
   rare:      { key: "rare",      label: "Rare",      emoji: "💎", points: 10, duration: 15000, accent: "#2ECC71", accent2: "#7BE8A8", border: "#2ECC7199", particles: "Emerald crystals · green aura · crystal shine" },
-  epic:      { key: "epic",      label: "Epic",      emoji: "⚔", points: 20, duration: 18000, accent: "#E03131", accent2: "#FF7A5A", border: "#E0313199", particles: "Fire · embers · sword slash · explosion ring" },
+  epic:      { key: "epic",      label: "Epic",      emoji: "⚔️", points: 20, duration: 18000, accent: "#E03131", accent2: "#FF7A5A", border: "#E0313199", particles: "Fire · embers · sword slash · explosion ring" },
   legendary: { key: "legendary", label: "Legendary", emoji: "👑", points: 40, duration: 24000, accent: "#9B51E0", accent2: "#D0A2FF", border: "#9B51E099", particles: "Purple lightning · royal aura · falling stars · shockwave" },
   legacy:    { key: "legacy",    label: "Legacy",    emoji: "🌌", points: 75, duration: 30000, accent: "#F4C542", accent2: "#FFFFFF", border: "#F4C542", particles: "Golden explosion · crown · confetti · light rays · screen shake" },
 };

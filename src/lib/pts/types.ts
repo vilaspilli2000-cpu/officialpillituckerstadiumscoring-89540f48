@@ -113,6 +113,15 @@ export interface Player {
   /** v3.3.4 — Official ranking buckets. Seeded from the historic baseline and
    *  only ever incremented after a completed match. Never recalculated. */
   buckets?: RankBuckets;
+  /** Additive permanent Legacy/Meltdown progression state. */
+  progression?: {
+    legacyProgress: number;
+    legacyLevel: number;
+    meltdownProgress: number;
+    meltdownLevel: number;
+  };
+  /** Current streaks used only by the post-v3.3 achievement engine. */
+  achievementStreaks?: { duckDodge: number; economyGuardian: number };
 }
 
 /** Official PTS ranking buckets (SR|BIG|CONS|AWD|4S|WKT|MATCH). */
@@ -354,4 +363,16 @@ export interface AwardFeedEntry {
   headline: string;
   reason: string;
   team: "A" | "B";
+}
+
+export interface LegacyMeltdownMilestone {
+  id: string;
+  ts: number;
+  matchId: string;
+  playerId: string;
+  system: "legacy" | "meltdown";
+  level: number;
+  perk: string;
+  multiplier: number;
+  trigger: string;
 }
