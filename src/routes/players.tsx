@@ -43,6 +43,7 @@ function Players() {
         </Link>
         <Link
           to="/achievements"
+          search={{ player: undefined }}
           className="ml-2 inline-flex items-center gap-1 rounded-full border border-primary/60 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/20"
         >
           🏆 Achievements
