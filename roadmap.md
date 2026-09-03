@@ -1,0 +1,3 @@
+- [ ] Add 35 achievements and additive Legacy/Meltdown progression
+- [ ] Layer and display final multiplier results
+- [ ] Verify typecheck and preview flows
