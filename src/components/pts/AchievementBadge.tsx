@@ -3,8 +3,9 @@ import { CATEGORY_META } from "@/lib/pts/achievements";
 
 /**
  * Premium collectible achievement badge.
- * Unlocked badges use their rarity metal + animated shine; locked badges are
- * grey with "???" and live progress underneath.
+ * Unlocked badges use their rarity metal + animated shine + premium glow;
+ * locked badges are grey with "???" and live progress underneath.
+ * Each achievement tier has a unique icon that's revealed only when unlocked.
  */
 export function AchievementBadge({ p, compact }: { p: AchProgress; compact?: boolean }) {
   const def = p.def;
@@ -19,13 +20,23 @@ export function AchievementBadge({ p, compact }: { p: AchProgress; compact?: boo
       : `linear-gradient(145deg, #14120C 0%, ${accent}33 45%, #0A0A0A 100%)`
     : "linear-gradient(145deg, #121212 0%, #1A1A1A 55%, #0D0D0D 100%)";
 
+  // Premium glow effect for unlocked achievements
+  const glowStyle = unlocked ? {
+    boxShadow: `
+      0 0 20px ${accent}40,
+      0 0 40px ${accent}20,
+      0 0 60px ${accent}10,
+      inset 0 1px 0 ${accent2}33
+    `,
+  } : {};
+
   return (
     <div
       className="relative overflow-hidden rounded-2xl p-3 transition-transform hover:-translate-y-0.5"
       style={{
         background: bg,
         border: `1px solid ${unlocked ? accent + "cc" : "#2A2A2A"}`,
-        boxShadow: unlocked ? `0 0 22px ${accent}33, inset 0 1px 0 ${accent2}33` : "none",
+        ...glowStyle,
       }}
     >
       {/* animated shine */}
@@ -61,6 +72,8 @@ export function AchievementBadge({ p, compact }: { p: AchProgress; compact?: boo
             background: unlocked ? `radial-gradient(circle at 30% 25%, ${accent2}55, #0A0A0A 70%)` : "#191919",
             border: `1px solid ${unlocked ? accent + "88" : "#2E2E2E"}`,
             filter: unlocked ? "none" : "grayscale(1)",
+            // Icon glow for unlocked achievements
+            boxShadow: unlocked ? `0 0 12px ${accent}60, 0 0 24px ${accent}30` : "none",
           }}
         >
           {unlocked ? def.icon : "🔒"}

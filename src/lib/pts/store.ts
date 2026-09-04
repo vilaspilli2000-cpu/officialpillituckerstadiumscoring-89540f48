@@ -663,6 +663,101 @@ export const usePtsStore = create<State>()(
           if (aw.type === "fighter") bump(aw.playerId, "fighter", 1);
           if (aw.type === "fielder") bump(aw.playerId, "fielder", 1);
         }
+
+        // --- New v4 Achievement Stats ------------------------------------
+        // Duck Dodger: No-duck streak (a duck resets the streak)
+        const duckStreak: Record<string, number> = {};
+        for (const pl of players) duckStreak[pl.id] = pl.achievementStreaks?.duckDodge ?? 0;
+        for (const b of current.innings.flatMap(i => i.batters)) {
+          if (b.runs === 0 && b.out) {
+            // Duck - reset streak
+            duckStreak[b.playerId] = 0;
+          } else if (b.runs > 0) {
+            // Scored runs - increment streak
+            duckStreak[b.playerId] = (duckStreak[b.playerId] ?? 0) + 1;
+            bump(b.playerId, "duckDodgeStreak", duckStreak[b.playerId], true);
+          }
+        }
+        // Persist duck streak back to player.achievementStreaks
+        for (const pl of updated) {
+          const streak = duckStreak[pl.id] ?? 0;
+          pl.achievementStreaks = { ...pl.achievementStreaks, duckDodge: streak };
+        }
+
+        // Economy Guardian: Economy ≤8 streak (economy > 8 resets streak)
+        const economyStreak: Record<string, number> = {};
+        for (const pl of players) economyStreak[pl.id] = pl.achievementStreaks?.economyGuardian ?? 0;
+        for (const [pid, a] of bowlAgg) {
+          const econ = a.balls > 0 ? (a.runs / a.balls) * 6 : 0;
+          if (econ > 8) {
+            // Expensive - reset streak
+            economyStreak[pid] = 0;
+          } else if (econ <= 8 && econ > 0) {
+            // Good economy - increment streak
+            economyStreak[pid] = (economyStreak[pid] ?? 0) + 1;
+            bump(pid, "economyGuardianStreak", economyStreak[pid], true);
+          }
+        }
+        // Persist economy streak back to player.achievementStreaks
+        for (const pl of updated) {
+          const streak = economyStreak[pl.id] ?? 0;
+          pl.achievementStreaks = { ...pl.achievementStreaks, economyGuardian: streak };
+        }
+
+        // Match Appearances: one per player who participated in the match
+        for (const id of counted) {
+          bump(id, "matchAppearances", 1);
+        }
+
+        // Chase Survivor: Not-out innings while chasing
+        const target = current.target;
+        for (const inn of current.innings) {
+          const isChase = target !== undefined && inn.battingTeam === (current.innings[0].battingTeam === "A" ? "B" : "A");
+          if (!isChase) continue;
+          for (const b of inn.batters) {
+            if (!b.out) {
+              bump(b.playerId, "chasingNotOuts", 1);
+            }
+          }
+        }
+
+        // Boundary Saves (already tracked in fielding events, but also track here for consistency)
+        for (const fe of current.fieldingEvents ?? []) {
+          if (fe.kind === "boundary-save") bump(fe.playerId, "boundarySaves", 1);
+        }
+
+        // Botm/Bowltm awards (batsman/bowler awards)
+        for (const aw of current.awards ?? []) {
+          if (aw.type === "batsman") bump(aw.playerId, "botmAwards", 1);
+          if (aw.type === "bowler") bump(aw.playerId, "bowltmAwards", 1);
+        }
+
+        // Low Scores: scores below 10
+        for (const inn of current.innings) {
+          for (const b of inn.batters) {
+            if (b.runs > 0 && b.runs < 10) bump(b.playerId, "lowScores", 1);
+          }
+        }
+
+        // Worst Awards
+        for (const aw of current.awards ?? []) {
+          if (aw.type === "worst") bump(aw.playerId, "worstAwards", 1);
+        }
+
+        // Bowled Dismissals
+        for (const inn of current.innings) {
+          for (const b of inn.batters) {
+            if (b.dismissalType === "bowled") bump(b.playerId, "bowledDismissals", 1);
+          }
+        }
+
+        // Extras Given (wides + no-balls from bowler)
+        for (const inn of current.innings) {
+          for (const bw of inn.bowlers) {
+            const extras = (bw.wides ?? 0) + (bw.noBalls ?? 0);
+            if (extras > 0) bump(bw.playerId, "extrasGiven", extras);
+          }
+        }
         for (let i = 0; i < updated.length; i++) {
           const d = progress.get(updated[i].id);
           if (d) updated[i] = addAchProgress(updated[i], d);

@@ -44,18 +44,27 @@ export type StatKey =
   | "runs" | "hundreds" | "fifties" | "matchSR" | "wickets" | "fours"
   | "catches" | "oneBounceCatches" | "pom" | "fighter" | "fielder" | "streak30"
   | "ducks" | "goldenDucks" | "sixOuts" | "hitWickets" | "caughtOuts"
-  | "expensiveMatches" | "catchDrops";
+  | "expensiveMatches" | "catchDrops"
+  // New v4 achievement stats
+  | "duckDodgeStreak" | "matchAppearances" | "chasingNotOuts" | "economyGuardianStreak"
+  | "boundarySaves" | "botmAwards" | "bowltmAwards" | "lowScores" | "worstAwards"
+  | "bowledDismissals" | "extrasGiven";
 
 /** Statistics only evaluated once a match is officially over. */
 export const RESULT_ONLY_STATS: StatKey[] = [
   "pom", "fighter", "fielder", "expensiveMatches",
   "ducks", "goldenDucks", "sixOuts", "hitWickets", "caughtOuts", "catchDrops",
+  // New v4 achievement stats that are result-only
+  "duckDodgeStreak", "economyGuardianStreak", "chasingNotOuts", "botmAwards", "bowltmAwards",
+  "lowScores", "worstAwards", "bowledDismissals", "extrasGiven",
 ];
 
 /** Statistics that unlock live, during scoring. */
 export const LIVE_STATS: StatKey[] = [
   "runs", "fifties", "hundreds", "matchSR", "wickets", "fours",
   "catches", "oneBounceCatches", "streak30",
+  // boundarySaves and matchAppearances could be checked live if needed
+  "boundarySaves", "matchAppearances",
 ];
 
 export interface AchievementDef {
@@ -186,6 +195,63 @@ const GROUP_SPECS: GroupSpec[] = [
     unit: "Catch Drops", icon: "🧈",
     tiers: [["Slippery Hands", 5], ["Butter Fingers", 15], ["Drop Specialist", 30], ["Gravity's Friend", 50], ["Butter Fingers Supreme", 75]],
   },
+  // NEW v4 NORMAL ACHIEVEMENTS (7 families × 5 levels = 35)
+  {
+    id: "duck-dodger", name: "Duck Dodger", category: "batting", statKey: "duckDodgeStreak",
+    unit: "No‑Duck Streak", icon: "🦆", note: "A duck (dismissed for 0) resets the streak",
+    tiers: [["Duck Dodger", 5], ["Duck Breaker", 10], ["Duck Master", 20], ["Duck Slayer", 35], ["Duck Immortal", 50]],
+  },
+  {
+    id: "veteran", name: "Veteran", category: "awards", statKey: "matchAppearances",
+    unit: "Match Appearances", icon: "🌱", note: "Actual player match appearances from existing data",
+    tiers: [["Rookie", 50], ["Regular", 100], ["Veteran", 200], ["Ironman", 300], ["Immortal", 500]],
+  },
+  {
+    id: "chase-survivor", name: "Chase Survivor", category: "batting", statKey: "chasingNotOuts",
+    unit: "Chase Not‑Outs", icon: "🏃", note: "Count qualifying not‑out innings while chasing",
+    tiers: [["Chase Runner", 3], ["Chase Finisher", 7], ["Chase Specialist", 15], ["Chase Master", 25], ["Chase Immortal", 40]],
+  },
+  {
+    id: "economy-guardian", name: "Economy Guardian", category: "bowling", statKey: "economyGuardianStreak",
+    unit: "Economy ≤8 Streak", icon: "🧤", note: "Economy ≤8 is successful; >8 resets the streak",
+    tiers: [["Economy Keeper", 3], ["Economy Guardian", 5], ["Economy Master", 10], ["Economy Fortress", 20], ["Economy Immortal", 30]],
+  },
+  {
+    id: "boundary-guardian", name: "Boundary Guardian", category: "fielding", statKey: "boundarySaves",
+    unit: "Boundary Saves", icon: "👀", note: "Authoritative existing fielding data",
+    tiers: [["Boundary Watcher", 10], ["Boundary Saver", 25], ["Boundary Guardian", 50], ["Boundary Master", 100], ["Boundary Immortal", 200]],
+  },
+  {
+    id: "batting-royalty", name: "Batting Royalty", category: "awards", statKey: "botmAwards",
+    unit: "BOTM Awards", icon: "🔎", note: "Count actual existing BOTM awards",
+    tiers: [["Batting Seeker", 10], ["Batting Star", 25], ["Batting Hero", 50], ["Batting King", 100], ["Batting Legend", 150]],
+  },
+  {
+    id: "bowling-royalty", name: "Bowling Royalty", category: "awards", statKey: "bowltmAwards",
+    unit: "BOWLTM Awards", icon: "🎳", note: "Count actual existing BOWLTM awards",
+    tiers: [["Bowling Seeker", 10], ["Bowling Star", 25], ["Bowling Hero", 50], ["Bowling King", 100], ["Bowling Legend", 150]],
+  },
+  // NEW v4 HALL OF SHAME (4 topics × 5 levels = 20)
+  {
+    id: "low-blow", name: "Low Blow", category: "shame", statKey: "lowScores", shame: true,
+    unit: "Scores Below 10", icon: "🥴", note: "Scores below 10 runs",
+    tiers: [["Rough Start", 3], ["Bad Touch", 7], ["Low Blow", 12], ["Run Drought", 20], ["Batting Breakdown", 30]],
+  },
+  {
+    id: "worst-case", name: "Worst Case", category: "shame", statKey: "worstAwards", shame: true,
+    unit: "Worst Player Awards", icon: "😵", note: "Count actual Worst Player awards",
+    tiers: [["Off Day", 3], ["Bad Run", 5], ["Rough Patch", 10], ["Downfall", 15], ["Total Meltdown", 25]],
+  },
+  {
+    id: "clean-bowled", name: "Clean Bowled", category: "shame", statKey: "bowledDismissals", shame: true,
+    unit: "Bowled Dismissals", icon: "🥊", note: "Count actual bowled dismissals",
+    tiers: [["Beaten", 5], ["Broken Stumps", 10], ["Cleaned Up", 20], ["Stump Storm", 35], ["Bowled Out", 50]],
+  },
+  {
+    id: "wayward", name: "Wayward", category: "shame", statKey: "extrasGiven", shame: true,
+    unit: "Extras Given", icon: "💨", note: "Extras attributable to the bowler",
+    tiers: [["Loose Delivery", 25], ["Wayward Spell", 50], ["Costly Bowler", 100], ["Run Leak", 175], ["Extraordinary Disaster", 250]],
+  },
 ];
 
 export interface AchievementGroup extends Omit<GroupSpec, "tiers"> {
@@ -237,6 +303,10 @@ export const ALL_STAT_KEYS: StatKey[] = [
   "catches", "oneBounceCatches", "pom", "fighter", "fielder", "streak30",
   "ducks", "goldenDucks", "sixOuts", "hitWickets", "caughtOuts",
   "expensiveMatches", "catchDrops",
+  // New v4 achievement stats
+  "duckDodgeStreak", "matchAppearances", "chasingNotOuts", "economyGuardianStreak",
+  "boundarySaves", "botmAwards", "bowltmAwards", "lowScores", "worstAwards",
+  "bowledDismissals", "extrasGiven",
 ];
 
 export const zeroAchProgress = (): AchStats =>

@@ -63,6 +63,13 @@ export interface Player {
     fielderAwards?: number;
     fighterAwards?: number;
     worstAwards?: number;
+    // New v4 achievement counters
+    botmAwards?: number; // Batting awards (BOTM)
+    bowltmAwards?: number; // Bowling awards (BOWLTM) - renamed from bowlerAwards
+    bowledDismissals?: number;
+    lowScores?: number; // Scores below 10
+    extrasGiven?: number; // Extras attributable to bowler
+    chasingNotOuts?: number; // Not outs while chasing
   };
   ratings?: {
     overall?: number;
