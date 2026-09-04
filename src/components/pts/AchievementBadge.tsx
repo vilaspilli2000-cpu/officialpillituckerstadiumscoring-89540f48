@@ -79,7 +79,7 @@ export function AchievementBadge({ p, compact }: { p: AchProgress; compact?: boo
             boxShadow: unlocked ? `0 0 12px ${accent}60, 0 0 24px ${accent}30` : "none",
           }}
         >
-          {unlocked ? def.icon : (tierEmoji ?? "🔒")}
+          {unlocked ? def.icon : "🔒"}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.18em]" style={{ color: accent }}>

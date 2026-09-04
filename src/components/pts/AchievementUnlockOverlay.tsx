@@ -84,7 +84,7 @@ export function AchievementUnlockOverlay() {
           {shame ? "Hall Of Shame" : def.legacy ? "First Player In PTS History" : "Achievement Unlocked"}
         </div>
         <div className="mt-4 text-6xl" style={{ filter: `drop-shadow(0 0 24px ${accent})` }}>
-          {def.legacy && !shame ? "👑" : (tierEmoji ?? def.icon)}
+          {def.legacy && !shame ? "👑" : def.icon}
         </div>
         <h1
           className="mt-4 font-black leading-tight"

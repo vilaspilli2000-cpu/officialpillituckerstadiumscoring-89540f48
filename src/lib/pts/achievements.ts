@@ -171,37 +171,37 @@ const GROUP_SPECS: GroupSpec[] = [
   {
     id: "ducks", name: "Most Ducks", category: "shame", statKey: "ducks", shame: true,
     unit: "Ducks", icon: "🦆",
-    tiers: [["Slip Up", 5], ["Misfire", 15], ["Blunder", 35], ["Collapse", 60], ["Meltdown", 100]],
+    tiers: [["Duckling", 5], ["Quackdown", 15], ["Duckstorm", 35], ["Duckfall", 60], ["Duckageddon", 100]],
   },
   {
     id: "golden-ducks", name: "Most Golden Ducks", category: "shame", statKey: "goldenDucks", shame: true,
     unit: "Golden Ducks", icon: "🥇",
-    tiers: [["Slip Up", 3], ["Misfire", 8], ["Blunder", 15], ["Collapse", 25], ["Meltdown", 40]],
+    tiers: [["Golden Goose", 3], ["Gilded Quack", 8], ["Golden Curse", 15], ["Golden Doom", 25], ["Golden Abyss", 40]],
   },
   {
     id: "six-outs", name: "Most Six Outs", category: "shame", statKey: "sixOuts", shame: true,
     unit: "Six Outs", icon: "💥",
-    tiers: [["Slip Up", 5], ["Misfire", 15], ["Blunder", 30], ["Collapse", 50], ["Meltdown", 75]],
+    tiers: [["Six Slip", 5], ["Six Strike", 15], ["Six Snare", 30], ["Six Fallout", 50], ["Six Apocalypse", 75]],
   },
   {
     id: "hit-wickets", name: "Most Hit Wickets", category: "shame", statKey: "hitWickets", shame: true,
     unit: "Hit Wickets", icon: "🤦",
-    tiers: [["Slip Up", 2], ["Misfire", 5], ["Blunder", 10], ["Collapse", 20], ["Meltdown", 35]],
+    tiers: [["Stump Slip", 2], ["Stump Shock", 5], ["Wicket Wreck", 10], ["Stump Storm", 20], ["Stumpageddon", 35]],
   },
   {
     id: "caught-outs", name: "Most Caught Outs", category: "shame", statKey: "caughtOuts", shame: true,
     unit: "Caught Outs", icon: "🧲", note: "Direct catch + one bounce catch dismissals combined",
-    tiers: [["Slip Up", 25], ["Misfire", 75], ["Blunder", 150], ["Collapse", 250], ["Meltdown", 400]],
+    tiers: [["Soft Hands", 25], ["Catch Trap", 75], ["Catch Frenzy", 150], ["Catchstorm", 250], ["Catchpocalypse", 400]],
   },
   {
     id: "expensive-matches", name: "Expensive Matches", category: "shame", statKey: "expensiveMatches", shame: true,
     unit: "Expensive Matches", icon: "💸", note: "One entry per completed match with a final economy above 10.00",
-    tiers: [["Slip Up", 5], ["Misfire", 15], ["Blunder", 30], ["Collapse", 50], ["Meltdown", 75]],
+    tiers: [["Costly Spell", 5], ["Run Leak", 15], ["Run Flood", 30], ["Economy Crash", 50], ["Run Tsunami", 75]],
   },
   {
     id: "catch-drops", name: "Catch Drops", category: "shame", statKey: "catchDrops", shame: true,
     unit: "Catch Drops", icon: "🧈",
-    tiers: [["Slip Up", 5], ["Misfire", 15], ["Blunder", 30], ["Collapse", 50], ["Meltdown", 75]],
+    tiers: [["Butterfingers", 5], ["Fumble Fever", 15], ["Drop Frenzy", 30], ["Hands Down", 50], ["Dropocalypse", 75]],
   },
   // NEW v4 NORMAL ACHIEVEMENTS (7 families × 5 levels = 35)
   {
@@ -243,22 +243,22 @@ const GROUP_SPECS: GroupSpec[] = [
   {
     id: "low-blow", name: "Low Blow", category: "shame", statKey: "lowScores", shame: true,
     unit: "Scores Below 10", icon: "🥴", note: "Scores below 10 runs",
-    tiers: [["Slip Up", 3], ["Misfire", 7], ["Blunder", 12], ["Collapse", 20], ["Meltdown", 30]],
+    tiers: [["Slow Start", 3], ["Run Struggle", 7], ["Batting Bruise", 12], ["Run Drought", 20], ["Batting Abyss", 30]],
   },
   {
     id: "worst-case", name: "Worst Case", category: "shame", statKey: "worstAwards", shame: true,
     unit: "Worst Player Awards", icon: "😵", note: "Count actual Worst Player awards",
-    tiers: [["Slip Up", 3], ["Misfire", 5], ["Blunder", 10], ["Collapse", 15], ["Meltdown", 25]],
+    tiers: [["Off Day", 3], ["Bad Streak", 5], ["Rough Patch", 10], ["Downfall", 15], ["Total Ruin", 25]],
   },
   {
     id: "clean-bowled", name: "Clean Bowled", category: "shame", statKey: "bowledDismissals", shame: true,
     unit: "Bowled Dismissals", icon: "🥊", note: "Count actual bowled dismissals",
-    tiers: [["Slip Up", 5], ["Misfire", 10], ["Blunder", 20], ["Collapse", 35], ["Meltdown", 50]],
+    tiers: [["Beaten Clean", 5], ["Stump Blast", 10], ["Cleaned Up", 20], ["Stump Storm", 35], ["Bowled Chaos", 50]],
   },
   {
     id: "wayward", name: "Wayward", category: "shame", statKey: "extrasGiven", shame: true,
     unit: "Extras Given", icon: "💨", note: "Extras attributable to the bowler",
-    tiers: [["Slip Up", 25], ["Misfire", 50], ["Blunder", 100], ["Collapse", 175], ["Meltdown", 250]],
+    tiers: [["Loose Line", 25], ["Wild Spell", 50], ["Wayward Ways", 100], ["Run Riot", 175], ["Chaos Spell", 250]],
   },
 ];
 
