@@ -151,7 +151,6 @@ function Profile() {
           <Stat label="Boundary %" value={boundaryPct} />
           <Stat label="Dot Ball %" value={bowlerDotPct} />
           <Stat label="Total Boundaries" value={boundaries} />
-          <Stat label="Total Sixes" value={player.career.sixes ?? 0} />
           <Stat label="Career Awards" value={totalAwards} />
           <Stat label="Impact Score" value={impact} />
           <Stat label="Overall Rank" value={rankLabel} />
@@ -179,7 +178,6 @@ function Profile() {
           <Stat label="150s" value={player.career.hundred50s ?? 0} />
           <Stat label="200s" value={player.career.doubleHundreds ?? 0} />
           <Stat label="Fours" value={player.career.fours ?? 0} />
-          <Stat label="Sixes" value={player.career.sixes ?? 0} />
           <Stat label="Boundary %" value={boundaryPct} />
           <Stat label="Boundary Ratio" value={boundaryRatio} />
           <Stat label="Not Outs" value={player.career.notOuts} />
@@ -208,10 +206,8 @@ function Profile() {
       <Section title="Fielding">
         <div className="grid grid-cols-3 gap-3">
           <Stat label="Catches" value={player.career.catches} />
-          <Stat label="Run Outs" value={player.career.runOuts} />
           <Stat label="Boundary Saves" value={player.career.boundarySaves ?? 0} />
           <Stat label="Catch Drops" value={player.career.catchDrops ?? 0} />
-          <Stat label="Stumpings" value={0} />
         </div>
       </Section>
 

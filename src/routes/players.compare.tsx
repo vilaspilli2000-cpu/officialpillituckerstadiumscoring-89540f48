@@ -131,7 +131,6 @@ function Comparison({ a, b, ranked, matches }: {
     { label: "150s", a: a.career.hundred50s ?? 0, b: b.career.hundred50s ?? 0 },
     { label: "200s", a: a.career.doubleHundreds ?? 0, b: b.career.doubleHundreds ?? 0 },
     { label: "Fours", a: a.career.fours, b: b.career.fours },
-    { label: "Sixes", a: a.career.sixes, b: b.career.sixes },
     { label: "Not Outs", a: a.career.notOuts, b: b.career.notOuts },
     { label: "Ducks", a: a.career.ducks ?? 0, b: b.career.ducks ?? 0 },
   ]);
@@ -153,7 +152,6 @@ function Comparison({ a, b, ranked, matches }: {
   const catchPct = (p: Player) => p.career.matches ? ((p.career.catches / p.career.matches) * 100).toFixed(0) : "0";
   const fieldingRows = markBetter([
     { label: "Catches", a: a.career.catches, b: b.career.catches },
-    { label: "Run Outs", a: a.career.runOuts, b: b.career.runOuts },
     { label: "Catch % (per match)", a: catchPct(a), b: catchPct(b) },
   ]);
 
@@ -189,7 +187,6 @@ function Comparison({ a, b, ranked, matches }: {
     { label: "Average", a: rankOf(a.id, avgOf), b: rankOf(b.id, avgOf) },
     { label: "Strike Rate", a: rankOf(a.id, srOf), b: rankOf(b.id, srOf) },
     { label: "Fours", a: rankOf(a.id, (p) => p.career.fours), b: rankOf(b.id, (p) => p.career.fours) },
-    { label: "Sixes", a: rankOf(a.id, (p) => p.career.sixes), b: rankOf(b.id, (p) => p.career.sixes) },
     { label: "Catches", a: rankOf(a.id, (p) => p.career.catches), b: rankOf(b.id, (p) => p.career.catches) },
     { label: "Awards", a: rankOf(a.id, (p) => p.career.awards), b: rankOf(b.id, (p) => p.career.awards) },
   ].map((r) => ({ ...r, aBetter: (r.a as number) < (r.b as number), bBetter: (r.b as number) < (r.a as number) }));
@@ -222,13 +219,13 @@ function Comparison({ a, b, ranked, matches }: {
               <div className="font-semibold mb-1">{a.name} vs {b.name} (bat)</div>
               <div>Runs: {aVsB.runs} · Balls: {aVsB.balls}</div>
               <div>SR: {aVsB.balls ? aVsB.strikeRate.toFixed(1) : "—"} · Dismissed: {aVsB.dismissed}</div>
-              <div>4s: {aVsB.fours} · 6s: {aVsB.sixes} · Highest: {aVsB.highest || "—"}</div>
+              <div>4s: {aVsB.fours} · Highest: {aVsB.highest || "—"}</div>
             </div>
             <div>
               <div className="font-semibold mb-1">{b.name} vs {a.name} (bat)</div>
               <div>Runs: {bVsA.runs} · Balls: {bVsA.balls}</div>
               <div>SR: {bVsA.balls ? bVsA.strikeRate.toFixed(1) : "—"} · Dismissed: {bVsA.dismissed}</div>
-              <div>4s: {bVsA.fours} · 6s: {bVsA.sixes} · Highest: {bVsA.highest || "—"}</div>
+              <div>4s: {bVsA.fours} · Highest: {bVsA.highest || "—"}</div>
             </div>
           </div>
         </div>

@@ -70,7 +70,6 @@ export function PlayerRivalries({
           ["Dismissed", String(bvb.dismissed)],
           ["Avg", bvb.dismissed ? bvb.average.toFixed(1) : "—"],
           ["4s", String(bvb.fours)],
-          ["6s", String(bvb.sixes)],
           ["Dots", String(bvb.dots)],
           ["Highest", bvb.highest ? `${bvb.highest}${bvb.highestNotOut ? "*" : ""}` : "—"],
           ["Last dismissal", bvb.lastDismissal ?? "—"],
@@ -103,8 +102,6 @@ export function PlayerRivalries({
               const nm = players.find((p) => p.id === f.fielderId)?.name ?? "—";
               const parts: string[] = [];
               if (f.caught) parts.push(`${f.caught} c`);
-              if (f.runOut) parts.push(`${f.runOut} ro`);
-              if (f.stumped) parts.push(`${f.stumped} st`);
               return (
                 <div key={f.fielderId} className="flex items-center justify-between text-xs">
                   <span>{nm}</span>

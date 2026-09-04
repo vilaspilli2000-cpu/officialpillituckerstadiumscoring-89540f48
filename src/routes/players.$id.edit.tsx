@@ -113,7 +113,6 @@ function EditPlayer() {
         <Num label="150s" v={c.hundred50s ?? 0} on={(v) => setCareer("hundred50s", v)} />
         <Num label="200s" v={c.doubleHundreds ?? 0} on={(v) => setCareer("doubleHundreds", v)} />
         <Num label="Fours" v={c.fours} on={(v) => setCareer("fours", v)} />
-        <Num label="Sixes" v={c.sixes} on={(v) => setCareer("sixes", v)} />
         <Num label="Not outs" v={c.notOuts} on={(v) => setCareer("notOuts", v)} />
         <Num label="Ducks" v={c.ducks ?? 0} on={(v) => setCareer("ducks", v)} />
       </Section>
@@ -132,7 +131,6 @@ function EditPlayer() {
 
       <Section title="Fielding & Awards">
         <Num label="Catches" v={c.catches} on={(v) => setCareer("catches", v)} />
-        <Num label="Run outs" v={c.runOuts} on={(v) => setCareer("runOuts", v)} />
         <Num label="Boundary saves" v={c.boundarySaves ?? 0} on={(v) => setCareer("boundarySaves", v)} />
         <Num label="Catch drops" v={c.catchDrops ?? 0} on={(v) => setCareer("catchDrops", v)} />
         <Num label="Total Awards" v={c.awards} on={(v) => setCareer("awards", v)} />
