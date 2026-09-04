@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { usePtsStore, playerName } from "@/lib/pts/store";
-import { achievementById, RARITIES } from "@/lib/pts/achievements";
+import { achievementById, RARITIES, HOS_TIER_EMOJI } from "@/lib/pts/achievements";
 import type { AchUnlock } from "@/lib/pts/types";
 
 /**
@@ -59,6 +59,7 @@ export function AchievementUnlockOverlay() {
   const name = playerName(players, active.playerId);
   const shame = def.shame;
   const accent = shame ? "#EB5757" : r.accent;
+  const tierEmoji = shame ? HOS_TIER_EMOJI[def.rarity] : null;
 
   return (
     <div
@@ -83,7 +84,7 @@ export function AchievementUnlockOverlay() {
           {shame ? "Hall Of Shame" : def.legacy ? "First Player In PTS History" : "Achievement Unlocked"}
         </div>
         <div className="mt-4 text-6xl" style={{ filter: `drop-shadow(0 0 24px ${accent})` }}>
-          {def.legacy && !shame ? "👑" : def.icon}
+          {def.legacy && !shame ? "👑" : (tierEmoji ?? def.icon)}
         </div>
         <h1
           className="mt-4 font-black leading-tight"
@@ -92,7 +93,7 @@ export function AchievementUnlockOverlay() {
           {def.name}
         </h1>
         <div className="mt-2 text-sm uppercase tracking-[0.3em]" style={{ color: accent }}>
-          {r.emoji} {r.label}
+          {tierEmoji ?? r.emoji} {r.label}
         </div>
         <div className="mt-5 text-2xl font-bold">{name}</div>
         <p className="mt-2 text-sm text-white/75">{active.reason}</p>

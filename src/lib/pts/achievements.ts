@@ -31,6 +31,15 @@ export const RARITIES: Record<Rarity, RarityStyle> = {
 
 export const RARITY_ORDER: Rarity[] = ["common", "rare", "epic", "legendary", "legacy"];
 
+/** Hall of Shame tier emoji — one per rarity, visible even when locked. */
+export const HOS_TIER_EMOJI: Record<Rarity, string> = {
+  common: "🫣",
+  rare: "💥",
+  epic: "🤦",
+  legendary: "📉",
+  legacy: "💀",
+};
+
 export const CATEGORY_META: Record<AchCategory, { label: string; icon: string }> = {
   batting:  { label: "Batting", icon: "🏏" },
   bowling:  { label: "Bowling", icon: "🎯" },
@@ -57,14 +66,13 @@ export const RESULT_ONLY_STATS: StatKey[] = [
   // New v4 achievement stats that are result-only
   "duckDodgeStreak", "economyGuardianStreak", "chasingNotOuts", "botmAwards", "bowltmAwards",
   "lowScores", "worstAwards", "bowledDismissals", "extrasGiven",
+  "boundarySaves", "matchAppearances",
 ];
 
 /** Statistics that unlock live, during scoring. */
 export const LIVE_STATS: StatKey[] = [
   "runs", "fifties", "hundreds", "matchSR", "wickets", "fours",
   "catches", "oneBounceCatches", "streak30",
-  // boundarySaves and matchAppearances could be checked live if needed
-  "boundarySaves", "matchAppearances",
 ];
 
 export interface AchievementDef {
@@ -163,37 +171,37 @@ const GROUP_SPECS: GroupSpec[] = [
   {
     id: "ducks", name: "Most Ducks", category: "shame", statKey: "ducks", shame: true,
     unit: "Ducks", icon: "🦆",
-    tiers: [["Duckling", 5], ["Pond Resident", 15], ["Duck Commander", 35], ["Duck Emperor", 60], ["King Of Ducks", 100]],
+    tiers: [["Slip Up", 5], ["Misfire", 15], ["Blunder", 35], ["Collapse", 60], ["Meltdown", 100]],
   },
   {
     id: "golden-ducks", name: "Most Golden Ducks", category: "shame", statKey: "goldenDucks", shame: true,
     unit: "Golden Ducks", icon: "🥇",
-    tiers: [["Early Exit", 3], ["Golden Visitor", 8], ["Golden Magnet", 15], ["Golden Disaster", 25], ["Golden Goose", 40]],
+    tiers: [["Slip Up", 3], ["Misfire", 8], ["Blunder", 15], ["Collapse", 25], ["Meltdown", 40]],
   },
   {
     id: "six-outs", name: "Most Six Outs", category: "shame", statKey: "sixOuts", shame: true,
     unit: "Six Outs", icon: "💥",
-    tiers: [["Sky Gambler", 5], ["Boundary Addict", 15], ["Air Specialist", 30], ["Six Sacrificer", 50], ["King Of Six Outs", 75]],
+    tiers: [["Slip Up", 5], ["Misfire", 15], ["Blunder", 30], ["Collapse", 50], ["Meltdown", 75]],
   },
   {
     id: "hit-wickets", name: "Most Hit Wickets", category: "shame", statKey: "hitWickets", shame: true,
     unit: "Hit Wickets", icon: "🤦",
-    tiers: [["Lost Balance", 2], ["Self Destroyer", 5], ["Walking Timber", 10], ["Stump Kicker", 20], ["Walking Wicket", 35]],
+    tiers: [["Slip Up", 2], ["Misfire", 5], ["Blunder", 10], ["Collapse", 20], ["Meltdown", 35]],
   },
   {
     id: "caught-outs", name: "Most Caught Outs", category: "shame", statKey: "caughtOuts", shame: true,
     unit: "Caught Outs", icon: "🧲", note: "Direct catch + one bounce catch dismissals combined",
-    tiers: [["Easy Target", 25], ["Catch Favourite", 75], ["Sky Victim", 150], ["Human Target", 250], ["Catch Magnet", 400]],
+    tiers: [["Slip Up", 25], ["Misfire", 75], ["Blunder", 150], ["Collapse", 250], ["Meltdown", 400]],
   },
   {
     id: "expensive-matches", name: "Expensive Matches", category: "shame", statKey: "expensiveMatches", shame: true,
     unit: "Expensive Matches", icon: "💸", note: "One entry per completed match with a final economy above 10.00",
-    tiers: [["Costly Spell", 5], ["Run Donor", 15], ["Run ATM", 30], ["Run Distributor", 50], ["ATM Bowler", 75]],
+    tiers: [["Slip Up", 5], ["Misfire", 15], ["Blunder", 30], ["Collapse", 50], ["Meltdown", 75]],
   },
   {
     id: "catch-drops", name: "Catch Drops", category: "shame", statKey: "catchDrops", shame: true,
     unit: "Catch Drops", icon: "🧈",
-    tiers: [["Slippery Hands", 5], ["Butter Fingers", 15], ["Drop Specialist", 30], ["Gravity's Friend", 50], ["Butter Fingers Supreme", 75]],
+    tiers: [["Slip Up", 5], ["Misfire", 15], ["Blunder", 30], ["Collapse", 50], ["Meltdown", 75]],
   },
   // NEW v4 NORMAL ACHIEVEMENTS (7 families × 5 levels = 35)
   {
@@ -235,22 +243,22 @@ const GROUP_SPECS: GroupSpec[] = [
   {
     id: "low-blow", name: "Low Blow", category: "shame", statKey: "lowScores", shame: true,
     unit: "Scores Below 10", icon: "🥴", note: "Scores below 10 runs",
-    tiers: [["Rough Start", 3], ["Bad Touch", 7], ["Low Blow", 12], ["Run Drought", 20], ["Batting Breakdown", 30]],
+    tiers: [["Slip Up", 3], ["Misfire", 7], ["Blunder", 12], ["Collapse", 20], ["Meltdown", 30]],
   },
   {
     id: "worst-case", name: "Worst Case", category: "shame", statKey: "worstAwards", shame: true,
     unit: "Worst Player Awards", icon: "😵", note: "Count actual Worst Player awards",
-    tiers: [["Off Day", 3], ["Bad Run", 5], ["Rough Patch", 10], ["Downfall", 15], ["Total Meltdown", 25]],
+    tiers: [["Slip Up", 3], ["Misfire", 5], ["Blunder", 10], ["Collapse", 15], ["Meltdown", 25]],
   },
   {
     id: "clean-bowled", name: "Clean Bowled", category: "shame", statKey: "bowledDismissals", shame: true,
     unit: "Bowled Dismissals", icon: "🥊", note: "Count actual bowled dismissals",
-    tiers: [["Beaten", 5], ["Broken Stumps", 10], ["Cleaned Up", 20], ["Stump Storm", 35], ["Bowled Out", 50]],
+    tiers: [["Slip Up", 5], ["Misfire", 10], ["Blunder", 20], ["Collapse", 35], ["Meltdown", 50]],
   },
   {
     id: "wayward", name: "Wayward", category: "shame", statKey: "extrasGiven", shame: true,
     unit: "Extras Given", icon: "💨", note: "Extras attributable to the bowler",
-    tiers: [["Loose Delivery", 25], ["Wayward Spell", 50], ["Costly Bowler", 100], ["Run Leak", 175], ["Extraordinary Disaster", 250]],
+    tiers: [["Slip Up", 25], ["Misfire", 50], ["Blunder", 100], ["Collapse", 175], ["Meltdown", 250]],
   },
 ];
 

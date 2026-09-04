@@ -681,7 +681,7 @@ export const usePtsStore = create<State>()(
         // Persist duck streak back to player.achievementStreaks
         for (const pl of updated) {
           const streak = duckStreak[pl.id] ?? 0;
-          pl.achievementStreaks = { ...pl.achievementStreaks, duckDodge: streak };
+          pl.achievementStreaks = { duckDodge: streak, economyGuardian: pl.achievementStreaks?.economyGuardian ?? 0 };
         }
 
         // Economy Guardian: Economy ≤8 streak (economy > 8 resets streak)
@@ -701,7 +701,7 @@ export const usePtsStore = create<State>()(
         // Persist economy streak back to player.achievementStreaks
         for (const pl of updated) {
           const streak = economyStreak[pl.id] ?? 0;
-          pl.achievementStreaks = { ...pl.achievementStreaks, economyGuardian: streak };
+          pl.achievementStreaks = { duckDodge: pl.achievementStreaks?.duckDodge ?? 0, economyGuardian: streak };
         }
 
         // Match Appearances: one per player who participated in the match

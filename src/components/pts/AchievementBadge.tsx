@@ -1,11 +1,11 @@
-import { RARITIES, type AchProgress } from "@/lib/pts/achievements";
+import { RARITIES, HOS_TIER_EMOJI, type AchProgress } from "@/lib/pts/achievements";
 import { CATEGORY_META } from "@/lib/pts/achievements";
 
 /**
  * Premium collectible achievement badge.
  * Unlocked badges use their rarity metal + animated shine + premium glow;
  * locked badges are grey with "???" and live progress underneath.
- * Each achievement tier has a unique icon that's revealed only when unlocked.
+ * Hall of Shame tiers show their tier emoji even when locked.
  */
 export function AchievementBadge({ p, compact }: { p: AchProgress; compact?: boolean }) {
   const def = p.def;
@@ -29,6 +29,9 @@ export function AchievementBadge({ p, compact }: { p: AchProgress; compact?: boo
       inset 0 1px 0 ${accent2}33
     `,
   } : {};
+
+  // HOS tier emoji visible even when locked; normal achievements keep 🔒
+  const tierEmoji = shame ? HOS_TIER_EMOJI[def.rarity] : null;
 
   return (
     <div
@@ -76,11 +79,11 @@ export function AchievementBadge({ p, compact }: { p: AchProgress; compact?: boo
             boxShadow: unlocked ? `0 0 12px ${accent}60, 0 0 24px ${accent}30` : "none",
           }}
         >
-          {unlocked ? def.icon : "🔒"}
+          {unlocked ? def.icon : (tierEmoji ?? "🔒")}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.18em]" style={{ color: accent }}>
-            <span>{r.emoji} {r.label}</span>
+            <span>{tierEmoji ?? r.emoji} {r.label}</span>
             <span className="text-muted-foreground">· {CATEGORY_META[def.category].icon} {CATEGORY_META[def.category].label}</span>
           </div>
           <div className="truncate font-bold" style={{ color: unlocked ? "#F4F1EA" : "#8A8A80" }}>
