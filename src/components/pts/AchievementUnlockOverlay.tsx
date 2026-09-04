@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { usePtsStore, playerName } from "@/lib/pts/store";
-import { achievementById, RARITIES, HOS_TIER_EMOJI } from "@/lib/pts/achievements";
+import { achievementById, RARITIES, HOS_TIER_EMOJI, HOS_TIER_LABELS } from "@/lib/pts/achievements";
 import type { AchUnlock } from "@/lib/pts/types";
 
 /**
@@ -60,6 +60,7 @@ export function AchievementUnlockOverlay() {
   const shame = def.shame;
   const accent = shame ? "#EB5757" : r.accent;
   const tierEmoji = shame ? HOS_TIER_EMOJI[def.rarity] : null;
+  const tierLabelText = shame ? HOS_TIER_LABELS[def.rarity] : r.label;
 
   return (
     <div
@@ -93,7 +94,7 @@ export function AchievementUnlockOverlay() {
           {def.name}
         </h1>
         <div className="mt-2 text-sm uppercase tracking-[0.3em]" style={{ color: accent }}>
-          {tierEmoji ?? r.emoji} {r.label}
+          {tierEmoji ?? r.emoji} {tierLabelText}
         </div>
         <div className="mt-5 text-2xl font-bold">{name}</div>
         <p className="mt-2 text-sm text-white/75">{active.reason}</p>

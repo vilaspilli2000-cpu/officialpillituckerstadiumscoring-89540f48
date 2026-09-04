@@ -1,4 +1,4 @@
-import { RARITIES, HOS_TIER_EMOJI, type AchProgress } from "@/lib/pts/achievements";
+import { RARITIES, HOS_TIER_EMOJI, HOS_TIER_LABELS, type AchProgress } from "@/lib/pts/achievements";
 import { CATEGORY_META } from "@/lib/pts/achievements";
 
 /**
@@ -32,6 +32,7 @@ export function AchievementBadge({ p, compact }: { p: AchProgress; compact?: boo
 
   // HOS tier emoji visible even when locked; normal achievements keep 🔒
   const tierEmoji = shame ? HOS_TIER_EMOJI[def.rarity] : null;
+  const tierLabel = shame ? HOS_TIER_LABELS[def.rarity] : r.label;
 
   return (
     <div
@@ -83,7 +84,7 @@ export function AchievementBadge({ p, compact }: { p: AchProgress; compact?: boo
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.18em]" style={{ color: accent }}>
-            <span>{tierEmoji ?? r.emoji} {r.label}</span>
+            <span>{tierEmoji ?? r.emoji} {tierLabel}</span>
             <span className="text-muted-foreground">· {CATEGORY_META[def.category].icon} {CATEGORY_META[def.category].label}</span>
           </div>
           <div className="truncate font-bold" style={{ color: unlocked ? "#F4F1EA" : "#8A8A80" }}>

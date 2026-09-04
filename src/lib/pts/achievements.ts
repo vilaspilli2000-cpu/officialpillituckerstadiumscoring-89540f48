@@ -40,6 +40,15 @@ export const HOS_TIER_EMOJI: Record<Rarity, string> = {
   legacy: "💀",
 };
 
+/** Hall of Shame tier display labels — one per rarity. */
+export const HOS_TIER_LABELS: Record<Rarity, string> = {
+  common: "SLIP UP",
+  rare: "MISFIRE",
+  epic: "BLUNDER",
+  legendary: "COLLAPSE",
+  legacy: "MELTDOWN",
+};
+
 export const CATEGORY_META: Record<AchCategory, { label: string; icon: string }> = {
   batting:  { label: "Batting", icon: "🏏" },
   bowling:  { label: "Bowling", icon: "🎯" },
