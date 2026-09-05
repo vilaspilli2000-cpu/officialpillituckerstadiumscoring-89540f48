@@ -120,11 +120,9 @@ export interface Player {
   /** v3.3.4 — Official ranking buckets. Seeded from the historic baseline and
    *  only ever incremented after a completed match. Never recalculated. */
   buckets?: RankBuckets;
-  /** Additive permanent Legacy/Meltdown progression state. */
+  /** Additive permanent Legacy/Meltdown progression state (1-to-1 achievement count). */
   progression?: {
-    legacyProgress: number;
     legacyLevel: number;
-    meltdownProgress: number;
     meltdownLevel: number;
   };
   /** Current streaks used only by the post-v3.3 achievement engine. */

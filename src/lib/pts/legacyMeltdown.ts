@@ -1,9 +1,8 @@
 import type { Player } from "./types";
+import { ACHIEVEMENTS, achievementById } from "./achievements";
 
 export interface ProgressionState {
-  legacyProgress: number;
   legacyLevel: number;
-  meltdownProgress: number;
   meltdownLevel: number;
 }
 
@@ -33,12 +32,22 @@ export interface LayeredResult {
   meltdownPerk: string;
 }
 
-const LEGACY_POSITIVE = Array.from({ length: 19 }, (_, i) =>
-  Number((2 + (6.0012 * i) / 18).toFixed(4)),
-);
-const LEGACY_NEGATIVE = [0.7, 0.4, 0.1, ...Array.from({ length: 16 }, () => 0)];
-const MELTDOWN_POSITIVE = [0.8, 0.71, 0.62, 0.53, 0.44, 0.35, 0.26, 0.17, 0.1, 0.1, 0.1];
-const MELTDOWN_NEGATIVE = Array.from({ length: 11 }, (_, i) => 1.75 + i * 0.25);
+/** Legacy multipliers for positive PTS. L1 through L19. */
+const LEGACY_POSITIVE = [
+  2.0000, 2.3334, 2.6668, 3.0002, 3.3336,
+  3.6670, 4.0004, 4.3338, 4.6672, 5.0006,
+  5.3340, 5.6674, 6.0008, 6.3342, 6.6676,
+  7.0010, 7.3344, 7.6678, 8.0012,
+];
+
+/** Legacy multipliers for negative PTS. L1 through L19. */
+const LEGACY_NEGATIVE = [0.7, 0.4, 0.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+/** Meltdown multipliers for positive PTS. M1 through M11. */
+const MELTDOWN_POSITIVE = [0.80, 0.71, 0.62, 0.53, 0.44, 0.35, 0.26, 0.17, 0.10, 0.10, 0.10];
+
+/** Meltdown multipliers for negative PTS. M1 through M11. */
+const MELTDOWN_NEGATIVE = [1.75, 2.00, 2.25, 2.50, 2.75, 3.00, 3.25, 3.50, 3.75, 4.00, 4.25];
 
 const LEGACY_PERKS = [
   "First Light", "Rising Standard", "Crafted Under Pressure", "Reliable Hand", "Match Memory",
@@ -53,16 +62,25 @@ const MELTDOWN_PERKS = [
 
 const clampLevel = (value: number, max: number) => Math.max(0, Math.min(max, value));
 
-export function defaultProgression(): ProgressionState {
-  return { legacyProgress: 0, legacyLevel: 0, meltdownProgress: 0, meltdownLevel: 0 };
-}
+/** Show base PTS with the app's readable precision (2 dp). */
+const fmtBase = (n: number) => {
+  const r = Math.round(n * 100) / 100;
+  return (r > 0 ? "+" : "") + (Number.isInteger(r) ? r.toString() : r.toFixed(2));
+};
 
+/** Show final PTS with the app's readable precision (2 dp). */
+const fmtFinal = (n: number) => {
+  const r = Math.round(n * 100) / 100;
+  return (r > 0 ? "+" : "") + (Number.isInteger(r) ? r.toString() : r.toFixed(2));
+};
+
+/**
+ * Derive the authoritative progression state from a player's unlocked
+ * achievements. Levels are 1-to-1 with the number of actually unlocked
+ * achievement IDs — never from stored progression, never from thresholds.
+ */
 export function progressionOf(player: Player): ProgressionState {
-  return { ...defaultProgression(), ...(player.progression ?? {}) };
-}
-
-function levelForProgress(progress: number, max: number, pointsPerLevel: number) {
-  return clampLevel(Math.floor(progress / pointsPerLevel), max);
+  return progressionFromAchievements(player);
 }
 
 export function perkFor(system: "legacy" | "meltdown", level: number) {
@@ -71,7 +89,12 @@ export function perkFor(system: "legacy" | "meltdown", level: number) {
   return perks[Math.min(level, perks.length) - 1] ?? perks[perks.length - 1];
 }
 
-function multiplierFor(system: "legacy" | "meltdown", level: number, positive: boolean) {
+/**
+ * Look up a multiplier from the authoritative table.
+ * level 0 (inactive) always returns the neutral multiplier 1.
+ * positive selects the positive table; negative the negative table.
+ */
+export function multiplierFor(system: "legacy" | "meltdown", level: number, positive: boolean) {
   if (level <= 0) return 1;
   const values = system === "legacy"
     ? (positive ? LEGACY_POSITIVE : LEGACY_NEGATIVE)
@@ -79,52 +102,86 @@ function multiplierFor(system: "legacy" | "meltdown", level: number, positive: b
   return values[Math.min(level, values.length) - 1] ?? 1;
 }
 
-export function layerResult(player: Player, normalNet: number): LayeredResult {
-  const baseResult = Math.round(normalNet);
-  const state = progressionOf(player);
-  const positive = baseResult >= 0;
-  const legacyActive = state.legacyLevel > 0;
-  const meltdownActive = state.meltdownLevel > 0;
-  const legacyMultiplier = legacyActive ? multiplierFor("legacy", state.legacyLevel, positive) : 1;
-  const meltdownMultiplier = meltdownActive ? multiplierFor("meltdown", state.meltdownLevel, positive) : 1;
-  const finalResult = Math.round(baseResult * legacyMultiplier * meltdownMultiplier);
+/**
+ * Count the number of VALID, ACTUALLY UNLOCKED achievements for a player.
+ *
+ * Only unlocks whose achId resolves to a real definition in the registry
+ * are counted. Unknown / invalid IDs are ignored — they must never count.
+ * `legacy` counts non-shame achievements; `meltdown` counts shame ones.
+ * Definition-only counting (iterating the registry) is NOT used.
+ */
+function countUnlockedAchievements(player: Player, legacy: boolean): number {
+  const unlocked = player.achievements ?? [];
+  let count = 0;
+  for (const u of unlocked) {
+    const def = achievementById(u.achId);
+    if (!def) continue; // unknown/invalid ID — do NOT count
+    if ((legacy ? !def.shame : def.shame)) count++;
+  }
+  return count;
+}
+
+/** Derive Legacy level from unlocked achievements (1-to-1: count = level). */
+export function legacyLevelFromAchievements(player: Player): number {
+  return clampLevel(countUnlockedAchievements(player, true), 19);
+}
+
+/** Derive Meltdown level from unlocked achievements (1-to-1: count = level). */
+export function meltdownLevelFromAchievements(player: Player): number {
+  return clampLevel(countUnlockedAchievements(player, false), 11);
+}
+
+/** Compute progression state from existing unlock data. */
+export function progressionFromAchievements(player: Player): ProgressionState {
   return {
-    baseResult,
-    legacyLevel: state.legacyLevel,
-    legacyMultiplier,
-    legacyActive,
-    meltdownLevel: state.meltdownLevel,
-    meltdownMultiplier,
-    meltdownActive,
-    finalResult,
-    calculation: `${baseResult} × ${legacyMultiplier.toFixed(4)} × ${meltdownMultiplier.toFixed(4)} = ${finalResult}`,
-    legacyPerk: perkFor("legacy", state.legacyLevel),
-    meltdownPerk: perkFor("meltdown", state.meltdownLevel),
+    legacyLevel: legacyLevelFromAchievements(player),
+    meltdownLevel: meltdownLevelFromAchievements(player),
   };
 }
 
-export function advanceProgression(player: Player, normalNet: number): {
-  progression: ProgressionState;
-  milestones: Array<Omit<ProgressionMilestone, "id" | "ts" | "matchId" | "playerId">>;
-} {
-  const prior = progressionOf(player);
-  const rounded = Math.round(normalNet);
-  const next: ProgressionState = {
-    legacyProgress: prior.legacyProgress + Math.max(0, rounded),
-    legacyLevel: prior.legacyLevel,
-    meltdownProgress: prior.meltdownProgress + Math.max(0, -rounded),
-    meltdownLevel: prior.meltdownLevel,
+/**
+ * Apply Legacy and Meltdown multipliers to a base PTS result.
+ *
+ * - Base PTS is the exact decimal result from computeMatchPoints.
+ * - Positive base PTS uses the positive multiplier tables.
+ * - Negative base PTS uses the negative multiplier tables.
+ * - Zero base PTS safely returns zero with no misleading multiplication.
+ * - Level 0 (no achievements) uses the neutral multiplier 1 — L1/M1 are
+ *   never applied to a player with zero unlocked achievements.
+ */
+export function layerResult(baseNet: number, legacyLevel: number, meltdownLevel: number): LayeredResult {
+  const baseResult = baseNet;
+  const positive = baseResult > 0;
+  const legacyActive = legacyLevel > 0;
+  const meltdownActive = meltdownLevel > 0;
+  const legacyMultiplier = multiplierFor("legacy", legacyLevel, positive);
+  const meltdownMultiplier = multiplierFor("meltdown", meltdownLevel, positive);
+
+  let finalResult: number;
+  let calculation: string;
+
+  if (baseResult === 0) {
+    finalResult = 0;
+    calculation = "Base PTS is 0 — no multiplier applied (final = 0)";
+  } else {
+    finalResult = baseResult * legacyMultiplier * meltdownMultiplier;
+    const baseStr = fmtBase(baseResult);
+    calculation = `${baseStr} × ${legacyMultiplier.toFixed(4)} × ${meltdownMultiplier.toFixed(2)} = ${fmtFinal(finalResult)}`;
+  }
+
+  return {
+    baseResult,
+    legacyLevel,
+    legacyMultiplier,
+    legacyActive,
+    meltdownLevel,
+    meltdownMultiplier,
+    meltdownActive,
+    finalResult,
+    calculation,
+    legacyPerk: perkFor("legacy", legacyLevel),
+    meltdownPerk: perkFor("meltdown", meltdownLevel),
   };
-  next.legacyLevel = Math.max(prior.legacyLevel, levelForProgress(next.legacyProgress, 19, 100));
-  next.meltdownLevel = Math.max(prior.meltdownLevel, levelForProgress(next.meltdownProgress, 11, 50));
-  const milestones: Array<Omit<ProgressionMilestone, "id" | "ts" | "matchId" | "playerId">> = [];
-  for (let level = prior.legacyLevel + 1; level <= next.legacyLevel; level++) {
-    milestones.push({ system: "legacy", level, perk: perkFor("legacy", level), multiplier: multiplierFor("legacy", level, true), trigger: `Reached ${next.legacyProgress.toLocaleString()} positive normal PTS` });
-  }
-  for (let level = prior.meltdownLevel + 1; level <= next.meltdownLevel; level++) {
-    milestones.push({ system: "meltdown", level, perk: perkFor("meltdown", level), multiplier: multiplierFor("meltdown", level, false), trigger: `Absorbed ${next.meltdownProgress.toLocaleString()} negative normal PTS` });
-  }
-  return { progression: next, milestones };
 }
 
 export function milestoneId(m: Omit<ProgressionMilestone, "id">) {

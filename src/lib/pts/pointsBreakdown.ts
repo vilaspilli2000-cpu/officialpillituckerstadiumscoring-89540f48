@@ -1,15 +1,22 @@
 import type { Match, Player } from "./types";
 import { computeMatchPoints, buildStreakSnapshot, type PointLine } from "./matchPoints";
 import { computeOvertakeScore } from "./overtakeRanking";
+import { layerResult, legacyLevelFromAchievements, meltdownLevelFromAchievements } from "./legacyMeltdown";
 
 export interface PointsBreakdownEntry {
   playerId: string;
   playerName: string;
   team: "A" | "B";
   oldPoints: number;
-  netPoints: number; // exact, decimals allowed
+  baseNet: number; // exact base PTS before Legacy/Meltdown multipliers
+  netPoints: number; // exact final PTS after multipliers
   netRounded: number; // added to career ranking
   newPoints: number;
+  legacyLevel: number;
+  meltdownLevel: number;
+  legacyMultiplier: number;
+  meltdownMultiplier: number;
+  calculation: string;
   sections: {
     batting: { total: number; lines: PointLine[] };
     bowling: { total: number; lines: PointLine[] };
@@ -45,15 +52,24 @@ export function buildPointsBreakdown(
     const player = players.find((p) => p.id === playerId);
     if (!player) continue;
     const oldPoints = computeOvertakeScore(player, priorMatches).total;
-    const netRounded = Math.round(pm.net);
+    const ll = legacyLevelFromAchievements(player);
+    const ml = meltdownLevelFromAchievements(player);
+    const layered = layerResult(pm.net, ll, ml);
+    const netRounded = Math.round(layered.finalResult);
     entries.push({
       playerId,
       playerName: player.name,
       team: match.teamA.playerIds.includes(playerId) ? "A" : "B",
       oldPoints,
-      netPoints: pm.net,
+      baseNet: pm.net,
+      netPoints: layered.finalResult,
       netRounded,
       newPoints: oldPoints + netRounded,
+      legacyLevel: ll,
+      meltdownLevel: ml,
+      legacyMultiplier: layered.legacyMultiplier,
+      meltdownMultiplier: layered.meltdownMultiplier,
+      calculation: layered.calculation,
       sections: {
         batting: { total: pm.batting + pm.consistencyBonus, lines: mergeLines(pm.lines.batting) },
         bowling: { total: pm.bowling, lines: mergeLines(pm.lines.bowling) },

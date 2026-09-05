@@ -13,6 +13,7 @@ import { computeProbability } from "./probability";
 import { generateCommentaryFor } from "./commentary";
 import { MILESTONE_STEPS, totalAwards } from "./milestones";
 import { computeMatchPoints, buildStreakSnapshot } from "./matchPoints";
+import { layerResult, legacyLevelFromAchievements, meltdownLevelFromAchievements } from "./legacyMeltdown";
 import { buildPointsBreakdown } from "./pointsBreakdown";
 import { applyHistoricBaselineAll } from "./historicBaseline";
 import {
@@ -601,15 +602,6 @@ export const usePtsStore = create<State>()(
           });
         }
 
-        // --- Net Match Points → accumulate on player.matchPoints -----------
-        // Decimals are allowed while calculating; only the final net total is
-        // rounded before it is added to the career ranking.
-        const mp = computeMatchPoints(current, updated, priorStreaks);
-        for (const pl of updated) {
-          const pm = mp.get(pl.id);
-          if (pm) pl.matchPoints = (pl.matchPoints ?? 0) + Math.round(pm.net);
-        }
-
         // --- Achievement Progress (§ v3.3.4) -------------------------------
         // Progress counters only ever grow from matches played after the
         // achievement system was installed — never from career statistics.
@@ -763,6 +755,10 @@ export const usePtsStore = create<State>()(
           if (d) updated[i] = addAchProgress(updated[i], d);
         }
 
+        // --- Net Match Points (base, before multipliers) -------------------
+        // Used by ranking buckets; multiplier applied later with final achievements.
+        const mp = computeMatchPoints(current, updated, priorStreaks);
+
         // --- Ranking buckets: never reset, only ever extended --------------
         for (let i = 0; i < updated.length; i++) {
           const pre = preById.get(updated[i].id);
@@ -792,10 +788,23 @@ export const usePtsStore = create<State>()(
         );
         const finalPlayers = finalRun.players;
 
+        // --- Net Match Points (with final Legacy/Meltdown levels) -------------
+        // Awards the completed match's final achievements are included in the
+        // Legacy/Meltdown level calculation, so the multiplier uses the player's
+        // unlocked achievement count AFTER this match's achievements are applied.
+        const finalWithPts = finalPlayers.map((pl) => {
+          const pm = mp.get(pl.id);
+          if (!pm) return pl;
+          const ll = legacyLevelFromAchievements(pl);
+          const ml = meltdownLevelFromAchievements(pl);
+          const layered = layerResult(pm.net, ll, ml);
+          return { ...pl, matchPoints: (pl.matchPoints ?? 0) + Math.round(layered.finalResult) };
+        });
+
         // Permanent Points Breakdown saved with the scorecard.
         const completed: Match = {
           ...current,
-          pointsBreakdown: buildPointsBreakdown(current, players, matches),
+          pointsBreakdown: buildPointsBreakdown(current, finalWithPts, matches),
           commentary: [
             ...(current.commentary ?? []),
             ...finalRun.unlocks.map((u, i) => ({
@@ -809,7 +818,7 @@ export const usePtsStore = create<State>()(
 
         set({
           matches: [completed, ...matches],
-          players: finalPlayers,
+          players: finalWithPts,
           current: undefined,
           undoStack: [],
           achFeed: [...finalRun.unlocks, ...get().achFeed].slice(0, 5000),
