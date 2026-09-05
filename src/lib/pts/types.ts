@@ -314,18 +314,6 @@ export interface Match {
   penalties?: Penalty[];
   /** Total selected players in the match (used for the two-player bowling exception). */
   totalPlayers?: number;
-  /** Match-specific toss result. Optional for back-compat with historical matches. */
-  toss?: Toss;
-}
-
-/** Match-specific toss: caller, call, secure coin result, winner, and BAT/BOWL decision. */
-export interface Toss {
-  caller: "A" | "B";
-  call: "H" | "T";
-  result: "H" | "T";
-  winner: "A" | "B";
-  decision: "bat" | "bowl";
-  decidedAt: number;
 }
 
 /** Penalty event: modifies score/target without consuming balls or affecting player stats.

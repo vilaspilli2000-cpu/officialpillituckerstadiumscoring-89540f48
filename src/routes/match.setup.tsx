@@ -21,37 +21,17 @@ export const Route = createFileRoute("/match/setup")({
 
 function Setup() {
   const players = usePtsStore((s) => s.players);
-  const setPendingSetup = usePtsStore((s) => s.setPendingSetup);
-  const pendingSetup = usePtsStore((s) => s.pendingSetup);
+  const startMatch = usePtsStore((s) => s.startMatch);
   const defaultFollowOn = usePtsStore((s) => s.settings.defaultFollowOn);
   const navigate = useNavigate();
-
-  // Restore any prior draft (e.g. user navigated back from the toss page).
-  useEffect(() => {
-    if (pendingSetup) {
-      setFormat(pendingSetup.format);
-      setTeamAIds(pendingSetup.teamA.playerIds);
-      setTeamBIds(pendingSetup.teamB.playerIds);
-      setJokerId(pendingSetup.jokerId);
-      setFollowOnMargin(pendingSetup.followOnMargin);
-      setCaptainAId(pendingSetup.teamA.captainId ?? "");
-      setCaptainBId(pendingSetup.teamB.captainId ?? "");
-      setOpeningBatterAId(pendingSetup.openingBatterAId);
-      setOpeningBatterBId(pendingSetup.openingBatterBId);
-      setOpeningBowlerAId(pendingSetup.openingBowlerAId);
-      setOpeningBowlerBId(pendingSetup.openingBowlerBId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const [format, setFormat] = useState<FormatId>("A");
   const [teamAIds, setTeamAIds] = useState<string[]>([]);
   const [teamBIds, setTeamBIds] = useState<string[]>([]);
   const [jokerId, setJokerId] = useState<string | undefined>();
-  const [openingBatterAId, setOpeningBatterAId] = useState<string>("");
-  const [openingBatterBId, setOpeningBatterBId] = useState<string>("");
-  const [openingBowlerAId, setOpeningBowlerAId] = useState<string>("");
-  const [openingBowlerBId, setOpeningBowlerBId] = useState<string>("");
+  const [firstBattingTeam, setFirstBattingTeam] = useState<"A" | "B">("A");
+  const [openingBatterId, setOpeningBatterId] = useState<string>("");
+  const [openingBowlerId, setOpeningBowlerId] = useState<string>("");
   const [followOnMargin, setFollowOnMargin] = useState<number>(defaultFollowOn);
   const [captainAId, setCaptainAId] = useState<string>("");
   const [captainBId, setCaptainBId] = useState<string>("");
@@ -65,13 +45,13 @@ function Setup() {
     if (captainBId && !teamBIds.includes(captainBId)) setCaptainBId("");
   }, [teamAIds, teamBIds, captainAId, captainBId]);
 
-  // Total selected players in the match (lineupA + lineupB, deduped).
-  const totalPlayers = useMemo(() => new Set([...lineupA, ...lineupB]).size, [lineupA, lineupB]);
-
   const captainAName = captainAId ? players.find((p) => p.id === captainAId)?.name : undefined;
   const captainBName = captainBId ? players.find((p) => p.id === captainBId)?.name : undefined;
   const teamAName = captainAName ? `${captainAName}'s Team` : "Team A";
   const teamBName = captainBName ? `${captainBName}'s Team` : "Team B";
+
+  const battingIds = firstBattingTeam === "A" ? lineupA : lineupB;
+  const bowlingIds = firstBattingTeam === "A" ? lineupB : lineupA;
 
   const valid =
     teamAIds.length >= 1 &&
@@ -79,7 +59,9 @@ function Setup() {
     captainAId !== "" &&
     captainBId !== "" &&
     teamAIds.includes(captainAId) &&
-    teamBIds.includes(captainBId);
+    teamBIds.includes(captainBId) &&
+    battingIds.includes(openingBatterId) &&
+    bowlingIds.includes(openingBowlerId);
 
   function toggle(list: string[], id: string, setList: (v: string[]) => void) {
     if (list.includes(id)) setList(list.filter((x) => x !== id));
@@ -99,26 +81,19 @@ function Setup() {
   }
 
   function submit() {
-    // Default each team's opener/closer to the first player in that lineup if
-    // the user did not pick one explicitly. This keeps the flow moving even
-    // when the user has not touched the openers section.
-    const openA = (v: string) => (lineupA.includes(v) && v) ? v : (lineupA[0] ?? "");
-    const openB = (v: string) => (lineupB.includes(v) && v) ? v : (lineupB[0] ?? "");
-    setPendingSetup({
+    startMatch({
       format,
       teamA: { id: "A", name: teamAName, playerIds: lineupA, captainId: captainAId },
       teamB: { id: "B", name: teamBName, playerIds: lineupB, captainId: captainBId },
       jokerId,
       followOnMargin,
-      openingBatterAId: openA(openingBatterAId),
-      openingBatterBId: openB(openingBatterBId),
-      openingBowlerAId: openA(openingBowlerAId),
-      openingBowlerBId: openB(openingBowlerBId),
+      firstBattingTeam,
+      openingBatterId,
+      openingBowlerId,
       lineupA,
       lineupB,
-      totalPlayers,
     });
-    navigate({ to: "/match/setup/toss" });
+    navigate({ to: "/match/live" });
   }
 
   return (
@@ -241,25 +216,19 @@ function Setup() {
         />
       </Section>
 
-      <Section title="Opening Batters & Bowlers" hint="Optional. The actual batting order is decided by the toss. If left blank, each opener defaults to the first player in the respective lineup.">
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <Label className="text-xs uppercase tracking-widest text-primary/80">Team A Opening Batter</Label>
-            <PlayerPicker ids={lineupA} value={openingBatterAId} onChange={setOpeningBatterAId} />
-          </div>
-          <div>
-            <Label className="text-xs uppercase tracking-widest text-primary/80">Team B Opening Batter</Label>
-            <PlayerPicker ids={lineupB} value={openingBatterBId} onChange={setOpeningBatterBId} />
-          </div>
-          <div>
-            <Label className="text-xs uppercase tracking-widest text-primary/80">Team A Opening Bowler</Label>
-            <PlayerPicker ids={lineupA} value={openingBowlerAId} onChange={setOpeningBowlerAId} />
-          </div>
-          <div>
-            <Label className="text-xs uppercase tracking-widest text-primary/80">Team B Opening Bowler</Label>
-            <PlayerPicker ids={lineupB} value={openingBowlerBId} onChange={setOpeningBowlerBId} />
-          </div>
+      <Section title="First to Bat">
+        <div className="flex gap-2">
+          <Button variant={firstBattingTeam === "A" ? "gold" : "score"} onClick={() => setFirstBattingTeam("A")}>{teamAName}</Button>
+          <Button variant={firstBattingTeam === "B" ? "gold" : "score"} onClick={() => setFirstBattingTeam("B")}>{teamBName}</Button>
         </div>
+      </Section>
+
+      <Section title="Opening Batter">
+        <PlayerPicker ids={battingIds} value={openingBatterId} onChange={setOpeningBatterId} />
+      </Section>
+
+      <Section title="Opening Bowler">
+        <PlayerPicker ids={bowlingIds} value={openingBowlerId} onChange={setOpeningBowlerId} />
       </Section>
 
       {format === "C" && (
@@ -280,13 +249,13 @@ function Setup() {
 
       <div className="mt-8">
         <Button variant="hero" size="xl" disabled={!valid} onClick={submit}>
-          Proceed to Toss
+          Start Match
         </Button>
         {!valid && (
           <p className="text-xs text-muted-foreground mt-2">
             {(!captainAId || !captainBId)
               ? "Select a captain for both teams to continue."
-              : "Pick at least 1 player per team."}
+              : "Pick at least 1 player per team, plus opening batter and bowler."}
           </p>
         )}
       </div>

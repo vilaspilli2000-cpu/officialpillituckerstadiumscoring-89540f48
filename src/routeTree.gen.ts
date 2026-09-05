@@ -23,7 +23,6 @@ import { Route as MatchResultRouteImport } from './routes/match.result'
 import { Route as MatchSetupRouteImport } from './routes/match.setup'
 import { Route as PlayersIdRouteImport } from './routes/players.$id'
 import { Route as PlayersCompareRouteImport } from './routes/players.compare'
-import { Route as MatchSetupTossRouteImport } from './routes/match.setup.toss'
 import { Route as PlayersIdEditRouteImport } from './routes/players.$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
@@ -96,11 +95,6 @@ const PlayersCompareRoute = PlayersCompareRouteImport.update({
   path: '/compare',
   getParentRoute: () => PlayersRoute,
 } as any)
-const MatchSetupTossRoute = MatchSetupTossRouteImport.update({
-  id: '/toss',
-  path: '/toss',
-  getParentRoute: () => MatchSetupRoute,
-} as any)
 const PlayersIdEditRoute = PlayersIdEditRouteImport.update({
   id: '/edit',
   path: '/edit',
@@ -119,10 +113,9 @@ export interface FileRoutesByFullPath {
   '/match/$id': typeof MatchIdRoute
   '/match/live': typeof MatchLiveRoute
   '/match/result': typeof MatchResultRoute
-  '/match/setup': typeof MatchSetupRouteWithChildren
+  '/match/setup': typeof MatchSetupRoute
   '/players/$id': typeof PlayersIdRouteWithChildren
   '/players/compare': typeof PlayersCompareRoute
-  '/match/setup/toss': typeof MatchSetupTossRoute
   '/players/$id/edit': typeof PlayersIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -137,10 +130,9 @@ export interface FileRoutesByTo {
   '/match/$id': typeof MatchIdRoute
   '/match/live': typeof MatchLiveRoute
   '/match/result': typeof MatchResultRoute
-  '/match/setup': typeof MatchSetupRouteWithChildren
+  '/match/setup': typeof MatchSetupRoute
   '/players/$id': typeof PlayersIdRouteWithChildren
   '/players/compare': typeof PlayersCompareRoute
-  '/match/setup/toss': typeof MatchSetupTossRoute
   '/players/$id/edit': typeof PlayersIdEditRoute
 }
 export interface FileRoutesById {
@@ -156,10 +148,9 @@ export interface FileRoutesById {
   '/match/$id': typeof MatchIdRoute
   '/match/live': typeof MatchLiveRoute
   '/match/result': typeof MatchResultRoute
-  '/match/setup': typeof MatchSetupRouteWithChildren
+  '/match/setup': typeof MatchSetupRoute
   '/players/$id': typeof PlayersIdRouteWithChildren
   '/players/compare': typeof PlayersCompareRoute
-  '/match/setup/toss': typeof MatchSetupTossRoute
   '/players/$id/edit': typeof PlayersIdEditRoute
 }
 export interface FileRouteTypes {
@@ -179,7 +170,6 @@ export interface FileRouteTypes {
     | '/match/setup'
     | '/players/$id'
     | '/players/compare'
-    | '/match/setup/toss'
     | '/players/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -197,7 +187,6 @@ export interface FileRouteTypes {
     | '/match/setup'
     | '/players/$id'
     | '/players/compare'
-    | '/match/setup/toss'
     | '/players/$id/edit'
   id:
     | '__root__'
@@ -215,7 +204,6 @@ export interface FileRouteTypes {
     | '/match/setup'
     | '/players/$id'
     | '/players/compare'
-    | '/match/setup/toss'
     | '/players/$id/edit'
   fileRoutesById: FileRoutesById
 }
@@ -231,7 +219,7 @@ export interface RootRouteChildren {
   MatchIdRoute: typeof MatchIdRoute
   MatchLiveRoute: typeof MatchLiveRoute
   MatchResultRoute: typeof MatchResultRoute
-  MatchSetupRoute: typeof MatchSetupRouteWithChildren
+  MatchSetupRoute: typeof MatchSetupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -334,13 +322,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlayersCompareRouteImport
       parentRoute: typeof PlayersRoute
     }
-    '/match/setup/toss': {
-      id: '/match/setup/toss'
-      path: '/toss'
-      fullPath: '/match/setup/toss'
-      preLoaderRoute: typeof MatchSetupTossRouteImport
-      parentRoute: typeof MatchSetupRoute
-    }
     '/players/$id/edit': {
       id: '/players/$id/edit'
       path: '/edit'
@@ -376,18 +357,6 @@ const PlayersRouteChildren: PlayersRouteChildren = {
 const PlayersRouteWithChildren =
   PlayersRoute._addFileChildren(PlayersRouteChildren)
 
-interface MatchSetupRouteChildren {
-  MatchSetupTossRoute: typeof MatchSetupTossRoute
-}
-
-const MatchSetupRouteChildren: MatchSetupRouteChildren = {
-  MatchSetupTossRoute: MatchSetupTossRoute,
-}
-
-const MatchSetupRouteWithChildren = MatchSetupRoute._addFileChildren(
-  MatchSetupRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AchievementsRoute: AchievementsRoute,
@@ -400,7 +369,7 @@ const rootRouteChildren: RootRouteChildren = {
   MatchIdRoute: MatchIdRoute,
   MatchLiveRoute: MatchLiveRoute,
   MatchResultRoute: MatchResultRoute,
-  MatchSetupRoute: MatchSetupRouteWithChildren,
+  MatchSetupRoute: MatchSetupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

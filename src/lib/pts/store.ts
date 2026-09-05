@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 import { toast } from "sonner";
 import type {
   Achievement, AwardFeedEntry, BallEventType, FormatId, Match, MilestoneEntry,
-  Player, RecordEntry, Team, FieldingEventKind, AchUnlock, Penalty, Toss,
+  Player, RecordEntry, Team, FieldingEventKind, AchUnlock, Penalty,
 } from "./types";
 import { SEED_PLAYERS, OFFICIAL_AWARD_SPLITS } from "./seed";
 import { applyEvent, type ApplyOptions } from "./engine";
@@ -94,7 +94,7 @@ interface SetupInput {
   teamB: Team;
   jokerId?: string;
   followOnMargin: number;
-  /** Derived from the toss winner's decision. */
+  /** Selected directly in setup: whichever team bats first. */
   firstBattingTeam: "A" | "B";
   openingBatterId: string;
   openingBowlerId: string;
@@ -102,25 +102,6 @@ interface SetupInput {
   lineupB: string[];
   /** For Format B: configured overs (×6) or balls for the innings limit. */
   configuredOversCap?: number;
-}
-
-/** Transient pre-match draft used between the setup page and the toss page. */
-export interface PendingSetup {
-  format: FormatId;
-  teamA: Team;
-  teamB: Team;
-  jokerId?: string;
-  followOnMargin: number;
-  /** Per-team opening batters. Whichever team bats first per the toss will use theirs. */
-  openingBatterAId: string;
-  openingBatterBId: string;
-  /** Per-team opening bowlers. Whichever team bowls first per the toss will use theirs. */
-  openingBowlerAId: string;
-  openingBowlerBId: string;
-  lineupA: string[];
-  lineupB: string[];
-  /** Total selected players (for the two-player bowling exception). */
-  totalPlayers: number;
 }
 
 interface State {
@@ -131,8 +112,6 @@ interface State {
   achFeed: AchUnlock[];
   undoStack: Match[];
   settings: { defaultFollowOn: number; commentaryEnabled?: boolean };
-  /** Pre-match draft between setup and toss pages. */
-  pendingSetup?: PendingSetup;
   milestoneFeed: MilestoneEntry[];
   recordFeed: RecordEntry[];
   awardFeed: AwardFeedEntry[];
@@ -141,10 +120,6 @@ interface State {
 
   startMatch: (input: SetupInput) => void;
   setCurrent: (m: Match | undefined) => void;
-  /** Stash a pre-match setup draft for the toss page. */
-  setPendingSetup: (p: PendingSetup | undefined) => void;
-  /** Persist the toss result and initialise the live match. */
-  commitToss: (toss: Omit<Toss, "decidedAt">) => void;
   scoreEvent: (type: BallEventType, opts?: ApplyOptions) => void;
   undo: () => void;
   setNextBatter: (id: string) => void;
@@ -174,7 +149,6 @@ export const usePtsStore = create<State>()(
       achFeed: [],
       undoStack: [],
       settings: { defaultFollowOn: 200 },
-      pendingSetup: undefined,
       milestoneFeed: [],
       recordFeed: [],
       awardFeed: [],
@@ -201,43 +175,7 @@ export const usePtsStore = create<State>()(
           probability: [],
           totalPlayers,
         };
-        set({ current: match, undoStack: [], pendingSetup: undefined });
-      },
-
-      setPendingSetup: (p) => set({ pendingSetup: p }),
-
-      /** Persist the toss result, then initialise the live match. */
-      commitToss: (tossIn) => {
-        const draft = get().pendingSetup;
-        if (!draft) return;
-        const toss: Toss = { ...tossIn, decidedAt: Date.now() };
-        const firstBattingTeam: "A" | "B" = toss.decision === "bat" ? toss.winner : (toss.winner === "A" ? "B" : "A");
-        const lineup = firstBattingTeam === "A" ? draft.lineupA : draft.lineupB;
-        const firstInnings = newInnings(
-          firstBattingTeam,
-          firstBattingTeam === "A" ? "B" : "A",
-          lineup,
-          draft.format,
-          false,
-        );
-        // Per-team openers: pick the correct one for the team that is actually batting first.
-        firstInnings.currentBatterId = firstBattingTeam === "A" ? draft.openingBatterAId : draft.openingBatterBId;
-        firstInnings.currentBowlerId = firstBattingTeam === "A" ? draft.openingBowlerBId : draft.openingBowlerAId;
-        const match: Match = {
-          id: uid(),
-          createdAt: Date.now(),
-          format: draft.format,
-          teamA: draft.teamA,
-          teamB: draft.teamB,
-          jokerId: draft.jokerId,
-          followOnMargin: draft.followOnMargin,
-          innings: [firstInnings],
-          currentInnings: 0,
-          probability: [],
-          totalPlayers: draft.totalPlayers,
-          toss,
-        };
-        set({ current: match, undoStack: [], pendingSetup: undefined });
+        set({ current: match, undoStack: [] });
       },
 
       setCurrent: (m) => set({ current: m }),
@@ -1012,7 +950,6 @@ export const usePtsStore = create<State>()(
       resetAll: () => set({
         players: BASE_PLAYERS, matches: [], current: undefined,
         achievements: [], achFeed: [], undoStack: [],
-        pendingSetup: undefined,
         milestoneFeed: [], recordFeed: [], awardFeed: [],
       }),
 
