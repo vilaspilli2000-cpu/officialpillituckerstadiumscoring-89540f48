@@ -308,6 +308,21 @@ export interface Match {
   pointsBreakdown?: import("./pointsBreakdown").PointsBreakdownEntry[];
   /** Set when a side declared the win (WIN-D) and the opponent accepted. */
   winDeclared?: { declaringTeam: "A" | "B"; ts: number };
+  /** For Format B: the configured ball/over limit for the innings. */
+  configuredOversCap?: number;
+  /** Penalty events (not deliveries) that modify team scores or target. */
+  penalties?: Penalty[];
+}
+
+/** Penalty event: modifies score/target without consuming balls or affecting player stats.
+ *  `runs` is always a positive integer 1–20 — the signed effect (+X or -X) is derived
+ *  from the selected player's team and the current innings at application time. */
+export interface Penalty {
+  id: string;
+  ts: number;
+  playerId: string;
+  runs: number; // positive integer 1-20
+  inningsIndex: number; // Which innings the penalty occurred in
 }
 
 export interface CommentaryEntry {

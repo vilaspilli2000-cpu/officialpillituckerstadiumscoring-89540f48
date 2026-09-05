@@ -118,7 +118,7 @@ async function doPush() {
   try {
     const claiming = !!usePtsStore.getState().current;
     const { data, error } = await supabase.rpc("pts_push_state", {
-      _expected_version: -1,
+      _expected_version: useCloud.getState().version,
       _data: snapshot() as never,
       _device: (claiming ? deviceId() : null) as unknown as string,
     });

@@ -32,6 +32,7 @@ function Setup() {
   const [teamBIds, setTeamBIds] = useState<string[]>([]);
   const [jokerId, setJokerId] = useState<string | undefined>();
   const [firstBattingTeam, setFirstBattingTeam] = useState<"A" | "B">("A");
+  const [configuredOversCap, setConfiguredOversCap] = useState<number>(36);
   const [openingBatterId, setOpeningBatterId] = useState<string>("");
   const [openingBowlerId, setOpeningBowlerId] = useState<string>("");
   const [followOnMargin, setFollowOnMargin] = useState<number>(defaultFollowOn);
@@ -77,6 +78,7 @@ function Setup() {
       openingBowlerId,
       lineupA,
       lineupB,
+      configuredOversCap: format === "B" ? configuredOversCap : undefined,
     });
     navigate({ to: "/match/live" });
   }
@@ -168,6 +170,29 @@ function Setup() {
       <Section title="Opening Bowler">
         <PlayerPicker ids={bowlingIds} value={openingBowlerId} onChange={setOpeningBowlerId} />
       </Section>
+
+      {format === "B" && (
+        <Section title="Format B Ball Limit">
+          <div className="flex flex-wrap gap-2">
+            <Label className="text-xs uppercase tracking-widest text-primary/80">Balls</Label>
+            <select
+              className="rounded border px-3 py-1 text-sm"
+              value={configuredOversCap}
+              onChange={(e) => setConfiguredOversCap(Number(e.target.value))}
+            >
+              <option value={30}>30 (5 overs)</option>
+              <option value={36}>36 (6 overs)</option>
+              <option value={42}>42 (7 overs)</option>
+              <option value={48}>48 (8 overs)</option>
+              <option value={60}>60 (10 overs)</option>
+              <option value={72}>72 (12 overs)</option>
+              <option value={84}>84 (14 overs)</option>
+              <option value={96}>96 (16 overs)</option>
+            </select>
+            <span className="text-xs text-muted-foreground">legal balls (step 6 per over)</span>
+          </div>
+        </Section>
+      )}
 
       {format === "C" && (
         <Section title="Follow-on Margin">

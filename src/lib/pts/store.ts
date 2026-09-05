@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { toast } from "sonner";
 import type {
   Achievement, AwardFeedEntry, BallEventType, FormatId, Match, MilestoneEntry,
-  Player, RecordEntry, Team, FieldingEventKind, AchUnlock,
+  Player, RecordEntry, Team, FieldingEventKind, AchUnlock, Penalty,
 } from "./types";
 import { SEED_PLAYERS, OFFICIAL_AWARD_SPLITS } from "./seed";
 import { applyEvent, type ApplyOptions } from "./engine";
@@ -98,6 +99,8 @@ interface SetupInput {
   openingBowlerId: string;
   lineupA: string[]; // ordered
   lineupB: string[];
+  /** For Format B: configured overs (×6) or balls for the innings limit. */
+  configuredOversCap?: number;
 }
 
 interface State {
@@ -122,6 +125,8 @@ interface State {
   setNextBowler: (id: string) => void;
   declareInnings: () => void;
   concedeMatch: (declaringTeam: "A" | "B") => void;
+  abandonMatch: () => void;
+  applyPenalty: (playerId: string, runs: number) => boolean;
   addFieldingEvent: (kind: FieldingEventKind, playerId: string) => void;
   completeMatch: () => void;
   resetAll: () => void;
@@ -151,7 +156,7 @@ export const usePtsStore = create<State>()(
         const lineup = input.firstBattingTeam === "A" ? input.lineupA : input.lineupB;
         const battingTeam = input.firstBattingTeam;
         const bowlingTeam: "A" | "B" = battingTeam === "A" ? "B" : "A";
-        const firstInnings = newInnings(battingTeam, bowlingTeam, lineup, input.format);
+        const firstInnings = newInnings(battingTeam, bowlingTeam, lineup, input.format, false, input.configuredOversCap);
         firstInnings.currentBatterId = input.openingBatterId;
         firstInnings.currentBowlerId = input.openingBowlerId;
         const match: Match = {
@@ -165,6 +170,7 @@ export const usePtsStore = create<State>()(
           innings: [firstInnings],
           currentInnings: 0,
           probability: [],
+          configuredOversCap: input.configuredOversCap,
         };
         set({ current: match, undoStack: [] });
       },
@@ -371,6 +377,103 @@ export const usePtsStore = create<State>()(
         m.awards = computeAwards(m, players);
         m.story = buildStory(m, players);
         set({ current: m, undoStack: [...undoStack, snapshot].slice(-50) });
+      },
+
+      /** Abandon Match: discard ALL active match data. No history record, no PTS, no achievements. */
+      abandonMatch: () => {
+        set({ current: undefined, undoStack: [] });
+      },
+
+      /**
+       * Apply a penalty event.
+       *
+       * The penalty effect is determined automatically from the current match state:
+       * - Find the selected player's team
+       * - Determine current innings, batting team, bowling team
+       * - First innings: bowling team player → add X to batting team score;
+       *                 batting team player → subtract X from batting team score
+       * - Second/third/fourth innings: bowling team player → subtract X from current target;
+       *                               batting team player → add X to current target
+       *
+       * If any required state cannot be safely determined, the penalty is NOT applied.
+       */
+      applyPenalty: (playerId, runs) => {
+        const { current, undoStack } = get();
+        if (!current) {
+          toast.error("Cannot apply penalty — no active match");
+          return false;
+        }
+        if (current.result) {
+          toast.error("Cannot apply penalty — match is already complete");
+          return false;
+        }
+
+        // Validate runs: must be an integer between 1 and 20
+        if (!Number.isInteger(runs) || runs < 1 || runs > 20) {
+          toast.error("Invalid penalty amount: must be integer 1-20");
+          return false;
+        }
+
+        const snapshot = structuredClone(current);
+
+        // Clone the match first so all mutations happen on the persisted state
+        const m = structuredClone(current);
+        const inn = m.innings[m.currentInnings];
+        if (!inn || inn.closed) {
+          toast.error("Cannot apply penalty — no active innings");
+          return false;
+        }
+
+        // Safely determine which team the player belongs to
+        const inTeamA = m.teamA.playerIds.includes(playerId);
+        const inTeamB = m.teamB.playerIds.includes(playerId);
+        if (inTeamA && inTeamB) {
+          toast.error("Cannot apply penalty — player belongs to both teams");
+          return false;
+        }
+        if (!inTeamA && !inTeamB) {
+          toast.error("Cannot apply penalty — player not in this match");
+          return false;
+        }
+        const playerTeam: "A" | "B" = inTeamA ? "A" : "B";
+
+        // Determine current batting/bowling teams from match state
+        const battingTeam = inn.battingTeam;
+        const bowlingTeam: "A" | "B" = battingTeam === "A" ? "B" : "A";
+        const isBowlingTeam = playerTeam === bowlingTeam;
+
+        // Record the penalty in the match state
+        const penalty: Penalty = {
+          id: uid(),
+          ts: Date.now(),
+          playerId,
+          runs,
+          inningsIndex: m.currentInnings,
+        };
+        m.penalties = [...(m.penalties ?? []), penalty];
+
+        // Apply the penalty effect based on innings
+        if (m.currentInnings === 0) {
+          // First innings: bowling team player → add X to batting team score
+          //              batting team player → subtract X from batting team score
+          // Modify the CLONED innings object so the mutation is persisted
+          if (isBowlingTeam) {
+            inn.runs += runs;
+          } else {
+            inn.runs -= runs;
+          }
+        } else {
+          // Second/third/fourth innings: bowling team player → subtract X from current target
+          //                             batting team player → add X to current target
+          if (isBowlingTeam) {
+            m.target = (m.target ?? 0) - runs;
+          } else {
+            m.target = (m.target ?? 0) + runs;
+          }
+        }
+
+        set({ current: m, undoStack: [...undoStack, snapshot].slice(-50) });
+        return true;
       },
 
       addFieldingEvent: (kind, playerId) => {

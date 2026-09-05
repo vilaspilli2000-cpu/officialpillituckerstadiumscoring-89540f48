@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ChevronLeft, Undo2, FileText } from "lucide-react";
+import { ChevronLeft, Undo2, FileText, Scale } from "lucide-react";
 import { AppShell } from "@/components/pts/AppShell";
 import { Button } from "@/components/ui/button";
 import { usePtsStore, playerName } from "@/lib/pts/store";
@@ -10,6 +10,7 @@ import { ProbabilityBar } from "@/components/pts/ProbabilityBar";
 import { PlayerSelectModal } from "@/components/pts/PlayerSelectModal";
 import { NoBallRunsModal } from "@/components/pts/NoBallRunsModal";
 import { WicketModal } from "@/components/pts/WicketModal";
+import { PenaltyRunsModal } from "@/components/pts/PenaltyRunsModal";
 import { LiveScorecard } from "@/components/pts/LiveScorecard";
 import { MatchAnalytics } from "@/components/pts/MatchAnalytics";
 import { CommentaryFeed } from "@/components/pts/CommentaryFeed";
@@ -19,6 +20,11 @@ import { TeamMomentumMeter } from "@/components/pts/TeamMomentumMeter";
 import type { BallEvent, BallEventType, DismissalType, FieldingEventKind } from "@/lib/pts/types";
 import { toast } from "sonner";
 import { canScoreHere, claimScoring, deviceId, useCloud } from "@/lib/pts/cloud";
+
+type PenaltyState = {
+  pendingPlayerId: string | null;
+  pendingRuns: number; // 1-20, integer
+};
 
 export const Route = createFileRoute("/match/live")({
   head: () => ({ meta: [{ title: "Live Scoring — PTS Scorer" }] }),
@@ -35,6 +41,8 @@ function Live() {
   const setNextBowler = usePtsStore((s) => s.setNextBowler);
   const declareInnings = usePtsStore((s) => s.declareInnings);
   const concedeMatch = usePtsStore((s) => s.concedeMatch);
+  const abandonMatch = usePtsStore((s) => s.abandonMatch);
+  const applyPenalty = usePtsStore((s) => s.applyPenalty);
   const addFieldingEvent = usePtsStore((s) => s.addFieldingEvent);
   const navigate = useNavigate();
   const cloud = useCloud();
@@ -43,8 +51,11 @@ function Live() {
   const [pendingNoBall, setPendingNoBall] = useState(false);
   const [wicketOpen, setWicketOpen] = useState<false | { preselect?: DismissalType }>(false);
   const [fieldingPick, setFieldingPick] = useState<false | FieldingEventKind>(false);
+  const [penaltySelecting, setPenaltySelecting] = useState(false);
+  const [penaltyPlayer, setPenaltyPlayer] = useState<string | null>(null);
   const [tab, setTab] = useState<"scoring" | "scorecard" | "analytics">("scoring");
   const [winDStep, setWinDStep] = useState<null | { step: "pick" } | { step: "confirm"; team: "A" | "B" }>(null);
+  const [abandonStep, setAbandonStep] = useState(false);
 
   useEffect(() => {
     if (current?.result) {
@@ -212,6 +223,31 @@ function Live() {
           <Meta label="VS" value={bowlingTeam.name} small />
           <Meta label="TARGET" value={current.target ? String(current.target) : "—"} gold={!!current.target} />
         </div>
+        {(current.penalties ?? []).length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {(current.penalties ?? []).map((p) => {
+              const inTeamA = current.teamA.playerIds.includes(p.playerId);
+              const inTeamB = current.teamB.playerIds.includes(p.playerId);
+              const penInn = current.innings[p.inningsIndex];
+              const penBatting = penInn ? (penInn.battingTeam === "A" ? current.teamA.name : current.teamB.name) : "?";
+              const isBowling = inTeamA
+                ? (penInn ? penInn.battingTeam === "B" : false)
+                : (penInn ? penInn.battingTeam === "A" : false);
+              const effect = p.inningsIndex === 0
+                ? (isBowling ? `+${p.runs} to ${penBatting} score` : `-${p.runs} to ${penBatting} score`)
+                : (isBowling ? `-${p.runs} to target` : `+${p.runs} to target`);
+              return (
+                <span
+                  key={p.id}
+                  className="rounded-lg border border-purple-500/40 bg-purple-500/10 px-2 py-1 text-[11px] font-bold text-purple-300"
+                  title="Team-level penalty adjustment — not a delivery or individual stat"
+                >
+                  ⚖ {playerName(players, p.playerId)} · {effect}
+                </span>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="rounded-2xl border border-primary/30 bg-card/60 p-4 mb-3">
@@ -319,6 +355,25 @@ function Live() {
         </button>
       )}
 
+      {!current.result && (
+        <button
+          onClick={() => { setPenaltyPlayer(null); setPenaltySelecting(true); }}
+          className="mt-2 w-full rounded-xl border border-purple-600 bg-purple-600 px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white transition active:scale-[0.98] hover:bg-purple-700 disabled:opacity-40"
+          disabled={scoringBlocked}
+        >
+          <Scale className="inline-block w-4 h-4 mr-2" /> PENALTY
+        </button>
+      )}
+
+      {!current.result && (
+        <button
+          onClick={() => setAbandonStep(true)}
+          className="mt-2 w-full rounded-xl border border-zinc-500 bg-zinc-700 px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white transition active:scale-[0.98] hover:bg-zinc-800"
+        >
+          ABANDON MATCH
+        </button>
+      )}
+
       {winDStep && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-card p-5">
@@ -368,6 +423,38 @@ function Live() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Abandon Match Confirmation Dialog */}
+      {abandonStep && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-card p-5">
+            <div className="text-sm font-bold text-red-500">⚠️ ABANDON MATCH</div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              This will permanently discard ALL active match data. No match history will be created, no PTS
+              awarded, and no achievements updated. Previously saved matches remain untouched.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  setAbandonStep(false);
+                  abandonMatch();
+                  toast.success("Match abandoned");
+                  navigate({ to: "/" });
+                }}
+                className="rounded-xl bg-red-600 px-4 py-3 text-sm font-black text-white hover:bg-red-700"
+              >
+                🟥 YES, ABANDON
+              </button>
+              <button
+                onClick={() => setAbandonStep(false)}
+                className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-700"
+              >
+                🟩 CANCEL
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -437,6 +524,34 @@ function Live() {
             fielderId,
           });
           flashAchievements();
+        }}
+      />
+
+      {/* Penalty Player Selection Modal */}
+      <PlayerSelectModal
+        open={penaltySelecting}
+        title="Select player for penalty"
+        options={[
+          ...current.teamA.playerIds.map((id) => ({ id, name: playerName(players, id) })),
+          ...current.teamB.playerIds.map((id) => ({ id, name: playerName(players, id) })),
+        ]}
+        onClose={() => { setPenaltySelecting(false); setPenaltyPlayer(null); }}
+        onPick={(id) => { setPenaltySelecting(false); setPenaltyPlayer(id); }}
+      />
+
+      {/* Penalty Runs Slider Modal */}
+      <PenaltyRunsModal
+        open={penaltyPlayer !== null}
+        playerName={penaltyPlayer ? playerName(players, penaltyPlayer) : ""}
+        onClose={() => setPenaltyPlayer(null)}
+        onApply={(runs) => {
+          if (penaltyPlayer) {
+            const ok = applyPenalty(penaltyPlayer, runs);
+            setPenaltyPlayer(null);
+            if (ok) {
+              toast.success(`Penalty applied: ${runs} runs`);
+            }
+          }
         }}
       />
     </AppShell>

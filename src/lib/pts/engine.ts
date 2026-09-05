@@ -280,7 +280,7 @@ export function applyEvent(
   }
 
   // target reached?
-  if (target && innings.runs >= target) {
+  if (target !== undefined && innings.runs >= target) {
     innings.closed = true;
     innings.closeReason = "target";
     inningsClosed = true;
@@ -320,7 +320,7 @@ export function ballsRemaining(innings: Innings) {
 }
 
 export function runsRequired(match: Match) {
-  if (!match.target) return undefined;
+  if (match.target === undefined) return undefined;
   const innings = match.innings[match.currentInnings];
   return Math.max(0, match.target - innings.runs);
 }

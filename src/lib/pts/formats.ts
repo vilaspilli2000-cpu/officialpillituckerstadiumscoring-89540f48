@@ -10,8 +10,8 @@ export function totalInningsFor(format: FormatId) {
   return format === "A" ? 2 : format === "B" ? 2 : 4;
 }
 
-export function oversCapFor(format: FormatId) {
-  return format === "A" ? 36 : undefined; // 6 overs = 36 legal balls
+export function oversCapFor(format: FormatId, configuredOversCap?: number) {
+  return format === "A" ? 36 : format === "B" ? configuredOversCap : undefined; // 6 overs = 36 legal balls
 }
 
 export function newInnings(
@@ -21,6 +21,8 @@ export function newInnings(
   format: FormatId,
   /** Every innings requires manual opening batter selection (v3.3.4 §37). */
   autoOpen = false,
+  /** For Format B: the configured ball/over limit for the innings. */
+  configuredOversCap?: number,
 ): Innings {
   return {
     battingTeam: batting,
@@ -28,7 +30,7 @@ export function newInnings(
     runs: 0,
     wickets: 0,
     legalBalls: 0,
-    oversCap: oversCapFor(format),
+    oversCap: oversCapFor(format, configuredOversCap),
     batters: [],
     bowlers: [],
     lineup,
@@ -164,11 +166,17 @@ export function advanceInnings(
 
   if (m.format === "B") {
     if (idx === 0) {
+      // For Format B: Team B's effective ball limit = Team A's actual legal balls
+      // This is applied regardless of whether Team A was all-out early or used the full limit
+      const effectiveLimit = prev.legalBalls;
       m.target = prev.runs + 1;
       const battingSide = prev.bowlingTeam;
       const bowlingSide = prev.battingTeam;
       const team = battingSide === "A" ? teams.A : teams.B;
-      m.innings.push(newInnings(battingSide, bowlingSide, [...team.playerIds], m.format));
+      const next = newInnings(battingSide, bowlingSide, [...team.playerIds], m.format, false, prev.oversCap);
+      // Team B gets exactly the number of legal balls Team A actually used
+      next.oversCap = effectiveLimit;
+      m.innings.push(next);
       m.currentInnings = 1;
     }
     return m;
@@ -221,10 +229,10 @@ export function advanceInnings(
 
 export function chaseStatus(match: Match): string {
   const innings = match.innings[match.currentInnings];
-  if (!innings || !match.target) return "";
+  if (!innings || match.target === undefined) return "";
   const need = match.target - innings.runs;
   if (need <= 0) return "Target reached";
-  if (match.format === "A" && innings.oversCap) {
+  if ((match.format === "A" || match.format === "B") && innings.oversCap) {
     const ballsLeft = innings.oversCap - innings.legalBalls;
     return `Need ${need} runs in ${ballsLeft} balls`;
   }
