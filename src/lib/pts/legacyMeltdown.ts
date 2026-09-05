@@ -103,12 +103,13 @@ export function multiplierFor(system: "legacy" | "meltdown", level: number, posi
 }
 
 /**
- * Count the number of VALID, ACTUALLY UNLOCKED achievements for a player.
+ * Count how many of a player's unlocked achievements belong to a given system.
  *
- * Only unlocks whose achId resolves to a real definition in the registry
- * are counted. Unknown / invalid IDs are ignored — they must never count.
- * `legacy` counts non-shame achievements; `meltdown` counts shame ones.
- * Definition-only counting (iterating the registry) is NOT used.
+ * - Legacy system: only counts achievements whose `def.legacy === true` (legacy-rarity tier).
+ * - Meltdown system: only counts achievements whose `def.shame === true` AND
+ *   `def.rarity === "legacy"` (legacy-rarity Hall Of Shame tiers = Meltdown).
+ *
+ * Unknown / invalid achIds are silently ignored — they must never affect the count.
  */
 function countUnlockedAchievements(player: Player, legacy: boolean): number {
   const unlocked = player.achievements ?? [];
@@ -116,7 +117,14 @@ function countUnlockedAchievements(player: Player, legacy: boolean): number {
   for (const u of unlocked) {
     const def = achievementById(u.achId);
     if (!def) continue; // unknown/invalid ID — do NOT count
-    if ((legacy ? !def.shame : def.shame)) count++;
+    if (legacy) {
+      // Legacy Level: exact number of legacy-rarity achievements unlocked.
+      if (def.legacy) count++;
+    } else {
+      // Meltdown Level: exact number of Meltdown achievements unlocked.
+      // Meltdown = Hall Of Shame achievements at legacy rarity tier.
+      if (def.shame && def.rarity === "legacy") count++;
+    }
   }
   return count;
 }
