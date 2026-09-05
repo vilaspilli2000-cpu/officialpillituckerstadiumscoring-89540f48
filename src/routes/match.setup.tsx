@@ -34,7 +34,6 @@ function Setup() {
       setTeamBIds(pendingSetup.teamB.playerIds);
       setJokerId(pendingSetup.jokerId);
       setFollowOnMargin(pendingSetup.followOnMargin);
-      setConfiguredOversCap(pendingSetup.configuredOversCap ?? 36);
       setCaptainAId(pendingSetup.teamA.captainId ?? "");
       setCaptainBId(pendingSetup.teamB.captainId ?? "");
       setOpeningBatterAId(pendingSetup.openingBatterAId);
@@ -49,7 +48,6 @@ function Setup() {
   const [teamAIds, setTeamAIds] = useState<string[]>([]);
   const [teamBIds, setTeamBIds] = useState<string[]>([]);
   const [jokerId, setJokerId] = useState<string | undefined>();
-  const [configuredOversCap, setConfiguredOversCap] = useState<number>(36);
   const [openingBatterAId, setOpeningBatterAId] = useState<string>("");
   const [openingBatterBId, setOpeningBatterBId] = useState<string>("");
   const [openingBowlerAId, setOpeningBowlerAId] = useState<string>("");
@@ -81,11 +79,7 @@ function Setup() {
     captainAId !== "" &&
     captainBId !== "" &&
     teamAIds.includes(captainAId) &&
-    teamBIds.includes(captainBId) &&
-    lineupA.includes(openingBatterAId) &&
-    lineupB.includes(openingBatterBId) &&
-    lineupA.includes(openingBowlerAId) &&
-    lineupB.includes(openingBowlerBId);
+    teamBIds.includes(captainBId);
 
   function toggle(list: string[], id: string, setList: (v: string[]) => void) {
     if (list.includes(id)) setList(list.filter((x) => x !== id));
@@ -105,19 +99,23 @@ function Setup() {
   }
 
   function submit() {
+    // Default each team's opener/closer to the first player in that lineup if
+    // the user did not pick one explicitly. This keeps the flow moving even
+    // when the user has not touched the openers section.
+    const openA = (v: string) => (lineupA.includes(v) && v) ? v : (lineupA[0] ?? "");
+    const openB = (v: string) => (lineupB.includes(v) && v) ? v : (lineupB[0] ?? "");
     setPendingSetup({
       format,
       teamA: { id: "A", name: teamAName, playerIds: lineupA, captainId: captainAId },
       teamB: { id: "B", name: teamBName, playerIds: lineupB, captainId: captainBId },
       jokerId,
       followOnMargin,
-      openingBatterAId,
-      openingBatterBId,
-      openingBowlerAId,
-      openingBowlerBId,
+      openingBatterAId: openA(openingBatterAId),
+      openingBatterBId: openB(openingBatterBId),
+      openingBowlerAId: openA(openingBowlerAId),
+      openingBowlerBId: openB(openingBowlerBId),
       lineupA,
       lineupB,
-      configuredOversCap: format === "B" ? configuredOversCap : undefined,
       totalPlayers,
     });
     navigate({ to: "/match/setup/toss" });
@@ -243,7 +241,7 @@ function Setup() {
         />
       </Section>
 
-      <Section title="Opening Batters & Bowlers" hint="The actual batting order is decided by the toss. Each team supplies its own opening batter and opening bowler so either side can bat first safely.">
+      <Section title="Opening Batters & Bowlers" hint="Optional. The actual batting order is decided by the toss. If left blank, each opener defaults to the first player in the respective lineup.">
         <div className="grid md:grid-cols-2 gap-4">
           <div>
             <Label className="text-xs uppercase tracking-widest text-primary/80">Team A Opening Batter</Label>
@@ -263,29 +261,6 @@ function Setup() {
           </div>
         </div>
       </Section>
-
-      {format === "B" && (
-        <Section title="Format B Ball Limit">
-          <div className="flex flex-wrap gap-2">
-            <Label className="text-xs uppercase tracking-widest text-primary/80">Balls</Label>
-            <select
-              className="rounded border px-3 py-1 text-sm"
-              value={configuredOversCap}
-              onChange={(e) => setConfiguredOversCap(Number(e.target.value))}
-            >
-              <option value={30}>30 (5 overs)</option>
-              <option value={36}>36 (6 overs)</option>
-              <option value={42}>42 (7 overs)</option>
-              <option value={48}>48 (8 overs)</option>
-              <option value={60}>60 (10 overs)</option>
-              <option value={72}>72 (12 overs)</option>
-              <option value={84}>84 (14 overs)</option>
-              <option value={96}>96 (16 overs)</option>
-            </select>
-            <span className="text-xs text-muted-foreground">legal balls (step 6 per over)</span>
-          </div>
-        </Section>
-      )}
 
       {format === "C" && (
         <Section title="Follow-on Margin">
@@ -311,7 +286,7 @@ function Setup() {
           <p className="text-xs text-muted-foreground mt-2">
             {(!captainAId || !captainBId)
               ? "Select a captain for both teams to continue."
-              : "Pick at least 1 player per team, plus opening batter and bowler."}
+              : "Pick at least 1 player per team."}
           </p>
         )}
       </div>

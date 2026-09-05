@@ -119,27 +119,6 @@ export interface PendingSetup {
   openingBowlerBId: string;
   lineupA: string[];
   lineupB: string[];
-  configuredOversCap?: number;
-  /** Total selected players (for the two-player bowling exception). */
-  totalPlayers: number;
-}
-
-/** Transient pre-match draft used between the setup page and the toss page. */
-export interface PendingSetup {
-  format: FormatId;
-  teamA: Team;
-  teamB: Team;
-  jokerId?: string;
-  followOnMargin: number;
-  /** Per-team opening batters. Whichever team bats first per the toss will use theirs. */
-  openingBatterAId: string;
-  openingBatterBId: string;
-  /** Per-team opening bowlers. Whichever team bowls first per the toss will use theirs. */
-  openingBowlerAId: string;
-  openingBowlerBId: string;
-  lineupA: string[];
-  lineupB: string[];
-  configuredOversCap?: number;
   /** Total selected players (for the two-player bowling exception). */
   totalPlayers: number;
 }
@@ -204,7 +183,7 @@ export const usePtsStore = create<State>()(
         const lineup = input.firstBattingTeam === "A" ? input.lineupA : input.lineupB;
         const battingTeam = input.firstBattingTeam;
         const bowlingTeam: "A" | "B" = battingTeam === "A" ? "B" : "A";
-        const firstInnings = newInnings(battingTeam, bowlingTeam, lineup, input.format, false, input.configuredOversCap);
+        const firstInnings = newInnings(battingTeam, bowlingTeam, lineup, input.format, false);
         firstInnings.currentBatterId = input.openingBatterId;
         firstInnings.currentBowlerId = input.openingBowlerId;
         // Total selected players in the match (lineups are the source of truth).
@@ -220,7 +199,6 @@ export const usePtsStore = create<State>()(
           innings: [firstInnings],
           currentInnings: 0,
           probability: [],
-          configuredOversCap: input.configuredOversCap,
           totalPlayers,
         };
         set({ current: match, undoStack: [], pendingSetup: undefined });
@@ -241,7 +219,6 @@ export const usePtsStore = create<State>()(
           lineup,
           draft.format,
           false,
-          draft.configuredOversCap,
         );
         // Per-team openers: pick the correct one for the team that is actually batting first.
         firstInnings.currentBatterId = firstBattingTeam === "A" ? draft.openingBatterAId : draft.openingBatterBId;
@@ -257,7 +234,6 @@ export const usePtsStore = create<State>()(
           innings: [firstInnings],
           currentInnings: 0,
           probability: [],
-          configuredOversCap: draft.configuredOversCap,
           totalPlayers: draft.totalPlayers,
           toss,
         };

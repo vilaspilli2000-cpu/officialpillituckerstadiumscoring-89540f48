@@ -10,8 +10,13 @@ export function totalInningsFor(format: FormatId) {
   return format === "A" ? 2 : format === "B" ? 2 : 4;
 }
 
-export function oversCapFor(format: FormatId, configuredOversCap?: number) {
-  return format === "A" ? 36 : format === "B" ? configuredOversCap : undefined; // 6 overs = 36 legal balls
+export function oversCapFor(format: FormatId) {
+  // Format A: hard cap of 6 overs (36 legal balls).
+  // Format B: first innings plays with NO configured cap — it ends naturally on
+  // all-out, and the second innings' cap is set dynamically to the actual
+  // first-innings legalBalls by advanceInnings().
+  // Format C: no innings cap (unlimited).
+  return format === "A" ? 36 : undefined;
 }
 
 export function newInnings(
@@ -21,8 +26,6 @@ export function newInnings(
   format: FormatId,
   /** Every innings requires manual opening batter selection (v3.3.4 §37). */
   autoOpen = false,
-  /** For Format B: the configured ball/over limit for the innings. */
-  configuredOversCap?: number,
 ): Innings {
   return {
     battingTeam: batting,
@@ -30,7 +33,7 @@ export function newInnings(
     runs: 0,
     wickets: 0,
     legalBalls: 0,
-    oversCap: oversCapFor(format, configuredOversCap),
+    oversCap: oversCapFor(format),
     batters: [],
     bowlers: [],
     lineup,
@@ -173,7 +176,7 @@ export function advanceInnings(
       const battingSide = prev.bowlingTeam;
       const bowlingSide = prev.battingTeam;
       const team = battingSide === "A" ? teams.A : teams.B;
-      const next = newInnings(battingSide, bowlingSide, [...team.playerIds], m.format, false, prev.oversCap);
+      const next = newInnings(battingSide, bowlingSide, [...team.playerIds], m.format, false);
       // Team B gets exactly the number of legal balls Team A actually used
       next.oversCap = effectiveLimit;
       m.innings.push(next);

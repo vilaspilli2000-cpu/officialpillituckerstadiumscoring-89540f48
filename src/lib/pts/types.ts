@@ -310,8 +310,6 @@ export interface Match {
   pointsBreakdown?: import("./pointsBreakdown").PointsBreakdownEntry[];
   /** Set when a side declared the win (WIN-D) and the opponent accepted. */
   winDeclared?: { declaringTeam: "A" | "B"; ts: number };
-  /** For Format B: the configured ball/over limit for the innings. */
-  configuredOversCap?: number;
   /** Penalty events (not deliveries) that modify team scores or target. */
   penalties?: Penalty[];
   /** Total selected players in the match (used for the two-player bowling exception). */
