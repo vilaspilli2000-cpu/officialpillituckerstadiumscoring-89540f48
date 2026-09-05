@@ -1,8 +1,9 @@
 import { oversString } from "@/lib/pts/engine";
-import { usePtsStore, playerName } from "@/lib/pts/store";
-import type { Innings, Player } from "@/lib/pts/types";
+import { usePtsStore } from "@/lib/pts/store";
+import type { Innings, Match, Player } from "@/lib/pts/types";
+import { CaptainName } from "./CaptainName";
 
-export function BattingScorecard({ innings }: { innings: Innings }) {
+export function BattingScorecard({ innings, match }: { innings: Innings; match: Match }) {
   const players = usePtsStore((s) => s.players);
   return (
     <div className="overflow-x-auto card-gold rounded-xl">
@@ -16,13 +17,16 @@ export function BattingScorecard({ innings }: { innings: Innings }) {
             const isCurrent = innings.currentBatterId === b.playerId;
             return (
               <tr key={b.playerId} className={`border-t border-border/40 ${isCurrent ? "bg-primary/10" : ""}`}>
-                <td className="p-2 font-medium">{playerName(players, b.playerId)}{isCurrent && " *"}</td>
+                <td className="p-2 font-medium">
+                  <CaptainName match={match} playerId={b.playerId} players={players} className="font-medium" />
+                  {isCurrent && " *"}
+                </td>
                 <td className="text-center font-bold">{b.runs}</td>
                 <td className="text-center">{b.balls}</td>
                 <td className="text-center">{sr}</td>
                 <td className="text-center">{b.fours}</td>
                 <td className="text-xs">
-                  {b.out ? dismissalText(b, players) : <span className="text-success">not out</span>}
+                  {b.out ? dismissalText(b, players, match) : <span className="text-success">not out</span>}
                 </td>
               </tr>
             );
@@ -33,21 +37,29 @@ export function BattingScorecard({ innings }: { innings: Innings }) {
   );
 }
 
-function dismissalText(b: { dismissalType?: string; bowlerId?: string; catcherId?: string }, players: Player[]) {
-  const bowler = b.bowlerId ? `b ${playerName(players, b.bowlerId)}` : "";
-  const catcher = b.catcherId ? `c ${playerName(players, b.catcherId)} ` : "";
+function dismissalText(
+  b: { dismissalType?: string; bowlerId?: string; catcherId?: string },
+  players: Player[],
+  match: Match,
+) {
+  const bowler = b.bowlerId ? (
+    <span>b <CaptainName match={match} playerId={b.bowlerId} players={players} className="text-xs" /></span>
+  ) : null;
+  const catcher = b.catcherId ? (
+    <span>c <CaptainName match={match} playerId={b.catcherId} players={players} className="text-xs" /> </span>
+  ) : null;
   switch (b.dismissalType) {
-    case "bowled": return `b ${playerName(players, b.bowlerId)}`;
-    case "caught": return `${catcher}${bowler}`;
-    case "caught-one-bounce": return `${catcher.replace("c ", "c¹ ")}${bowler}`;
-    case "six-and-out": return `six & out`;
-    case "leg-l2": return `L2`;
-    case "run-out": return `run out`;
-    default: return "out";
+    case "bowled": return bowler;
+    case "caught": return <span>{catcher}{bowler}</span>;
+    case "caught-one-bounce": return <span>c¹ {catcher}{bowler}</span>;
+    case "six-and-out": return <span>six &amp; out</span>;
+    case "leg-l2": return <span>L2</span>;
+    case "run-out": return <span>run out</span>;
+    default: return <span>out</span>;
   }
 }
 
-export function BowlingScorecard({ innings }: { innings: Innings }) {
+export function BowlingScorecard({ innings, match }: { innings: Innings; match: Match }) {
   const players = usePtsStore((s) => s.players);
   return (
     <div className="overflow-x-auto card-gold rounded-xl">
@@ -60,7 +72,9 @@ export function BowlingScorecard({ innings }: { innings: Innings }) {
             const econ = b.balls ? ((b.runs / b.balls) * 6).toFixed(1) : "-";
             return (
               <tr key={b.playerId} className="border-t border-border/40">
-                <td className="p-2 font-medium">{playerName(players, b.playerId)}</td>
+                <td className="p-2 font-medium">
+                  <CaptainName match={match} playerId={b.playerId} players={players} className="font-medium" />
+                </td>
                 <td className="text-center">{oversString(b.balls)}</td>
                 <td className="text-center font-bold">{b.wickets}</td>
                 <td className="text-center">{b.runs}</td>

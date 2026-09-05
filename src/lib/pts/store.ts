@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 import { toast } from "sonner";
 import type {
   Achievement, AwardFeedEntry, BallEventType, FormatId, Match, MilestoneEntry,
-  Player, RecordEntry, Team, FieldingEventKind, AchUnlock, Penalty,
+  Player, RecordEntry, Team, FieldingEventKind, AchUnlock, Penalty, Toss,
 } from "./types";
 import { SEED_PLAYERS, OFFICIAL_AWARD_SPLITS } from "./seed";
 import { applyEvent, type ApplyOptions } from "./engine";
@@ -94,6 +94,7 @@ interface SetupInput {
   teamB: Team;
   jokerId?: string;
   followOnMargin: number;
+  /** Derived from the toss winner's decision. */
   firstBattingTeam: "A" | "B";
   openingBatterId: string;
   openingBowlerId: string;
@@ -101,6 +102,46 @@ interface SetupInput {
   lineupB: string[];
   /** For Format B: configured overs (×6) or balls for the innings limit. */
   configuredOversCap?: number;
+}
+
+/** Transient pre-match draft used between the setup page and the toss page. */
+export interface PendingSetup {
+  format: FormatId;
+  teamA: Team;
+  teamB: Team;
+  jokerId?: string;
+  followOnMargin: number;
+  /** Per-team opening batters. Whichever team bats first per the toss will use theirs. */
+  openingBatterAId: string;
+  openingBatterBId: string;
+  /** Per-team opening bowlers. Whichever team bowls first per the toss will use theirs. */
+  openingBowlerAId: string;
+  openingBowlerBId: string;
+  lineupA: string[];
+  lineupB: string[];
+  configuredOversCap?: number;
+  /** Total selected players (for the two-player bowling exception). */
+  totalPlayers: number;
+}
+
+/** Transient pre-match draft used between the setup page and the toss page. */
+export interface PendingSetup {
+  format: FormatId;
+  teamA: Team;
+  teamB: Team;
+  jokerId?: string;
+  followOnMargin: number;
+  /** Per-team opening batters. Whichever team bats first per the toss will use theirs. */
+  openingBatterAId: string;
+  openingBatterBId: string;
+  /** Per-team opening bowlers. Whichever team bowls first per the toss will use theirs. */
+  openingBowlerAId: string;
+  openingBowlerBId: string;
+  lineupA: string[];
+  lineupB: string[];
+  configuredOversCap?: number;
+  /** Total selected players (for the two-player bowling exception). */
+  totalPlayers: number;
 }
 
 interface State {
@@ -111,6 +152,8 @@ interface State {
   achFeed: AchUnlock[];
   undoStack: Match[];
   settings: { defaultFollowOn: number; commentaryEnabled?: boolean };
+  /** Pre-match draft between setup and toss pages. */
+  pendingSetup?: PendingSetup;
   milestoneFeed: MilestoneEntry[];
   recordFeed: RecordEntry[];
   awardFeed: AwardFeedEntry[];
@@ -119,6 +162,10 @@ interface State {
 
   startMatch: (input: SetupInput) => void;
   setCurrent: (m: Match | undefined) => void;
+  /** Stash a pre-match setup draft for the toss page. */
+  setPendingSetup: (p: PendingSetup | undefined) => void;
+  /** Persist the toss result and initialise the live match. */
+  commitToss: (toss: Omit<Toss, "decidedAt">) => void;
   scoreEvent: (type: BallEventType, opts?: ApplyOptions) => void;
   undo: () => void;
   setNextBatter: (id: string) => void;
@@ -148,6 +195,7 @@ export const usePtsStore = create<State>()(
       achFeed: [],
       undoStack: [],
       settings: { defaultFollowOn: 200 },
+      pendingSetup: undefined,
       milestoneFeed: [],
       recordFeed: [],
       awardFeed: [],
@@ -159,6 +207,8 @@ export const usePtsStore = create<State>()(
         const firstInnings = newInnings(battingTeam, bowlingTeam, lineup, input.format, false, input.configuredOversCap);
         firstInnings.currentBatterId = input.openingBatterId;
         firstInnings.currentBowlerId = input.openingBowlerId;
+        // Total selected players in the match (lineups are the source of truth).
+        const totalPlayers = new Set([...input.lineupA, ...input.lineupB]).size;
         const match: Match = {
           id: uid(),
           createdAt: Date.now(),
@@ -171,8 +221,47 @@ export const usePtsStore = create<State>()(
           currentInnings: 0,
           probability: [],
           configuredOversCap: input.configuredOversCap,
+          totalPlayers,
         };
-        set({ current: match, undoStack: [] });
+        set({ current: match, undoStack: [], pendingSetup: undefined });
+      },
+
+      setPendingSetup: (p) => set({ pendingSetup: p }),
+
+      /** Persist the toss result, then initialise the live match. */
+      commitToss: (tossIn) => {
+        const draft = get().pendingSetup;
+        if (!draft) return;
+        const toss: Toss = { ...tossIn, decidedAt: Date.now() };
+        const firstBattingTeam: "A" | "B" = toss.decision === "bat" ? toss.winner : (toss.winner === "A" ? "B" : "A");
+        const lineup = firstBattingTeam === "A" ? draft.lineupA : draft.lineupB;
+        const firstInnings = newInnings(
+          firstBattingTeam,
+          firstBattingTeam === "A" ? "B" : "A",
+          lineup,
+          draft.format,
+          false,
+          draft.configuredOversCap,
+        );
+        // Per-team openers: pick the correct one for the team that is actually batting first.
+        firstInnings.currentBatterId = firstBattingTeam === "A" ? draft.openingBatterAId : draft.openingBatterBId;
+        firstInnings.currentBowlerId = firstBattingTeam === "A" ? draft.openingBowlerBId : draft.openingBowlerAId;
+        const match: Match = {
+          id: uid(),
+          createdAt: Date.now(),
+          format: draft.format,
+          teamA: draft.teamA,
+          teamB: draft.teamB,
+          jokerId: draft.jokerId,
+          followOnMargin: draft.followOnMargin,
+          innings: [firstInnings],
+          currentInnings: 0,
+          probability: [],
+          configuredOversCap: draft.configuredOversCap,
+          totalPlayers: draft.totalPlayers,
+          toss,
+        };
+        set({ current: match, undoStack: [], pendingSetup: undefined });
       },
 
       setCurrent: (m) => set({ current: m }),
@@ -303,6 +392,13 @@ export const usePtsStore = create<State>()(
         if (!current) return;
         const m = structuredClone(current);
         const innings = m.innings[m.currentInnings];
+        // Two-player exception: when the match has exactly two total players,
+        // the only possible bowler must be allowed to bowl consecutive overs.
+        const isTwoPlayer = (current.totalPlayers ?? 0) === 2;
+        if (!isTwoPlayer && innings.lastOverBowlerId && innings.lastOverBowlerId === id) {
+          // Refuse: same bowler cannot bowl two consecutive overs in a normal match.
+          return;
+        }
         innings.currentBowlerId = id;
         set({ current: m });
       },
@@ -318,13 +414,19 @@ export const usePtsStore = create<State>()(
         inn.declared = true;
         inn.closeReason = "declared";
         const battingName = inn.battingTeam === "A" ? m.teamA.name : m.teamB.name;
+        const battingTeam = inn.battingTeam === "A" ? m.teamA : m.teamB;
+        const captainId = battingTeam.captainId;
+        const captainName = captainId ? players.find((p) => p.id === captainId)?.name : undefined;
+        const text = captainName
+          ? `${captainName} declares for ${battingName} at ${inn.runs}/${inn.wickets}.`
+          : `${battingName} declare at ${inn.runs}/${inn.wickets}.`;
         m.commentary = [
           ...(m.commentary ?? []),
           {
             id: uid(), ts: Date.now(), inningsIndex: m.currentInnings,
             ballIndex: inn.events.length,
             overLabel: `${Math.floor(inn.legalBalls / 6)}.${inn.legalBalls % 6}`,
-            text: `${battingName} declare at ${inn.runs}/${inn.wickets}.`,
+            text,
             kind: "phase",
           },
         ];
@@ -934,6 +1036,7 @@ export const usePtsStore = create<State>()(
       resetAll: () => set({
         players: BASE_PLAYERS, matches: [], current: undefined,
         achievements: [], achFeed: [], undoStack: [],
+        pendingSetup: undefined,
         milestoneFeed: [], recordFeed: [], awardFeed: [],
       }),
 

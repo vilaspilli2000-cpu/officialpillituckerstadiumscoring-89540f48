@@ -120,9 +120,9 @@ function Result() {
               {inn.battingTeam === "A" ? current.teamA.name : current.teamB.name} — {inn.runs}/{inn.wickets}
               {inn.declared ? " Declared" : ""}
             </h3>
-            <BattingScorecard innings={inn} />
+            <BattingScorecard innings={inn} match={current} />
             <div className="h-2" />
-            <BowlingScorecard innings={inn} />
+            <BowlingScorecard innings={inn} match={current} />
           </div>
         ))}
       </section>

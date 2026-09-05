@@ -50,6 +50,9 @@ export function generateCommentaryFor(
   const batterPlayer = players.find((p) => p.id === ev.batterId);
   const bowlerPlayer = players.find((p) => p.id === ev.bowlerId);
   void batterPlayer; void bowlerPlayer;
+  // Captain flags (match-specific). Authoritative: teamA/B.captainId only.
+  const batterIsCaptain = !!(ev.batterId && (match.teamA.captainId === ev.batterId || match.teamB.captainId === ev.batterId));
+  const bowlerIsCaptain = !!(ev.bowlerId && (match.teamA.captainId === ev.bowlerId || match.teamB.captainId === ev.bowlerId));
 
   const recent = recentRunRate(innings, 18);
   const recWk = recentWickets(innings, 18);
@@ -396,6 +399,81 @@ export function generateCommentaryFor(
   if (need !== undefined && need === 0 && match.result) {
     kind = "milestone";
     main += ` 🏆 ${batting.name} get over the line!`;
+  }
+
+  // ---------- MATCH-SPECIFIC CAPTAIN FLAVOUR ----------
+  // Natural, probabilistic — never forced. Captain references only when contextually natural.
+  const catcherIsCaptain = !!(ev.catcherId && (match.teamA.captainId === ev.catcherId || match.teamB.captainId === ev.catcherId));
+  if (catcherIsCaptain && ev.isWicket && Math.random() < 0.45) {
+    const pool = [
+      " The captain completes the catch!",
+      " The skipper takes the catch!",
+      " The captain is right in the action with the catch.",
+    ];
+    main += " " + pickPhrase(pool, used);
+  } else if (batterIsCaptain && Math.random() < 0.28) {
+    if (ev.isWicket) {
+      const pool = [
+        " A huge wicket — the captain goes big.",
+        " Big moment! The captain has to walk.",
+        " The captain's innings comes to an end.",
+        " The skipper is gone — a key strike.",
+      ];
+      main += " " + pickPhrase(pool, used);
+    } else if (ev.type === "4") {
+      const pool = [
+        " The captain puts that away in style — four!",
+        " That's captain's authority — four!",
+        " The captain finds the boundary!",
+        " Captain takes charge with a cracking four.",
+        " The skipper finds the runs and leads from the front.",
+      ];
+      main += " " + pickPhrase(pool, used);
+    } else if (ev.type === "0") {
+      const pool = [
+        " The captain watches it through carefully.",
+        " The captain settles in at the crease.",
+      ];
+      main += " " + pickPhrase(pool, used);
+    } else if (ev.type === "1" || ev.type === "2" || ev.type === "3") {
+      const pool = [
+        " The captain gets the team moving.",
+        " The captain responds with a confident stroke.",
+        " The captain keeps the strike ticking.",
+      ];
+      main += " " + pickPhrase(pool, used);
+    } else if (batCard && batCard.runs >= 100 && batCard.runs - ev.runsToBatter < 100) {
+      main += " A captain's century — magnificent.";
+    } else if (batCard && batCard.runs >= 50 && batCard.runs - ev.runsToBatter < 50) {
+      main += " A captain's fifty — measured and classy.";
+    }
+  } else if (bowlerIsCaptain && Math.random() < 0.26) {
+    if (ev.isWicket) {
+      const pool = [
+        " The captain takes the ball and gets the breakthrough.",
+        " The skipper delivers with the ball!",
+        " Captain strikes!",
+        " The captain makes the breakthrough.",
+        " The captain comes in to bowl and strikes.",
+      ];
+      main += " " + pickPhrase(pool, used);
+    } else if (ev.type === "0" && rrr !== undefined && rrr > 10) {
+      main += " The captain keeps the squeeze on.";
+    } else if (ev.type === "0") {
+      const pool = [
+        " The captain joins the attack.",
+        " The captain takes the ball.",
+        " Captain takes charge with the ball.",
+      ];
+      main += " " + pickPhrase(pool, used);
+    } else if (ev.type === "4" || ev.type === "1" || ev.type === "2" || ev.type === "3") {
+      const pool = [
+        " The captain is right in the action.",
+        " Pressure moment for the skipper.",
+        " The captain has a job to do now.",
+      ];
+      main += " " + pickPhrase(pool, used);
+    }
   }
 
   // Final dedup safety: if exact text was already used in this match,

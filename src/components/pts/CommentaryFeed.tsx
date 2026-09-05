@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { CommentaryEntry } from "@/lib/pts/types";
+import { GlowCaptainWord } from "./CommentaryGlow";
 
 export function CommentaryFeed({ entries }: { entries: CommentaryEntry[] }) {
   const [expanded, setExpanded] = useState(false);
@@ -28,7 +29,7 @@ export function CommentaryFeed({ entries }: { entries: CommentaryEntry[] }) {
                 </span>
               )}
             </div>
-            <div>{c.text}</div>
+            <div><GlowCaptainWord text={c.text} /></div>
           </li>
         ))}
       </ul>

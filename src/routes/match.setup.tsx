@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/pts/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,33 +21,71 @@ export const Route = createFileRoute("/match/setup")({
 
 function Setup() {
   const players = usePtsStore((s) => s.players);
-  const startMatch = usePtsStore((s) => s.startMatch);
+  const setPendingSetup = usePtsStore((s) => s.setPendingSetup);
+  const pendingSetup = usePtsStore((s) => s.pendingSetup);
   const defaultFollowOn = usePtsStore((s) => s.settings.defaultFollowOn);
   const navigate = useNavigate();
 
+  // Restore any prior draft (e.g. user navigated back from the toss page).
+  useEffect(() => {
+    if (pendingSetup) {
+      setFormat(pendingSetup.format);
+      setTeamAIds(pendingSetup.teamA.playerIds);
+      setTeamBIds(pendingSetup.teamB.playerIds);
+      setJokerId(pendingSetup.jokerId);
+      setFollowOnMargin(pendingSetup.followOnMargin);
+      setConfiguredOversCap(pendingSetup.configuredOversCap ?? 36);
+      setCaptainAId(pendingSetup.teamA.captainId ?? "");
+      setCaptainBId(pendingSetup.teamB.captainId ?? "");
+      setOpeningBatterAId(pendingSetup.openingBatterAId);
+      setOpeningBatterBId(pendingSetup.openingBatterBId);
+      setOpeningBowlerAId(pendingSetup.openingBowlerAId);
+      setOpeningBowlerBId(pendingSetup.openingBowlerBId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [format, setFormat] = useState<FormatId>("A");
-  const [teamAName, setTeamAName] = useState("Team A");
-  const [teamBName, setTeamBName] = useState("Team B");
   const [teamAIds, setTeamAIds] = useState<string[]>([]);
   const [teamBIds, setTeamBIds] = useState<string[]>([]);
   const [jokerId, setJokerId] = useState<string | undefined>();
-  const [firstBattingTeam, setFirstBattingTeam] = useState<"A" | "B">("A");
   const [configuredOversCap, setConfiguredOversCap] = useState<number>(36);
-  const [openingBatterId, setOpeningBatterId] = useState<string>("");
-  const [openingBowlerId, setOpeningBowlerId] = useState<string>("");
+  const [openingBatterAId, setOpeningBatterAId] = useState<string>("");
+  const [openingBatterBId, setOpeningBatterBId] = useState<string>("");
+  const [openingBowlerAId, setOpeningBowlerAId] = useState<string>("");
+  const [openingBowlerBId, setOpeningBowlerBId] = useState<string>("");
   const [followOnMargin, setFollowOnMargin] = useState<number>(defaultFollowOn);
+  const [captainAId, setCaptainAId] = useState<string>("");
+  const [captainBId, setCaptainBId] = useState<string>("");
 
   const lineupA = useMemo(() => (jokerId && !teamAIds.includes(jokerId) ? [...teamAIds, jokerId] : teamAIds), [teamAIds, jokerId]);
   const lineupB = useMemo(() => (jokerId && !teamBIds.includes(jokerId) ? [...teamBIds, jokerId] : teamBIds), [teamBIds, jokerId]);
 
-  const battingIds = firstBattingTeam === "A" ? lineupA : lineupB;
-  const bowlingIds = firstBattingTeam === "A" ? lineupB : lineupA;
+  // If a captain is removed from the team, the captain must be invalidated.
+  useEffect(() => {
+    if (captainAId && !teamAIds.includes(captainAId)) setCaptainAId("");
+    if (captainBId && !teamBIds.includes(captainBId)) setCaptainBId("");
+  }, [teamAIds, teamBIds, captainAId, captainBId]);
+
+  // Total selected players in the match (lineupA + lineupB, deduped).
+  const totalPlayers = useMemo(() => new Set([...lineupA, ...lineupB]).size, [lineupA, lineupB]);
+
+  const captainAName = captainAId ? players.find((p) => p.id === captainAId)?.name : undefined;
+  const captainBName = captainBId ? players.find((p) => p.id === captainBId)?.name : undefined;
+  const teamAName = captainAName ? `${captainAName}'s Team` : "Team A";
+  const teamBName = captainBName ? `${captainBName}'s Team` : "Team B";
 
   const valid =
     teamAIds.length >= 1 &&
     teamBIds.length >= 1 &&
-    battingIds.includes(openingBatterId) &&
-    bowlingIds.includes(openingBowlerId);
+    captainAId !== "" &&
+    captainBId !== "" &&
+    teamAIds.includes(captainAId) &&
+    teamBIds.includes(captainBId) &&
+    lineupA.includes(openingBatterAId) &&
+    lineupB.includes(openingBatterBId) &&
+    lineupA.includes(openingBowlerAId) &&
+    lineupB.includes(openingBowlerBId);
 
   function toggle(list: string[], id: string, setList: (v: string[]) => void) {
     if (list.includes(id)) setList(list.filter((x) => x !== id));
@@ -67,20 +105,22 @@ function Setup() {
   }
 
   function submit() {
-    startMatch({
+    setPendingSetup({
       format,
-      teamA: { id: "A", name: teamAName, playerIds: lineupA },
-      teamB: { id: "B", name: teamBName, playerIds: lineupB },
+      teamA: { id: "A", name: teamAName, playerIds: lineupA, captainId: captainAId },
+      teamB: { id: "B", name: teamBName, playerIds: lineupB, captainId: captainBId },
       jokerId,
       followOnMargin,
-      firstBattingTeam,
-      openingBatterId,
-      openingBowlerId,
+      openingBatterAId,
+      openingBatterBId,
+      openingBowlerAId,
+      openingBowlerBId,
       lineupA,
       lineupB,
       configuredOversCap: format === "B" ? configuredOversCap : undefined,
+      totalPlayers,
     });
-    navigate({ to: "/match/live" });
+    navigate({ to: "/match/setup/toss" });
   }
 
   return (
@@ -105,8 +145,6 @@ function Setup() {
         <div className="grid md:grid-cols-2 gap-4">
           <TeamCard
             label="Team A"
-            name={teamAName}
-            onName={setTeamAName}
             selected={teamAIds}
             allPlayers={players.filter((p) => !teamBIds.includes(p.id))}
             onToggle={(id) => toggle(teamAIds, id, setTeamAIds)}
@@ -114,13 +152,62 @@ function Setup() {
           />
           <TeamCard
             label="Team B"
-            name={teamBName}
-            onName={setTeamBName}
             selected={teamBIds}
             allPlayers={players.filter((p) => !teamAIds.includes(p.id))}
             onToggle={(id) => toggle(teamBIds, id, setTeamBIds)}
             onMoveUp={(i) => moveUp(teamBIds, i, setTeamBIds)}
           />
+        </div>
+      </Section>
+
+      <Section title="Captains (compulsory)" hint="Each captain must be a member of their team. Team identity will be captain-derived.">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <Label className="text-xs uppercase tracking-widest text-primary/80">Team A Captain</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {teamAIds.length === 0 && (
+                <span className="text-xs text-muted-foreground">Select Team A players first.</span>
+              )}
+              {teamAIds.map((id) => {
+                const p = players.find((x) => x.id === id);
+                if (!p) return null;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setCaptainAId(id)}
+                    className={`px-3 py-2 rounded-lg border text-sm font-bold ${captainAId === id ? "border-primary bg-primary/10 text-primary" : "border-border"}`}
+                  >
+                    {p.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs uppercase tracking-widest text-primary/80">Team B Captain</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {teamBIds.length === 0 && (
+                <span className="text-xs text-muted-foreground">Select Team B players first.</span>
+              )}
+              {teamBIds.map((id) => {
+                const p = players.find((x) => x.id === id);
+                if (!p) return null;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setCaptainBId(id)}
+                    className={`px-3 py-2 rounded-lg border text-sm font-bold ${captainBId === id ? "border-primary bg-primary/10 text-primary" : "border-border"}`}
+                  >
+                    {p.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        <div className="mt-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Match title: </span>
+          <span className="font-bold text-primary">{teamAName} vs {teamBName}</span>
         </div>
       </Section>
 
@@ -156,19 +243,25 @@ function Setup() {
         />
       </Section>
 
-      <Section title="First to Bat">
-        <div className="flex gap-2">
-          <Button variant={firstBattingTeam === "A" ? "gold" : "score"} onClick={() => setFirstBattingTeam("A")}>{teamAName}</Button>
-          <Button variant={firstBattingTeam === "B" ? "gold" : "score"} onClick={() => setFirstBattingTeam("B")}>{teamBName}</Button>
+      <Section title="Opening Batters & Bowlers" hint="The actual batting order is decided by the toss. Each team supplies its own opening batter and opening bowler so either side can bat first safely.">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <Label className="text-xs uppercase tracking-widest text-primary/80">Team A Opening Batter</Label>
+            <PlayerPicker ids={lineupA} value={openingBatterAId} onChange={setOpeningBatterAId} />
+          </div>
+          <div>
+            <Label className="text-xs uppercase tracking-widest text-primary/80">Team B Opening Batter</Label>
+            <PlayerPicker ids={lineupB} value={openingBatterBId} onChange={setOpeningBatterBId} />
+          </div>
+          <div>
+            <Label className="text-xs uppercase tracking-widest text-primary/80">Team A Opening Bowler</Label>
+            <PlayerPicker ids={lineupA} value={openingBowlerAId} onChange={setOpeningBowlerAId} />
+          </div>
+          <div>
+            <Label className="text-xs uppercase tracking-widest text-primary/80">Team B Opening Bowler</Label>
+            <PlayerPicker ids={lineupB} value={openingBowlerBId} onChange={setOpeningBowlerBId} />
+          </div>
         </div>
-      </Section>
-
-      <Section title="Opening Batter">
-        <PlayerPicker ids={battingIds} value={openingBatterId} onChange={setOpeningBatterId} />
-      </Section>
-
-      <Section title="Opening Bowler">
-        <PlayerPicker ids={bowlingIds} value={openingBowlerId} onChange={setOpeningBowlerId} />
       </Section>
 
       {format === "B" && (
@@ -212,9 +305,15 @@ function Setup() {
 
       <div className="mt-8">
         <Button variant="hero" size="xl" disabled={!valid} onClick={submit}>
-          Start Match
+          Proceed to Toss
         </Button>
-        {!valid && <p className="text-xs text-muted-foreground mt-2">Pick at least 1 player per team, plus opening batter and bowler.</p>}
+        {!valid && (
+          <p className="text-xs text-muted-foreground mt-2">
+            {(!captainAId || !captainBId)
+              ? "Select a captain for both teams to continue."
+              : "Pick at least 1 player per team, plus opening batter and bowler."}
+          </p>
+        )}
       </div>
     </AppShell>
   );
@@ -231,9 +330,9 @@ function Section({ title, children, hint }: { title: string; children: React.Rea
 }
 
 function TeamCard({
-  label, name, onName, selected, allPlayers, onToggle, onMoveUp,
+  label, selected, allPlayers, onToggle, onMoveUp,
 }: {
-  label: string; name: string; onName: (s: string) => void;
+  label: string;
   selected: string[];
   allPlayers: { id: string; name: string }[];
   onToggle: (id: string) => void;
@@ -242,9 +341,8 @@ function TeamCard({
   const players = usePtsStore((s) => s.players);
   return (
     <div className="card-gold rounded-xl p-4">
-      <Label className="text-xs uppercase tracking-widest text-primary/80">{label} Name</Label>
-      <Input value={name} onChange={(e) => onName(e.target.value)} className="mt-1 mb-3" />
-      <div className="text-xs text-muted-foreground mb-2">Select 2–7 players</div>
+      <Label className="text-xs uppercase tracking-widest text-primary/80">{label}</Label>
+      <div className="text-xs text-muted-foreground mb-2 mt-1">Select 2–7 players</div>
       <div className="grid grid-cols-2 gap-2">
         {allPlayers.map((p) => (
           <button

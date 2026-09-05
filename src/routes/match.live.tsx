@@ -17,6 +17,7 @@ import { CommentaryFeed } from "@/components/pts/CommentaryFeed";
 import { RecordAlerts } from "@/components/pts/RecordAlerts";
 import { PlayerRivalries } from "@/components/pts/PlayerRivalries";
 import { TeamMomentumMeter } from "@/components/pts/TeamMomentumMeter";
+import { CaptainName } from "@/components/pts/CaptainName";
 import type { BallEvent, BallEventType, DismissalType, FieldingEventKind } from "@/lib/pts/types";
 import { toast } from "sonner";
 import { canScoreHere, claimScoring, deviceId, useCloud } from "@/lib/pts/cloud";
@@ -255,7 +256,7 @@ function Live() {
         <div className="mt-1 flex items-baseline justify-between gap-3">
           <div className="min-w-0">
             <div className="text-2xl font-bold truncate">
-              {playerName(players, innings.currentBatterId)}
+              <CaptainName match={current} playerId={innings.currentBatterId} players={players} className="text-2xl font-bold" />
               {innings.currentBatterId ? "*" : ""}
             </div>
             <div className="text-xs text-muted-foreground mt-1">
@@ -271,7 +272,7 @@ function Live() {
           <div className="min-w-0">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Bowler</div>
             <div className="font-semibold truncate">
-              {playerName(players, innings.currentBowlerId)}
+              <CaptainName match={current} playerId={innings.currentBowlerId} players={players} className="font-semibold" />
             </div>
           </div>
           <div className="text-right tabular-nums text-xs text-muted-foreground">
@@ -484,8 +485,18 @@ function Live() {
         title={innings.legalBalls === 0 ? "Select opening bowler" : "Select next bowler"}
         options={bowlerOptions}
         onPick={setNextBowler}
-        lockReason={(id) => (id === innings.lastOverBowlerId ? "bowled last over" : undefined)}
-        excludeIds={innings.lastOverBowlerId ? [innings.lastOverBowlerId] : []}
+        lockReason={(id) => (
+          (current.totalPlayers ?? 0) === 2
+            ? undefined
+            : id === innings.lastOverBowlerId
+              ? "bowled last over"
+              : undefined
+        )}
+        excludeIds={
+          (current.totalPlayers ?? 0) === 2 || !innings.lastOverBowlerId
+            ? []
+            : [innings.lastOverBowlerId]
+        }
       />
       <PlayerSelectModal
         open={!!fieldingPick}

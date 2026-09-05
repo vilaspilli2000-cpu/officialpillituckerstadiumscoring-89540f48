@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Match, Player } from "@/lib/pts/types";
 import { buildPointsBreakdown, type PointsBreakdownEntry } from "@/lib/pts/pointsBreakdown";
 import { achievementById } from "@/lib/pts/achievements";
+import { CaptainName, isCaptainOf } from "./CaptainName";
 import {
   legacyLevelFromAchievements,
   meltdownLevelFromAchievements,
@@ -136,7 +137,13 @@ export function PointsBreakdown({ match, players, priorMatches }: {
             <button className="w-full text-left" onClick={() => setOpenId(open ? null : e.playerId)}>
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="font-bold truncate">{e.playerName}</div>
+                  <div className="font-bold truncate">
+                    {isCaptainOf(match, e.playerId) ? (
+                      <CaptainName match={match} playerId={e.playerId} players={players} className="font-bold" />
+                    ) : (
+                      e.playerName
+                    )}
+                  </div>
                   <div className="text-[11px] text-muted-foreground tabular-nums">
                     {e.oldPoints} → <CountUp from={e.oldPoints} to={finalPoints} />
                   </div>
