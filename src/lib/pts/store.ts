@@ -124,6 +124,7 @@ interface State {
   undo: () => void;
   setNextBatter: (id: string) => void;
   setNextBowler: (id: string) => void;
+  retireHurt: (playerId: string) => void;
   declareInnings: () => void;
   concedeMatch: (declaringTeam: "A" | "B") => void;
   abandonMatch: () => void;
@@ -315,6 +316,18 @@ export const usePtsStore = create<State>()(
         }
         innings.currentBowlerId = id;
         set({ current: m });
+      },
+
+      retireHurt: (playerId) => {
+        const { current, undoStack } = get();
+        if (!current || current.result) return;
+        const innings = current.innings[current.currentInnings];
+        if (!innings || innings.closed || innings.currentBatterId !== playerId) return;
+
+        const snapshot = structuredClone(current);
+        const m = structuredClone(current);
+        m.innings[m.currentInnings].currentBatterId = undefined;
+        set({ current: m, undoStack: [...undoStack, snapshot].slice(-50) });
       },
 
       declareInnings: () => {

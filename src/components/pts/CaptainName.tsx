@@ -1,6 +1,36 @@
 import { playerName } from "@/lib/pts/store";
 import type { Match, Player } from "@/lib/pts/types";
 
+/**
+ * Return the current match-performance status for a player selection.
+ * Players without any recorded contribution are intentionally left neutral.
+ */
+export function matchStatusFor(match: Match, playerId: string): "best" | "worst" | undefined {
+  const scores = new Map<string, number>();
+  for (const innings of match.innings) {
+    for (const batter of innings.batters) {
+      scores.set(batter.playerId, (scores.get(batter.playerId) ?? 0) + batter.runs);
+    }
+    for (const bowler of innings.bowlers) {
+      scores.set(
+        bowler.playerId,
+        (scores.get(bowler.playerId) ?? 0) + bowler.wickets * 20 - bowler.runs / 10,
+      );
+    }
+  }
+
+  const playerScore = scores.get(playerId);
+  if (playerScore === undefined) return undefined;
+  const activeScores = [...scores.values()].filter((score) => score !== 0);
+  if (activeScores.length < 2) return undefined;
+
+  const best = Math.max(...activeScores);
+  const worst = Math.min(...activeScores);
+  if (playerScore === best && best > 0) return "best";
+  if (playerScore === worst && worst < 0) return "worst";
+  return undefined;
+}
+
 /** Resolve whether a player is one of the two captains in this specific match. */
 export function isCaptainOf(match: Match | undefined, playerId: string | undefined): boolean {
   if (!match || !playerId) return false;
