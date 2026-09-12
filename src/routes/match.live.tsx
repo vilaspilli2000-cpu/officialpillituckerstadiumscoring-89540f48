@@ -45,6 +45,7 @@ function Live() {
   const abandonMatch = usePtsStore((s) => s.abandonMatch);
   const applyPenalty = usePtsStore((s) => s.applyPenalty);
   const addFieldingEvent = usePtsStore((s) => s.addFieldingEvent);
+  const retireHurt = usePtsStore((s) => s.retireHurt);
   const navigate = useNavigate();
   const cloud = useCloud();
   const canWrite = canScoreHere(cloud);
@@ -315,6 +316,20 @@ function Live() {
         onPress={press}
       />
 
+      <button
+        disabled={scoringBlocked || !innings.currentBatterId}
+        onClick={() => {
+          if (innings.currentBatterId) {
+            retireHurt(innings.currentBatterId);
+          }
+        }}
+        className="mt-2 w-full rounded-2xl border border-amber-500/70 bg-amber-500/10 px-3 py-3 text-center text-amber-400 transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+        title="Batter leaves without being dismissed — not out, may return later. No ball, no runs, no wicket."
+      >
+        <div className="text-base font-black uppercase tracking-[0.15em] leading-none">RETIRE HURT</div>
+        <div className="mt-1 text-[10px] uppercase tracking-[0.15em] opacity-80">Not out · no ball · may return</div>
+      </button>
+
       <div className="mt-2 grid grid-cols-2 gap-2">
         <button
           disabled={scoringBlocked}
@@ -479,6 +494,7 @@ function Live() {
         title={innings.legalBalls === 0 && innings.batters.length === 0 ? "Select opening batter" : "Select next batter"}
         options={batterOptions}
         onPick={setNextBatter}
+        match={current}
       />
       <PlayerSelectModal
         open={needNextBowler}
