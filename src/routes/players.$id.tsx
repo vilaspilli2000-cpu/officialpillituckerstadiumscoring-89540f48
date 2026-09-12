@@ -1,4 +1,5 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Pencil } from "lucide-react";
 import { AppShell } from "@/components/pts/AppShell";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import {
   ACHIEVEMENT_GROUPS, CATEGORY_META, groupProgress, liveAchStats,
   type AchCategory, type AchProgress,
 } from "@/lib/pts/achievements";
+import { canScoreHere } from "@/lib/pts/cloud";
 
 export const Route = createFileRoute("/players/$id")({
   head: ({ params }) => ({ meta: [{ title: `Profile · ${params.id} — PTS Scorer` }] }),
@@ -29,6 +31,58 @@ function Profile() {
   const players = usePtsStore((s) => s.players);
   const matches = usePtsStore((s) => s.matches);
   if (!player) return <AppShell><p>Player not found. <Link to="/players" className="text-primary underline">Back</Link></p></AppShell>;
+  const updatePlayer = usePtsStore((s) => s.updatePlayer);
+  const isOwner = canScoreHere();
+  const CATS: AchCategory[] = ["batting", "bowling", "fielding", "awards", "shame"];
+
+  // Showcase selections (editable by profile owner only).
+  const savedShowcase = player.showcase ?? {};
+  const [draftShowcase, setDraftShowcase] = useState<Record<string, string>>(
+    () => ({ ...savedShowcase as Record<string, string> }),
+  );
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Reset draft when player changes (e.g. after sync from another device).
+  useEffect(() => {
+    if (!player) return;
+    setDraftShowcase({ ... (player.showcase ?? {}) } as Record<string, string>);
+    setHasChanges(false);
+  }, [player?.id]);
+
+  // Detect real unsaved changes (ignore when value equals saved).
+  useEffect(() => {
+    const changed = CATS.some((cat) => draftShowcase[cat] !== (savedShowcase[cat] ?? ""));
+    setHasChanges(changed);
+  }, [draftShowcase, savedShowcase]);
+
+  function pick(cat: AchCategory, achId: string) {
+    setDraftShowcase((d) => ({ ...d, [cat]: achId }));
+  }
+
+  function saveShowcase() {
+    if (!player) return;
+    // Build the next showcase: start from saved, apply changed categories,
+    // then drop empty values (empty = "use highest tier / auto").
+    const next: Record<string, string> = {};
+    for (const cat of CATS) {
+      const val = draftShowcase[cat] ?? "";
+      if (val && val !== savedShowcase[cat]) next[cat] = val;
+      if (!val && savedShowcase[cat]) next[cat] = "";
+    }
+    // If nothing changed (e.g. user reverted to saved), do nothing — keep save hidden.
+    if (Object.keys(next).length === 0) {
+      setHasChanges(false);
+      return;
+    }
+    const merged = { ...savedShowcase, ...next };
+    // Strip empty values so storage stays clean.
+    const clean: Partial<Record<AchCategory, string>> = {};
+    for (const [k, v] of Object.entries(merged)) if (v) clean[k as AchCategory] = v;
+    updatePlayer(player.id, { showcase: clean });
+    setDraftShowcase({ ...clean } as Record<string, string>);
+    setHasChanges(false);
+  }
+
   const c = combinedCareer(player);
   const innings = Math.max(0, player.career.innings ?? player.career.matches);
   const outs = Math.max(0, innings - player.career.notOuts);
@@ -66,7 +120,6 @@ function Profile() {
   const achAll: AchProgress[] = ACHIEVEMENT_GROUPS.flatMap(
     (g) => groupProgress(g, achStats, player, players).all,
   );
-  const CATS: AchCategory[] = ["batting", "bowling", "fielding", "awards", "shame"];
   const showcase = CATS.map((cat) => {
     const unlocked = achAll.filter((a) => a.unlocked && a.def.category === cat);
     return { cat, top: unlocked.length ? unlocked[unlocked.length - 1] : null };
@@ -121,23 +174,61 @@ function Profile() {
           </Link>
         </div>
         <div className="mb-2 text-[11px] text-muted-foreground">
-          Highest tier unlocked in each category · {player.achPoints ?? 0} ACH
+          {isOwner ? "Choose one achievement per category — your pick is shown to everyone" : "Highest tier unlocked in each category"} · {player.achPoints ?? 0} ACH
         </div>
+        {isOwner && (
+          <div className="mb-3 rounded-xl border border-primary/30 bg-primary/5 p-2 text-[11px] text-primary/80">
+            ⚙️ You are the profile scorer — edit your showcase below. Changes are shared across all devices.
+          </div>
+        )}
         <div className="grid gap-2 sm:grid-cols-2">
-          {showcase.map(({ cat, top }) =>
-            top ? (
-              <AchievementBadge key={cat} p={top} compact />
-            ) : (
-              <div
-                key={cat}
-                className="rounded-2xl border border-border/50 bg-secondary/30 p-3 text-xs text-muted-foreground"
-              >
-                <span className="mr-1">{CATEGORY_META[cat].icon}</span>
-                {CATEGORY_META[cat].label} — nothing unlocked yet
+          {showcase.map(({ cat, top }) => {
+            const sel = isOwner ? draftShowcase[cat] : (player.showcase?.[cat] ?? "");
+            const selected = sel ? achAll.find((a) => a.def.id === sel && a.unlocked) : top;
+            return (
+              <div key={cat} className="relative">
+                {selected ? (
+                  <AchievementBadge p={selected} compact />
+                ) : (
+                  <div
+                    className="rounded-2xl border border-border/50 bg-secondary/30 p-3 text-xs text-muted-foreground"
+                  >
+                    <span className="mr-1">{CATEGORY_META[cat].icon}</span>
+                    {CATEGORY_META[cat].label} — nothing unlocked yet
+                  </div>
+                )}
+                {isOwner && (
+                  <select
+                    aria-label={`Showcase for ${CATEGORY_META[cat].label}`}
+                    value={sel ?? ""}
+                    onChange={(e) => pick(cat, e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-border/60 bg-background/60 px-2 py-1.5 text-[11px] outline-none focus:border-primary"
+                  >
+                    <option value="">Use highest tier ({top?.def.name ?? "none"})</option>
+                    {achAll
+                      .filter((a) => a.unlocked && a.def.category === cat)
+                      .map((a) => (
+                        <option key={a.def.id} value={a.def.id}>{a.def.name}</option>
+                      ))}
+                  </select>
+                )}
               </div>
-            ),
-          )}
+            );
+          })}
         </div>
+        {isOwner && hasChanges && (
+          <div className="mt-3">
+            <Button
+              variant="gold"
+              size="sm"
+              onClick={saveShowcase}
+              className="gap-1"
+            >
+              Save Showcase
+            </Button>
+            <span className="ml-2 text-[11px] text-yellow-500/80">unsaved changes</span>
+          </div>
+        )}
       </section>
 
       <Section title="Career Summary">

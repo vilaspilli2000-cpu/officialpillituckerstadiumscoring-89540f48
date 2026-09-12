@@ -105,6 +105,8 @@ export interface Player {
   historicConsistency?: number;
   /** Marker: official PTS historic baseline (v10) has been applied. */
   ptsBaselineV10?: boolean;
+  /** Profile showcase: category -> selected achievement def id. */
+  showcase?: Partial<Record<"batting" | "bowling" | "fielding" | "awards" | "shame", string>>;
   /** Permanent Achievement Points (ACH). Hall Of Shame deducts. */
   achPoints?: number;
   /** Permanent achievement unlock history (never deleted). */
@@ -166,6 +168,7 @@ export type DismissalType =
   | "hit-wicket"
   | "retired"
   | "other"
+  | "nwtb"
   | "not-out";
 
 export interface BatterCard {
@@ -179,6 +182,8 @@ export interface BatterCard {
   bowlerId?: string;
   catcherId?: string;
   legState?: 0 | 1; // L1 pending flag
+  /** True when the batter left the crease without being dismissed (may return). */
+  retiredHurt?: boolean;
 }
 
 export interface BowlerCard {
@@ -246,6 +251,8 @@ export interface Innings {
   /** Innings ended by a captain's declaration. */
   declared?: boolean;
   followOnApplied?: boolean;
+  /** Player ids who retired hurt this innings (not out, may return later). */
+  retiredHurt?: string[];
 }
 
 export type FieldingEventKind = "catch-drop" | "boundary-save";
