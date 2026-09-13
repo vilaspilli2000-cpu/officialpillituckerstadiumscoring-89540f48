@@ -897,19 +897,6 @@ export const usePtsStore = create<State>()(
         // Used by ranking buckets; multiplier applied later with final achievements.
         const mp = computeMatchPoints(current, updated, priorStreaks);
 
-        // --- Ranking buckets: never reset, only ever extended --------------
-        for (let i = 0; i < updated.length; i++) {
-          const pre = preById.get(updated[i].id);
-          if (!pre) continue;
-          const pm = mp.get(updated[i].id);
-          if (!pm && !consPts.get(updated[i].id)) continue;
-          const delta = matchBucketDeltas(pre, updated[i], {
-            consistencyPoints: consPts.get(updated[i].id) ?? 0,
-            netMatchPoints: pm?.net ?? 0,
-          });
-          updated[i] = { ...updated[i], buckets: addBuckets(playerBuckets(updated[i]), delta) };
-        }
-
         // --- Result Achievement Engine (§11 / §12) -------------------------
         // Awards, expensive matches and every Hall Of Shame achievement are
         // only checked once the match is officially over. Live categories are
@@ -930,13 +917,30 @@ export const usePtsStore = create<State>()(
         // Awards the completed match's final achievements are included in the
         // Legacy/Meltdown level calculation, so the multiplier uses the player's
         // unlocked achievement count AFTER this match's achievements are applied.
-        const finalWithPts = finalPlayers.map((pl) => {
+        const finalNet = new Map<string, number>();
+        for (const pl of finalPlayers) {
           const pm = mp.get(pl.id);
-          if (!pm) return pl;
+          if (!pm) continue;
           const ll = legacyLevelFromAchievements(pl);
           const ml = meltdownLevelFromAchievements(pl);
-          const layered = layerResult(pm.net, ll, ml);
-          return { ...pl, matchPoints: (pl.matchPoints ?? 0) + Math.round(layered.finalResult) };
+          finalNet.set(pl.id, layerResult(pm.net, ll, ml).finalResult);
+        }
+
+        // --- Ranking buckets: never reset, only ever extended --------------
+        // Only the `match` bucket accumulates — by the FINAL (layered + rounded)
+        // Net Match Points. The other buckets (SR/BIG/CONS/AWD/4S/WKT) keep the
+        // official historic baseline and never change, so the total points follow
+        //   newTotal = oldTotal + finalNet
+        // exactly. `matchPoints` stays in sync with the persistent `match` bucket.
+        const finalWithPts = finalPlayers.map((pl) => {
+          const finalNetMatch = finalNet.get(pl.id);
+          if (finalNetMatch === undefined || !preById.has(pl.id)) return pl;
+          const delta = matchBucketDeltas(preById.get(pl.id)!, pl, {
+            consistencyPoints: consPts.get(pl.id) ?? 0,
+            netMatchPoints: Math.round(finalNetMatch),
+          });
+          const updatedBuckets = addBuckets(playerBuckets(pl), delta);
+          return { ...pl, buckets: updatedBuckets, matchPoints: updatedBuckets.match };
         });
 
         // Permanent Points Breakdown saved with the scorecard.
@@ -1079,6 +1083,7 @@ export const usePtsStore = create<State>()(
           awardsSeededV6?: boolean; historicRankingFrozenV7?: boolean;
           historicBonusV9?: boolean; achBaselineV334?: boolean;
           milestonesCorrectedV13?: boolean;
+          pointsBaselineV14?: boolean;
         };
         s.milestoneFeed = s.milestoneFeed ?? [];
         s.recordFeed = s.recordFeed ?? [];
@@ -1207,6 +1212,30 @@ export const usePtsStore = create<State>()(
         if (!s.milestonesCorrectedV13) {
           s.players = correctCareerMilestones(s.players);
           s.milestonesCorrectedV13 = true;
+        }
+        // v14: one-time ranking-points baseline correction.
+        // The ranking totals for these players previously drifted because the
+        // match-completion pipeline also grew SR/big/fours/wkt buckets, which
+        // aren't part of the persistent point total. The corrected totals were
+        // derived from the displayed Old Ranking Points + Final Net Match Points
+        // for that completed match:
+        //   sunny 8513 · deva 1137 · atharv 3482 · sathvik 5444
+        // The `match` bucket is adjusted so `bucketsTotal` lands on exactly the
+        // corrected total; no other field changes.
+        if (!s.pointsBaselineV14) {
+          const TARGET: Record<string, number> = {
+            sunny: 8513, deva: 1137, atharv: 3482, sathvik: 5444,
+          };
+          s.players = s.players.map((p) => {
+            const target = TARGET[p.id];
+            if (target === undefined) return p;
+            const cur = playerBuckets(p);
+            const curTotal = cur.sr + cur.big + cur.cons + cur.awd + cur.fours + cur.wkt + cur.match;
+            const delta = target - curTotal;
+            if (delta === 0) return p;
+            return { ...p, buckets: { ...cur, match: cur.match + delta } };
+          });
+          s.pointsBaselineV14 = true;
         }
         return s as never;
       },

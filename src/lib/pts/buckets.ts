@@ -68,19 +68,25 @@ const bigOf = (p: Player) =>
 /**
  * Bucket points earned by ONE completed match. `pre` is the player before the
  * match was credited, `post` is the player after career stats were credited.
+ *
+ * Only the match bucket changes; all other buckets (SR/BIG/CONS/AWD/4S/WKT)
+ * remain unchanged to preserve existing career/bucket data.
  */
 export function matchBucketDeltas(
   pre: Player,
   post: Player,
   opts: { consistencyPoints: number; netMatchPoints: number },
 ): RankBuckets {
+  // Only the match bucket changes. Other buckets are preserved from the
+  // official historic baseline; they must never drift from career stats.
+  // Final Net Match Points (layered + rounded) drive the total.
   return {
-    sr: Math.round(srOf(post) * 2) - Math.round(srOf(pre) * 2),
-    big: bigOf(post) - bigOf(pre),
-    cons: opts.consistencyPoints,
-    awd: awardPoints(post) - awardPoints(pre),
-    fours: (post.career.fours ?? 0) - (pre.career.fours ?? 0),
-    wkt: historicWicketsPoints(post.career.wickets ?? 0) - historicWicketsPoints(pre.career.wickets ?? 0),
+    sr: 0,
+    big: 0,
+    cons: 0,
+    awd: 0,
+    fours: 0,
+    wkt: 0,
     match: Math.round(opts.netMatchPoints),
   };
 }
