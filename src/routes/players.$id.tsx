@@ -98,9 +98,6 @@ function Profile() {
   const bowlAvg = player.career.wickets ? (player.career.bowlRuns / player.career.wickets).toFixed(1) : "-";
   const bowlSR = player.career.wickets ? (bowlBalls / player.career.wickets).toFixed(1) : "-";
   const bowlerDotPct = bowlBalls && dots ? ((dots / bowlBalls) * 100).toFixed(0) + "%" : "-";
-  const bestBB = (player.career.bestBowlingWkts ?? 0) > 0
-    ? `${player.career.bestBowlingWkts}/${player.career.bestBowlingRuns}`
-    : "-";
   const awardCounts = playerAwardCounts(player.id, matches);
   const perTypeCareer = {
     pom: player.career.pomAwards ?? 0,
@@ -241,11 +238,10 @@ function Profile() {
           <Stat label="Economy" value={econ} />
           <Stat label="Boundary %" value={boundaryPct} />
           <Stat label="Dot Ball %" value={bowlerDotPct} />
-          <Stat label="Total Boundaries" value={boundaries} />
+          <Stat label="4s / Boundaries" value={player.career.fours ?? 0} />
           <Stat label="Career Awards" value={totalAwards} />
           <Stat label="Impact Score" value={impact} />
           <Stat label="Overall Rank" value={rankLabel} />
-          <Stat label="Milestones" value={milestones.length} />
         </div>
         {milestones.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2 text-xs">
@@ -290,7 +286,6 @@ function Profile() {
           <Stat label="Maidens" value={player.career.maidens ?? 0} />
           <Stat label="Wides" value={player.career.wides ?? 0} />
           <Stat label="No Balls" value={player.career.noBalls ?? 0} />
-          <Stat label="Best Bowling" value={bestBB} />
         </div>
       </Section>
 

@@ -43,7 +43,7 @@ const ROWS: SeedRow[] = [
     id: "sunny", name: "Sunny", role: "All-rounder",
     notes: "PTS greatest all-rounder. Explosive boundary hitter, elite finisher, low dot-ball rate, major match winner.",
     matches: 260, innings: 218, runs: 22686, balls: 12789, highest: 264,
-    fifties: 55, hundreds: 24, hundred50s: 4, doubleHundreds: 2,
+    fifties: 58, hundreds: 24, hundred50s: 4, doubleHundreds: 2,
     fours: 5896, sixes: 782, notOuts: 36, ducks: 3,
     wickets: 473, bowlRuns: 4986, bowlBalls: 7632, maidens: 18, dots: 4218,
     wides: 42, noBalls: 11, bestBowlingWkts: 5, bestBowlingRuns: 9,
@@ -76,7 +76,7 @@ const ROWS: SeedRow[] = [
     id: "atharv", name: "Atharv", role: "Batter",
     notes: "Fearless stroke-maker with explosive starts and aggressive intent.",
     matches: 260, innings: 201, runs: 9285, balls: 5908, highest: 167,
-    fifties: 11, hundreds: 2, hundred50s: 0, doubleHundreds: 0,
+    fifties: 12, hundreds: 2, hundred50s: 0, doubleHundreds: 0,
     fours: 2386, sixes: 338, notOuts: 17, ducks: 10,
     wickets: 173, bowlRuns: 2765, bowlBalls: 3894, maidens: 8, dots: 2158,
     wides: 26, noBalls: 5, bestBowlingWkts: 4, bestBowlingRuns: 15,
@@ -282,4 +282,37 @@ export function combinedCareer(p: Player) {
     catches: p.career.catches,
     awards: p.career.awards,
   };
+}
+
+/** Authoritative career 50s / 100s corrections.
+ *
+ *  ONLY `career.fifties` and `career.hundreds` are overwritten for these
+ *  players. Every other field keeps its existing value — runs, innings,
+ *  balls, highest, averages, wickets, catches, awards, current/latest match
+ *  stats and cloud-synced data are all left untouched. Players not listed
+ *  here are returned unchanged.
+ *
+ *  Applied once via the store's one-time milestone-correction flag, so a
+ *  future 50/100 genuinely earned on the pitch is never overwritten. */
+export const CAREER_MILESTONE_CORRECTION: Record<string, { fifties: number; hundreds: number }> = {
+  sunny:      { fifties: 58, hundreds: 24 },
+  sathvik:    { fifties: 37, hundreds: 13 },
+  atharv:     { fifties: 12, hundreds: 2 },
+  rithu:      { fifties: 15, hundreds: 6 },
+  karthik:    { fifties: 3,  hundreds: 1 },
+  deva:       { fifties: 3,  hundreds: 0 },
+  mahesh:     { fifties: 2,  hundreds: 0 },
+  himmu:      { fifties: 1,  hundreds: 0 },
+  madhu:      { fifties: 0,  hundreds: 0 },
+  karunya:    { fifties: 0,  hundreds: 0 },
+  viru:       { fifties: 0,  hundreds: 0 },
+  karthikeya: { fifties: 0,  hundreds: 0 },
+};
+
+export function correctCareerMilestones(players: Player[]): Player[] {
+  return players.map((p) => {
+    const c = CAREER_MILESTONE_CORRECTION[p.id];
+    if (!c) return p;
+    return { ...p, career: { ...p.career, fifties: c.fifties, hundreds: c.hundreds } };
+  });
 }

@@ -1,10 +1,11 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { matchStatusFor } from "./CaptainName";
+import { usePtsStore } from "@/lib/pts/store";
+import { getPreviousMatchGlow, previousMatchStatusFor } from "./CaptainName";
 import type { Match } from "@/lib/pts/types";
 
 export function PlayerSelectModal({
-  open, title, options, onPick, excludeIds, lockReason, onClose, match,
+  open, title, options, onPick, excludeIds, lockReason, onClose,
 }: {
   open: boolean;
   title: string;
@@ -15,6 +16,8 @@ export function PlayerSelectModal({
   onClose?: () => void;
   match?: Match;
 }) {
+  // ROLLING PREVIOUS-MATCH GLOW SOURCE — most recent completed match.
+  const previousMatch = usePtsStore((s) => s.previousCompletedMatch());
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose?.(); }}>
       <DialogContent className="max-w-sm">
@@ -26,14 +29,9 @@ export function PlayerSelectModal({
             const excluded = excludeIds?.includes(o.id);
             const reason = lockReason?.(o.id);
             const disabled = excluded || !!reason;
-            const status = match ? matchStatusFor(match, o.id) : undefined;
-            const statusOverlay =
-              status === "best"
-                ? "bg-emerald-600/10 border-2 border-emerald-400 ring-2 ring-emerald-400/60 shadow-[0_0_16px_rgba(16,185,129,0.5)]"
-                : status === "worst"
-                  ? "bg-purple-900/15 border-2 border-purple-500 ring-2 ring-purple-500/60 shadow-[0_0_16px_rgba(147,51,234,0.55)]"
-                  : undefined;
-            if (!statusOverlay) {
+            const status = previousMatch ? previousMatchStatusFor(previousMatch, o.id) : undefined;
+            const glow = getPreviousMatchGlow(status);
+            if (!status) {
               return (
                 <Button
                   key={o.id}
@@ -52,9 +50,8 @@ export function PlayerSelectModal({
                 key={o.id}
                 disabled={disabled}
                 onClick={() => onPick(o.id)}
-                className={`justify-start rounded-lg border px-4 py-2 text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${statusOverlay} ${
-                  status === "best" ? "text-emerald-300" : "text-purple-300"
-                }`}
+                className={`justify-start rounded-lg border px-4 py-2 text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed pts-glow-card pts-glow-${status} ${glow.text}`}
+                style={{ background: `rgba(var(--pts-glow), 0.08)` }}
               >
                 <span className="truncate">{o.name}</span>
                 {reason && <span className="ml-auto text-xs text-muted-foreground">{reason}</span>}

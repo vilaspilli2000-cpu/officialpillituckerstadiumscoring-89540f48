@@ -5,7 +5,7 @@ import type {
   Achievement, AwardFeedEntry, BallEventType, FormatId, Match, MilestoneEntry,
   Player, RecordEntry, Team, FieldingEventKind, AchUnlock, Penalty,
 } from "./types";
-import { SEED_PLAYERS, OFFICIAL_AWARD_SPLITS } from "./seed";
+import { SEED_PLAYERS, OFFICIAL_AWARD_SPLITS, correctCareerMilestones } from "./seed";
 import { applyEvent, type ApplyOptions } from "./engine";
 import { advanceInnings, detectResult, newInnings, totalInningsFor } from "./formats";
 import { computeAwards } from "./awards";
@@ -139,6 +139,8 @@ interface State {
   importPlayers: (players: Player[]) => void;
   importMatches: (matches: Match[]) => void;
   setSetting: <K extends keyof State["settings"]>(k: K, v: State["settings"][K]) => void;
+  /** Return the most recent completed match, or undefined if none. */
+  previousCompletedMatch: () => Match | undefined;
 }
 
 export const usePtsStore = create<State>()(
@@ -522,6 +524,10 @@ export const usePtsStore = create<State>()(
         if (!current) return;
         // Snapshot pre-match career values (for milestone/personal-best detection).
         const preById = new Map(players.map((p) => [p.id, structuredClone(p)]));
+        // PRE-MATCH player records — used for the Points Breakdown's
+        // `oldPoints` so it reflects the true ranking BEFORE this match
+        // (never double-counts this match's own bucket deltas).
+        const preMatchPlayers = structuredClone(players);
         // Streak snapshot BEFORE this match (needed to award +12 consistency).
         const priorStreaks = buildStreakSnapshot(matches);
         // credit career stats
@@ -936,7 +942,7 @@ export const usePtsStore = create<State>()(
         // Permanent Points Breakdown saved with the scorecard.
         const completed: Match = {
           ...current,
-          pointsBreakdown: buildPointsBreakdown(current, finalWithPts, matches),
+          pointsBreakdown: buildPointsBreakdown(current, preMatchPlayers, matches, finalWithPts),
           commentary: [
             ...(current.commentary ?? []),
             ...finalRun.unlocks.map((u, i) => ({
@@ -1053,6 +1059,14 @@ export const usePtsStore = create<State>()(
       },
 
       setSetting: (k, v) => set({ settings: { ...get().settings, [k]: v } }),
+
+      /** Return the most recent completed match, or undefined if none. */
+      previousCompletedMatch: () => {
+        const completed = get().matches.filter(m => !!m.completedAt);
+        if (completed.length === 0) return undefined;
+        const sorted = [...completed].sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
+        return sorted[0];
+      },
     }),
     {
       name: "pts-scorer-v1",
@@ -1064,6 +1078,7 @@ export const usePtsStore = create<State>()(
           achFeed?: AchUnlock[];
           awardsSeededV6?: boolean; historicRankingFrozenV7?: boolean;
           historicBonusV9?: boolean; achBaselineV334?: boolean;
+          milestonesCorrectedV13?: boolean;
         };
         s.milestoneFeed = s.milestoneFeed ?? [];
         s.recordFeed = s.recordFeed ?? [];
@@ -1183,6 +1198,15 @@ export const usePtsStore = create<State>()(
             buckets: OFFICIAL_BUCKETS[p.id] ?? p.buckets ?? { ...ZERO_BUCKETS },
           }));
           s.achBaselineV334 = true;
+        }
+        // v13: one-time career milestone correction for fifties/hundreds.
+        // Only touches `career.fifties` and `career.hundreds`. Every other
+        // career field, all statistics and cloud data stay untouched.
+        // Future genuine 50/100 milestones earned on the pitch are never
+        // overwritten because this flag is set immediately.
+        if (!s.milestonesCorrectedV13) {
+          s.players = correctCareerMilestones(s.players);
+          s.milestonesCorrectedV13 = true;
         }
         return s as never;
       },

@@ -118,7 +118,11 @@ function projectedCareer(p: Player, match: Match | undefined, key: MilestoneKey)
   return base + live;
 }
 
-const CAREER_KEYS: MilestoneKey[] = ["runs", "fours", "sixes", "wickets", "catches", "runOuts", "awards"];
+// Record Alerts must never surface six-count or run-out milestones (see
+// product rule: run-outs / stumpings / six-counts / best bowling figures do
+// NOT appear as Record Alerts). The stats themselves stay tracked; only the
+// alert surface is pruned.
+const CAREER_KEYS: MilestoneKey[] = ["runs", "fours", "wickets", "catches", "awards"];
 
 /** Batting-innings milestones + career milestones for focus players. */
 export function computeLiveMilestoneAlerts(
@@ -205,19 +209,7 @@ export function computeLiveMilestoneAlerts(
           });
         }
       }
-      const bw = inn.bowlers.find((b) => b.playerId === focusId);
-      if (bw) {
-        const best = p.career.bestBowlingWkts ?? 0;
-        const gap = best - bw.wickets;
-        if (best > 0 && gap > 0 && gap <= 2) {
-          out.push({
-            id: `pb-bb-${focusId}`,
-            icon: "🎯",
-            tone: "personal",
-            text: `${p.name} needs ${gap} wicket${gap === 1 ? "" : "s"} to equal his best bowling figures (${best} wkts).`,
-          });
-        }
-      }
+      // Best bowling figures NEVER surface as a Record Alert (product rule).
     }
   }
 

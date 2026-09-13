@@ -154,3 +154,45 @@
   border: 1px solid oklch(0.82 0.16 88 / 25%);
   box-shadow: var(--shadow-card);
 }
+
+/*
+ * PTS Previous-Match Glow.
+ *
+ * Reuses the Achievement Showcase visual language: gentle, animated,
+ * pulsing — NOT a harsh static border. Cards glow on their whole container;
+ * scorecard/commentary names glow on the text.
+ *
+ * Status → colour:
+ *   potm   → emerald
+ *   worst  → dark purple
+ *   winner → gold/yellow
+ *   loser  → red
+ */
+@layer components {
+  .pts-glow-card,
+  .pts-glow-name {
+    position: relative;
+  }
+  .pts-glow-card { animation: pts-glow-pulse 3.2s ease-in-out infinite; }
+  .pts-glow-name  { animation: pts-glow-text  3.2s ease-in-out infinite; }
+
+  .pts-glow-potm   { --pts-glow: 16, 185, 129; }
+  .pts-glow-worst  { --pts-glow: 147,  51, 234; }
+  .pts-glow-winner { --pts-glow: 255, 200,  40; }
+  .pts-glow-loser  { --pts-glow: 225,  65,  70; }
+
+  @keyframes pts-glow-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(var(--pts-glow), 0.32), 0 0 10px 0 rgba(var(--pts-glow), 0.18); }
+    50%      { box-shadow: 0 0 6px  1px rgba(var(--pts-glow), 0.5),  0 0 22px 4px rgba(var(--pts-glow), 0.35); }
+  }
+  @keyframes pts-glow-text {
+    0%, 100% { text-shadow: 0 0 4px rgba(var(--pts-glow), 0.3); }
+    50%      { text-shadow: 0 0 12px rgba(var(--pts-glow), 0.7), 0 0 22px rgba(var(--pts-glow), 0.4); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pts-glow-card, .pts-glow-name { animation: none; }
+    .pts-glow-card  { box-shadow: 0 0 8px 1px rgba(var(--pts-glow), 0.3); }
+    .pts-glow-name  { text-shadow: 0 0 5px rgba(var(--pts-glow), 0.4); }
+  }
+}

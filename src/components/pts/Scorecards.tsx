@@ -1,10 +1,11 @@
 import { oversString } from "@/lib/pts/engine";
 import { usePtsStore } from "@/lib/pts/store";
 import type { Innings, Match, Player } from "@/lib/pts/types";
-import { CaptainName } from "./CaptainName";
+import { CaptainName, previousMatchStatusFor } from "./CaptainName";
 
 export function BattingScorecard({ innings, match }: { innings: Innings; match: Match }) {
   const players = usePtsStore((s) => s.players);
+  const prevMatch = usePtsStore((s) => s.previousCompletedMatch());
   return (
     <div className="overflow-x-auto card-gold rounded-xl">
       <table className="w-full text-sm">
@@ -15,8 +16,9 @@ export function BattingScorecard({ innings, match }: { innings: Innings; match: 
           {innings.batters.map((b) => {
             const sr = b.balls ? ((b.runs / b.balls) * 100).toFixed(1) : "-";
             const isCurrent = innings.currentBatterId === b.playerId;
+            const status = previousMatchStatusFor(prevMatch, b.playerId);
             return (
-              <tr key={b.playerId} className={`border-t border-border/40 ${isCurrent ? "bg-primary/10" : ""}`}>
+              <tr key={b.playerId} className={`border-t border-border/40 ${isCurrent ? "bg-primary/10" : ""} ${status ? "pts-glow-card pts-glow-" + status : ""}`}>
                 <td className="p-2 font-medium">
                   <CaptainName match={match} playerId={b.playerId} players={players} className="font-medium" />
                   {isCurrent && " *"}
@@ -61,6 +63,7 @@ function dismissalText(
 
 export function BowlingScorecard({ innings, match }: { innings: Innings; match: Match }) {
   const players = usePtsStore((s) => s.players);
+  const prevMatch = usePtsStore((s) => s.previousCompletedMatch());
   return (
     <div className="overflow-x-auto card-gold rounded-xl">
       <table className="w-full text-sm">
@@ -70,8 +73,9 @@ export function BowlingScorecard({ innings, match }: { innings: Innings; match: 
         <tbody>
           {innings.bowlers.map((b) => {
             const econ = b.balls ? ((b.runs / b.balls) * 6).toFixed(1) : "-";
+            const status = previousMatchStatusFor(prevMatch, b.playerId);
             return (
-              <tr key={b.playerId} className="border-t border-border/40">
+              <tr key={b.playerId} className={`border-t border-border/40 ${status ? "pts-glow-card pts-glow-" + status : ""}`}>
                 <td className="p-2 font-medium">
                   <CaptainName match={match} playerId={b.playerId} players={players} className="font-medium" />
                 </td>

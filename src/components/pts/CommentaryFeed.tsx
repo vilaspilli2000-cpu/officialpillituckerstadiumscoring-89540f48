@@ -1,9 +1,11 @@
 import { useState } from "react";
 import type { CommentaryEntry } from "@/lib/pts/types";
-import { GlowCaptainWord } from "./CommentaryGlow";
+import { GlowCommentaryNames } from "./CommentaryGlow";
+import { usePtsStore } from "@/lib/pts/store";
 
 export function CommentaryFeed({ entries }: { entries: CommentaryEntry[] }) {
   const [expanded, setExpanded] = useState(false);
+  const players = usePtsStore((s) => s.players);
   const ordered = [...entries].reverse();
   const visible = expanded ? ordered : ordered.slice(0, 8);
   if (entries.length === 0) {
@@ -29,7 +31,7 @@ export function CommentaryFeed({ entries }: { entries: CommentaryEntry[] }) {
                 </span>
               )}
             </div>
-            <div><GlowCaptainWord text={c.text} /></div>
+            <div><GlowCommentaryNames text={c.text} players={players} /></div>
           </li>
         ))}
       </ul>

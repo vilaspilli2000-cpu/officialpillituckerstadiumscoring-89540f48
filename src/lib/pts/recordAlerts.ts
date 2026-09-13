@@ -9,9 +9,9 @@ export interface RecordAlert {
 
 type StatKey =
   | "runs" | "highest" | "fifties" | "hundreds" | "hundred50s" | "doubleHundreds"
-  | "fours" | "sixes"
-  | "wickets" | "bestBowlingWkts" | "dots" | "maidens"
-  | "catches" | "runOuts"
+  | "fours"
+  | "wickets" | "dots" | "maidens"
+  | "catches"
   | "awards";
 
 interface StatDef {
@@ -30,13 +30,10 @@ const STATS: StatDef[] = [
   { key: "hundred50s", label: "most 150s", icon: "🎯", higherIsBetter: true, singularUnit: "150" },
   { key: "doubleHundreds", label: "most double centuries", icon: "👑", higherIsBetter: true, singularUnit: "double" },
   { key: "fours", label: "most fours", icon: "🎯", higherIsBetter: true, singularUnit: "four" },
-  { key: "sixes", label: "most sixes", icon: "⚡", higherIsBetter: true, singularUnit: "six" },
   { key: "wickets", label: "leading wicket-taker", icon: "🔥", higherIsBetter: true, singularUnit: "wicket" },
-  { key: "bestBowlingWkts", label: "best bowling figures", icon: "🎳", higherIsBetter: true, singularUnit: "wicket" },
   { key: "dots", label: "most dot balls", icon: "🧱", higherIsBetter: true, singularUnit: "dot" },
   { key: "maidens", label: "most maidens", icon: "🛡️", higherIsBetter: true, singularUnit: "maiden" },
   { key: "catches", label: "catching record", icon: "🧤", higherIsBetter: true, singularUnit: "catch" },
-  { key: "runOuts", label: "most run outs", icon: "🎯", higherIsBetter: true, singularUnit: "run out" },
   { key: "awards", label: "most match awards", icon: "🏅", higherIsBetter: true, singularUnit: "award" },
 ];
 
@@ -44,7 +41,6 @@ function pluralUnit(n: number, unit: string) {
   if (n === 1) return unit;
   if (unit === "century") return "centuries";
   if (unit === "fifty") return "fifties";
-  if (unit === "run out") return "run outs";
   return unit + "s";
 }
 
@@ -92,19 +88,9 @@ function projected(player: Player, match: Match | undefined, key: StatKey): numb
         if (c) live += c.fours;
         break;
       }
-      case "sixes": {
-        const c = inn.batters.find((b) => b.playerId === player.id);
-        if (c) live += c.sixes;
-        break;
-      }
       case "wickets": {
         const c = inn.bowlers.find((b) => b.playerId === player.id);
         if (c) live += c.wickets;
-        break;
-      }
-      case "bestBowlingWkts": {
-        const c = inn.bowlers.find((b) => b.playerId === player.id);
-        if (c) liveMax = Math.max(liveMax, c.wickets);
         break;
       }
       case "dots": {
@@ -119,7 +105,7 @@ function projected(player: Player, match: Match | undefined, key: StatKey): numb
       default: break;
     }
   }
-  if (key === "highest" || key === "bestBowlingWkts") return Math.max(base, liveMax);
+  if (key === "highest") return Math.max(base, liveMax);
   return base + live;
 }
 

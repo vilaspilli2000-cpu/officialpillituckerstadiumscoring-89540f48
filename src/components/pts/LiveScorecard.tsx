@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import type { Innings, Match, Player } from "@/lib/pts/types";
-import { playerName } from "@/lib/pts/store";
+import { playerName, usePtsStore } from "@/lib/pts/store";
 import { oversString } from "@/lib/pts/engine";
 import {
   batterAdvanced,
@@ -12,7 +12,11 @@ import {
   requiredRunRate,
   highestPartnership,
 } from "@/lib/pts/analytics";
-import { CaptainName } from "./CaptainName";
+import {
+  CaptainName,
+  previousMatchStatusFor,
+  getPreviousMatchGlow,
+} from "./CaptainName";
 
 function fmt(n: number, d = 1) {
   if (!isFinite(n)) return "—";
@@ -68,6 +72,8 @@ function situationLine(match: Match) {
 }
 
 function InningsBlock({ match, innings, players }: { match: Match; innings: Innings; players: Player[] }) {
+  // ROLLING PREVIOUS-MATCH GLOW SOURCE — the most recent completed match.
+  const prevMatch = usePtsStore((s) => s.previousCompletedMatch());
   const battingName = innings.battingTeam === "A" ? match.teamA.name : match.teamB.name;
   const extras = inningsExtras(innings);
   const ps = partnerships(innings);
@@ -113,8 +119,10 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
               const adv = batterAdvanced(innings, b.playerId);
               const sr = b.balls ? (b.runs / b.balls) * 100 : 0;
               const isCurrent = innings.currentBatterId === b.playerId;
+              const status = previousMatchStatusFor(prevMatch, b.playerId);
+              const glow = getPreviousMatchGlow(status);
               return (
-                <tr key={b.playerId} className={`border-t border-border/40 ${isCurrent ? "bg-primary/10" : ""}`}>
+                <tr key={b.playerId} className={`border-t border-border/40 ${isCurrent ? "bg-primary/10" : ""} ${status ? "pts-glow-card pts-glow-" + status : ""} ${glow.text}`}>
                   <td className="p-2 font-medium text-left whitespace-nowrap">
                     <CaptainName match={match} playerId={b.playerId} players={players} className="font-medium" />
                     {isCurrent && " *"}
@@ -156,8 +164,10 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
             {innings.bowlers.map((b) => {
               const adv = bowlerAdvanced(innings, b.playerId);
               const econ = b.balls ? (b.runs / b.balls) * 6 : 0;
+              const status = previousMatchStatusFor(prevMatch, b.playerId);
+              const glow = getPreviousMatchGlow(status);
               return (
-                <tr key={b.playerId} className="border-t border-border/40">
+                <tr key={b.playerId} className={`border-t border-border/40 ${status ? "pts-glow-card pts-glow-" + status : ""} ${glow.text}`}>
                   <td className="p-2 font-medium text-left whitespace-nowrap">
                     <CaptainName match={match} playerId={b.playerId} players={players} className="font-medium" />
                   </td>

@@ -38,12 +38,16 @@ function mergeLines(lines: PointLine[]): PointLine[] {
 /**
  * Build the permanent Points Breakdown for a match.
  * `priorMatches` must NOT include `match` (they are the completed matches
- * that existed before it) and `players` are the pre-match player records.
+ * that existed before it) and `players` are the PRE-MATCH player records,
+ * so `oldPoints` reflects the true ranking total before this match.
+ * `postPlayers` are optional POST-match records used ONLY for the Legacy /
+ * Meltdown achievement counts (which include this match's unlocks).
  */
 export function buildPointsBreakdown(
   match: Match,
   players: Player[],
   priorMatches: Match[],
+  postPlayers?: Player[],
 ): PointsBreakdownEntry[] {
   const streaks = buildStreakSnapshot(priorMatches);
   const mp = computeMatchPoints(match, players, streaks);
@@ -52,8 +56,10 @@ export function buildPointsBreakdown(
     const player = players.find((p) => p.id === playerId);
     if (!player) continue;
     const oldPoints = computeOvertakeScore(player, priorMatches).total;
-    const ll = legacyLevelFromAchievements(player);
-    const ml = meltdownLevelFromAchievements(player);
+    const post = postPlayers?.find((p) => p.id === playerId);
+    const levelSource = post ?? player;
+    const ll = legacyLevelFromAchievements(levelSource);
+    const ml = meltdownLevelFromAchievements(levelSource);
     const layered = layerResult(pm.net, ll, ml);
     const netRounded = Math.round(layered.finalResult);
     entries.push({
