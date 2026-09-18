@@ -288,12 +288,12 @@ const GROUP_SPECS: GroupSpec[] = [
   },
   {
     id: "most-fours-innings", name: "Four Frenzy", category: "batting", statKey: "mostFoursInnings",
-    unit: "Most 4s in 1 Innings", icon: "🏏", note: "Personal best fours in a single innings",
+    unit: "4s in 1 Innings", icon: "🏏", note: "Personal best fours in a single innings",
     tiers: [["Boundary Burst", 10], ["Four Striker", 12], ["Boundary Storm", 15], ["Four Destroyer", 19], ["Boundary Immortal", 27]],
   },
   {
     id: "most-balls-faced", name: "Endurance Batter", category: "batting", statKey: "mostBallsFaced",
-    unit: "Most Balls Faced in 1 Innings", icon: "🛡️", note: "Personal best balls faced in a single innings",
+    unit: "Balls Faced in 1 Innings", icon: "🛡️", note: "Personal best balls faced in a single innings",
     tiers: [["Crease Keeper", 25], ["Staying Power", 40], ["Innings Survivor", 60], ["Crease Warrior", 80], ["Crease Immortal", 100]],
   },
   {
@@ -303,7 +303,7 @@ const GROUP_SPECS: GroupSpec[] = [
   },
   {
     id: "most-ones-innings", name: "Single Runner", category: "batting", statKey: "mostOnesInnings",
-    unit: "Most 1s in 1 Innings", icon: "🏃", note: "Personal best 1s scored in a single innings",
+    unit: "1s in 1 Innings", icon: "🏃", note: "Personal best 1s scored in a single innings",
     tiers: [["Single Seeker", 20], ["Quick Rotator", 30], ["Strike Rotator", 50], ["Run Recycler", 60], ["Rotation Master", 100]],
   },
   {
@@ -323,12 +323,12 @@ const GROUP_SPECS: GroupSpec[] = [
   },
   {
     id: "most-dot-balls-faced", name: "Dot Ball Eater", category: "batting", statKey: "mostDotsFaced",
-    unit: "Most Dot Balls Faced in 1 Innings", icon: "🧱", note: "Personal best dot balls faced in a single innings",
+    unit: "Dot Balls Faced in 1 Innings", icon: "🧱", note: "Personal best dot balls faced in a single innings",
     tiers: [["Dot Survivor", 9], ["Dot Breaker", 17], ["Dot Battler", 25], ["Dot Warrior", 35], ["Dot Defier", 45]],
   },
   {
     id: "most-dot-balls-bowled", name: "Dot Ball Bowler", category: "bowling", statKey: "mostDotsBowled",
-    unit: "Most Dot Balls Bowled in 1 Innings", icon: "🧱", note: "Personal best dot balls bowled in a single innings",
+    unit: "Dot Balls Bowled in 1 Innings", icon: "🧱", note: "Personal best dot balls bowled in a single innings",
     tiers: [["Dot Starter", 10], ["Dot Hunter", 20], ["Dot Specialist", 30], ["Dot Enforcer", 40], ["Dot Dominator", 50]],
   },
 ];
