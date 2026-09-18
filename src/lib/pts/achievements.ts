@@ -66,7 +66,11 @@ export type StatKey =
   // New v4 achievement stats
   | "duckDodgeStreak" | "matchAppearances" | "chasingNotOuts" | "economyGuardianStreak"
   | "boundarySaves" | "botmAwards" | "bowltmAwards" | "lowScores" | "worstAwards"
-  | "bowledDismissals" | "extrasGiven";
+  | "bowledDismissals" | "extrasGiven"
+  // New v5 achievement stats
+  | "dotsBowled" | "mostFoursInnings" | "mostBallsFaced" | "oversBelow3Economy"
+  | "mostOnesInnings" | "consecutiveFifties" | "consecutiveHundreds" | "overs16plusRuns"
+  | "mostDotsFaced" | "mostDotsBowled";
 
 /** Statistics only evaluated once a match is officially over. */
 export const RESULT_ONLY_STATS: StatKey[] = [
@@ -82,6 +86,12 @@ export const RESULT_ONLY_STATS: StatKey[] = [
 export const LIVE_STATS: StatKey[] = [
   "runs", "fifties", "hundreds", "matchSR", "wickets", "fours",
   "catches", "oneBounceCatches", "streak30",
+  // New v4 achievement stats (live-updating)
+  "duckDodgeStreak", "matchAppearances", "chasingNotOuts", "economyGuardianStreak",
+  "boundarySaves", "botmAwards", "bowltmAwards", "lowScores", "worstAwards",
+  "bowledDismissals", "extrasGiven",
+  // New v5 achievement stats (live)
+  "dotsBowled", "consecutiveFifties", "consecutiveHundreds",
 ];
 
 export interface AchievementDef {
@@ -129,7 +139,7 @@ const GROUP_SPECS: GroupSpec[] = [
   {
     id: "half-centuries", name: "Half Centuries", category: "batting", statKey: "fifties",
     unit: "Fifties", icon: "5️⃣",
-    tiers: [["Reliable Start", 6], ["Fifty Specialist", 12], ["Fifty Hunter", 25], ["Fifty King", 40], ["Lord Of Fifties", 70]],
+    tiers: [["Reliable Start", 6], ["Fifty Specialist", 12], ["Fifty Hunter", 17], ["Fifty King", 23], ["Lord Of Fifties", 30]],
   },
   {
     id: "match-sr", name: "Match Strike Rate", category: "batting", statKey: "matchSR",
@@ -149,7 +159,7 @@ const GROUP_SPECS: GroupSpec[] = [
   {
     id: "career-fours", name: "Career Fours", category: "batting", statKey: "fours",
     unit: "Fours", icon: "🟨",
-    tiers: [["Boundary Finder", 150], ["Boundary Hunter", 400], ["Boundary Master", 700], ["Boundary King", 1000], ["Boundary Emperor", 1500]],
+    tiers: [["Boundary Finder", 150], ["Boundary Hunter", 400], ["Boundary Master", 600], ["Boundary King", 800], ["Boundary Emperor", 1000]],
   },
   {
     id: "direct-catches", name: "Direct Catches", category: "fielding", statKey: "catches",
@@ -269,6 +279,58 @@ const GROUP_SPECS: GroupSpec[] = [
     unit: "Extras Given", icon: "💨", note: "Extras attributable to the bowler",
     tiers: [["Loose Line", 25], ["Wild Spell", 50], ["Wayward Ways", 100], ["Run Riot", 175], ["Chaos Spell", 250]],
   },
+
+  // NEW v4 POSITIVE ACHIEVEMENTS (10 categories × 5 tiers = 50)
+  {
+    id: "dot-balls-bowled", name: "Dot Ball Counter", category: "bowling", statKey: "dotsBowled",
+    unit: "Career Dot Balls", icon: "🧱", note: "Career dot balls bowled",
+    tiers: [["Dot Seeker", 50], ["Dot Hunter", 150], ["Dot Master", 300], ["Dot Commander", 500], ["Dot Conqueror", 750]],
+  },
+  {
+    id: "most-fours-innings", name: "Four Frenzy", category: "batting", statKey: "mostFoursInnings",
+    unit: "Most 4s in 1 Innings", icon: "🏏", note: "Personal best fours in a single innings",
+    tiers: [["Boundary Burst", 10], ["Four Striker", 12], ["Boundary Storm", 15], ["Four Destroyer", 19], ["Boundary Immortal", 27]],
+  },
+  {
+    id: "most-balls-faced", name: "Endurance Batter", category: "batting", statKey: "mostBallsFaced",
+    unit: "Most Balls Faced in 1 Innings", icon: "🛡️", note: "Personal best balls faced in a single innings",
+    tiers: [["Crease Keeper", 25], ["Staying Power", 40], ["Innings Survivor", 60], ["Crease Warrior", 80], ["Crease Immortal", 100]],
+  },
+  {
+    id: "economy-overs", name: "Effective Bowler", category: "bowling", statKey: "oversBelow3Economy",
+    unit: "Qualifying Overs", icon: "🎯", note: "Overs bowled with economy below 3.00",
+    tiers: [["Tight Spell", 6], ["Run Saver", 9], ["Economy Specialist", 12], ["Run Controller", 19], ["Run Eliminator", 22]],
+  },
+  {
+    id: "most-ones-innings", name: "Single Runner", category: "batting", statKey: "mostOnesInnings",
+    unit: "Most 1s in 1 Innings", icon: "🏃", note: "Personal best 1s scored in a single innings",
+    tiers: [["Single Seeker", 20], ["Quick Rotator", 30], ["Strike Rotator", 50], ["Run Recycler", 60], ["Rotation Master", 100]],
+  },
+  {
+    id: "fifty-streak", name: "Fifty Streak", category: "batting", statKey: "consecutiveFifties",
+    unit: "Consecutive 50+ Scores", icon: "🔥", note: "Consecutive innings scoring 50+ runs",
+    tiers: [["Fifty Finder", 2], ["Fifty Fever", 4], ["Fifty Streak", 6], ["Fifty Force", 8], ["Fifty Dynasty", 10]],
+  },
+  {
+    id: "century-streak", name: "Century Streak", category: "batting", statKey: "consecutiveHundreds",
+    unit: "Consecutive 100+ Scores", icon: "💯", note: "Consecutive innings scoring 100+ runs",
+    tiers: [["Century Finder", 2], ["Century Fever", 3], ["Century Streak", 4], ["Century Force", 5], ["Century Dynasty", 6]],
+  },
+  {
+    id: "overs-16plus", name: "16+ Run Overs", category: "batting", statKey: "overs16plusRuns",
+    unit: "Qualifying Overs", icon: "🔥", note: "Batting overs scoring 16+ runs",
+    tiers: [["Power Burst", 2], ["Power Surge", 5], ["Over Storm", 10], ["Over Inferno", 20], ["Power Immortal", 30]],
+  },
+  {
+    id: "most-dot-balls-faced", name: "Dot Ball Eater", category: "batting", statKey: "mostDotsFaced",
+    unit: "Most Dot Balls Faced in 1 Innings", icon: "🧱", note: "Personal best dot balls faced in a single innings",
+    tiers: [["Dot Survivor", 9], ["Dot Breaker", 17], ["Dot Battler", 25], ["Dot Warrior", 35], ["Dot Defier", 45]],
+  },
+  {
+    id: "most-dot-balls-bowled", name: "Dot Ball Bowler", category: "bowling", statKey: "mostDotsBowled",
+    unit: "Most Dot Balls Bowled in 1 Innings", icon: "🧱", note: "Personal best dot balls bowled in a single innings",
+    tiers: [["Dot Starter", 10], ["Dot Hunter", 20], ["Dot Specialist", 30], ["Dot Enforcer", 40], ["Dot Dominator", 50]],
+  },
 ];
 
 export interface AchievementGroup extends Omit<GroupSpec, "tiers"> {
@@ -324,6 +386,10 @@ export const ALL_STAT_KEYS: StatKey[] = [
   "duckDodgeStreak", "matchAppearances", "chasingNotOuts", "economyGuardianStreak",
   "boundarySaves", "botmAwards", "bowltmAwards", "lowScores", "worstAwards",
   "bowledDismissals", "extrasGiven",
+  // New v5 achievement stats
+  "dotsBowled", "mostFoursInnings", "mostBallsFaced", "oversBelow3Economy",
+  "mostOnesInnings", "consecutiveFifties", "consecutiveHundreds", "overs16plusRuns",
+  "mostDotsFaced", "mostDotsBowled",
 ];
 
 export const zeroAchProgress = (): AchStats =>
