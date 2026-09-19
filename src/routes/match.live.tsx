@@ -17,7 +17,6 @@ import { CommentaryFeed } from "@/components/pts/CommentaryFeed";
 import { RecordAlerts } from "@/components/pts/RecordAlerts";
 import { PlayerRivalries } from "@/components/pts/PlayerRivalries";
 import { TeamMomentumMeter } from "@/components/pts/TeamMomentumMeter";
-import ChallengeProgressAlert from "@/components/challenges/ChallengeProgressAlert";
 import { CaptainName } from "@/components/pts/CaptainName";
 import type { BallEvent, BallEventType, DismissalType, FieldingEventKind } from "@/lib/pts/types";
 import { toast } from "sonner";
@@ -57,9 +56,7 @@ function Live() {
   const [penaltySelecting, setPenaltySelecting] = useState(false);
   const [penaltyPlayer, setPenaltyPlayer] = useState<string | null>(null);
   const [tab, setTab] = useState<"scoring" | "scorecard" | "analytics">("scoring");
-  const [winDStep, setWinDStep] = useState<
-    null | { step: "pick" } | { step: "confirm"; team: "A" | "B" }
-  >(null);
+  const [winDStep, setWinDStep] = useState<null | { step: "pick" } | { step: "confirm"; team: "A" | "B" }>(null);
   const [abandonStep, setAbandonStep] = useState(false);
 
   useEffect(() => {
@@ -99,8 +96,7 @@ function Live() {
 
   const striker = innings.batters.find((b) => b.playerId === innings.currentBatterId);
   const bowler = innings.bowlers.find((b) => b.playerId === innings.currentBowlerId);
-  const strikerSR =
-    striker && striker.balls ? ((striker.runs / striker.balls) * 100).toFixed(0) : "—";
+  const strikerSR = striker && striker.balls ? ((striker.runs / striker.balls) * 100).toFixed(0) : "—";
   const bowlerEcon = bowler && bowler.balls ? ((bowler.runs / bowler.balls) * 6).toFixed(1) : "—";
   const bowlerOversStr = bowler ? oversString(bowler.balls) : "0.0";
 
@@ -170,9 +166,7 @@ function Live() {
             key={t}
             onClick={() => setTab(t)}
             className={`rounded-lg px-3 py-2 font-bold transition ${
-              tab === t
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-primary"
+              tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"
             }`}
           >
             {t}
@@ -180,374 +174,324 @@ function Live() {
         ))}
       </div>
 
-      {tab === "scorecard" && <LiveScorecard match={current} players={players} />}
-      {tab === "analytics" && <MatchAnalytics match={current} />}
+      {tab === "scorecard" && (
+        <LiveScorecard match={current} players={players} />
+      )}
+      {tab === "analytics" && (
+        <MatchAnalytics match={current} />
+      )}
       {tab === "scoring" && (
-        <>
-          {!canWrite && (
-            <div className="mb-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-400">
-              {cloud.role === "admin"
-                ? "Another device is scoring this match — you are watching live."
-                : "Viewer mode — live updates only."}
-              {cloud.role === "admin" && cloud.scoringDevice !== deviceId() && (
-                <button
-                  onClick={async () => {
-                    const r = await claimScoring(true);
-                    toast[r.ok ? "success" : "error"](
-                      r.ok ? "You now control scoring" : "Could not take control",
-                    );
-                  }}
-                  className="ml-2 underline font-bold"
+      <>
+      {!canWrite && (
+        <div className="mb-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-400">
+          {cloud.role === "admin"
+            ? "Another device is scoring this match — you are watching live."
+            : "Viewer mode — live updates only."}
+          {cloud.role === "admin" && cloud.scoringDevice !== deviceId() && (
+            <button
+              onClick={async () => {
+                const r = await claimScoring(true);
+                toast[r.ok ? "success" : "error"](
+                  r.ok ? "You now control scoring" : "Could not take control",
+                );
+              }}
+              className="ml-2 underline font-bold"
+            >
+              Take control
+            </button>
+          )}
+        </div>
+      )}
+      <section className="rounded-2xl border border-border/60 bg-card/70 p-5 mb-4 relative overflow-hidden">
+        <div className="flex items-start justify-between">
+          <div className="text-[11px] font-bold tracking-[0.15em] text-primary uppercase">
+            {battingTeam.name} · Innings {current.currentInnings + 1}
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-red-500">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+            LIVE
+          </div>
+        </div>
+        <div className="mt-2 flex items-baseline gap-1 tabular-nums">
+          <span className="text-6xl font-black text-gradient-gold leading-none">{innings.runs}</span>
+          <span className="text-2xl text-muted-foreground">/ {innings.wickets}</span>
+          {innings.declared && (
+            <span className="ml-2 text-sm font-bold uppercase tracking-widest text-primary">Declared</span>
+          )}
+        </div>
+        <div className="mt-4 grid grid-cols-4 gap-2 text-xs">
+          <Meta label="OVERS" value={oversString(innings.legalBalls)} />
+          <Meta label="WKTS" value={`${innings.wickets} / ${battingTeam.playerIds.length}`} />
+          <Meta label="VS" value={bowlingTeam.name} small />
+          <Meta label="TARGET" value={current.target ? String(current.target) : "—"} gold={!!current.target} />
+        </div>
+        {(current.penalties ?? []).length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {(current.penalties ?? []).map((p) => {
+              const inTeamA = current.teamA.playerIds.includes(p.playerId);
+              const inTeamB = current.teamB.playerIds.includes(p.playerId);
+              const penInn = current.innings[p.inningsIndex];
+              const penBatting = penInn ? (penInn.battingTeam === "A" ? current.teamA.name : current.teamB.name) : "?";
+              const isBowling = inTeamA
+                ? (penInn ? penInn.battingTeam === "B" : false)
+                : (penInn ? penInn.battingTeam === "A" : false);
+              const effect = p.inningsIndex === 0
+                ? (isBowling ? `+${p.runs} to ${penBatting} score` : `-${p.runs} to ${penBatting} score`)
+                : (isBowling ? `-${p.runs} to target` : `+${p.runs} to target`);
+              return (
+                <span
+                  key={p.id}
+                  className="rounded-lg border border-purple-500/40 bg-purple-500/10 px-2 py-1 text-[11px] font-bold text-purple-300"
+                  title="Team-level penalty adjustment — not a delivery or individual stat"
                 >
-                  Take control
-                </button>
-              )}
-            </div>
-          )}
-          <section className="rounded-2xl border border-border/60 bg-card/70 p-5 mb-4 relative overflow-hidden">
-            <div className="flex items-start justify-between">
-              <div className="text-[11px] font-bold tracking-[0.15em] text-primary uppercase">
-                {battingTeam.name} · Innings {current.currentInnings + 1}
-              </div>
-              <div className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-red-500">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-                LIVE
-              </div>
-            </div>
-            <div className="mt-2 flex items-baseline gap-1 tabular-nums">
-              <span className="text-6xl font-black text-gradient-gold leading-none">
-                {innings.runs}
-              </span>
-              <span className="text-2xl text-muted-foreground">/ {innings.wickets}</span>
-              {innings.declared && (
-                <span className="ml-2 text-sm font-bold uppercase tracking-widest text-primary">
-                  Declared
+                  ⚖ {playerName(players, p.playerId)} · {effect}
                 </span>
-              )}
-            </div>
-            <div className="mt-4 grid grid-cols-4 gap-2 text-xs">
-              <Meta label="OVERS" value={oversString(innings.legalBalls)} />
-              <Meta label="WKTS" value={`${innings.wickets} / ${battingTeam.playerIds.length}`} />
-              <Meta label="VS" value={bowlingTeam.name} small />
-              <Meta
-                label="TARGET"
-                value={current.target ? String(current.target) : "—"}
-                gold={!!current.target}
-              />
-            </div>
-            {(current.penalties ?? []).length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {(current.penalties ?? []).map((p) => {
-                  const inTeamA = current.teamA.playerIds.includes(p.playerId);
-                  const inTeamB = current.teamB.playerIds.includes(p.playerId);
-                  const penInn = current.innings[p.inningsIndex];
-                  const penBatting = penInn
-                    ? penInn.battingTeam === "A"
-                      ? current.teamA.name
-                      : current.teamB.name
-                    : "?";
-                  const isBowling = inTeamA
-                    ? penInn
-                      ? penInn.battingTeam === "B"
-                      : false
-                    : penInn
-                      ? penInn.battingTeam === "A"
-                      : false;
-                  const effect =
-                    p.inningsIndex === 0
-                      ? isBowling
-                        ? `+${p.runs} to ${penBatting} score`
-                        : `-${p.runs} to ${penBatting} score`
-                      : isBowling
-                        ? `-${p.runs} to target`
-                        : `+${p.runs} to target`;
-                  return (
-                    <span
-                      key={p.id}
-                      className="rounded-lg border border-purple-500/40 bg-purple-500/10 px-2 py-1 text-[11px] font-bold text-purple-300"
-                      title="Team-level penalty adjustment — not a delivery or individual stat"
-                    >
-                      ⚖ {playerName(players, p.playerId)} · {effect}
-                    </span>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          <section className="rounded-2xl border border-primary/30 bg-card/60 p-4 mb-3">
-            <div className="text-[11px] font-bold tracking-[0.15em] text-primary uppercase">
-              On strike
-            </div>
-            <div className="mt-1 flex items-baseline justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-2xl font-bold truncate">
-                  <CaptainName
-                    match={current}
-                    playerId={innings.currentBatterId}
-                    players={players}
-                    className="text-2xl font-bold"
-                  />
-                  {innings.currentBatterId ? "*" : ""}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  SR {strikerSR} · 4s {striker?.fours ?? 0} · 6s {striker?.sixes ?? 0}
-                </div>
-              </div>
-              <div className="text-right tabular-nums shrink-0">
-                <div className="text-3xl font-black">{striker?.runs ?? 0}</div>
-                <div className="text-xs text-muted-foreground">({striker?.balls ?? 0})</div>
-              </div>
-            </div>
-            <div className="mt-3 pt-3 border-t border-border/40 flex items-baseline justify-between text-sm">
-              <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Bowler
-                </div>
-                <div className="font-semibold truncate">
-                  <CaptainName
-                    match={current}
-                    playerId={innings.currentBowlerId}
-                    players={players}
-                    className="font-semibold"
-                  />
-                </div>
-              </div>
-              <div className="text-right tabular-nums text-xs text-muted-foreground">
-                {bowler?.wickets ?? 0}/{bowler?.runs ?? 0} · {bowlerOversStr} ov · econ {bowlerEcon}
-              </div>
-            </div>
-          </section>
-
-          <div className="mb-3">
-            <ProbabilityBar match={current} />
+              );
+            })}
           </div>
+        )}
+      </section>
 
-          <div className="mb-3">
-            <TeamMomentumMeter match={current} />
-          </div>
-
-          <ChallengeProgressAlert />
-
-          <div className="mb-4">
-            <CommentaryFeed entries={current.commentary ?? []} />
-          </div>
-
-          <div className="mb-4">
-            <RecordAlerts match={current} players={players} />
-          </div>
-
-          <div className="mb-4">
-            <PlayerRivalries match={current} matches={matches} players={players} />
-          </div>
-
-          <div className="flex items-center gap-2 mb-4 min-h-[40px] overflow-x-auto">
-            {lastSix.length === 0 ? (
-              <div className="text-xs text-muted-foreground">No balls bowled yet</div>
-            ) : (
-              lastSix.map((e) => <BallToken key={e.id} ev={e} />)
-            )}
-          </div>
-
-          <ScoringPad disabled={scoringBlocked} ballPendingL2={!!ballPendingL2} onPress={press} />
-
-          <button
-            disabled={scoringBlocked || !innings.currentBatterId}
-            onClick={() => {
-              if (innings.currentBatterId) {
-                retireHurt(innings.currentBatterId);
-              }
-            }}
-            className="mt-2 w-full rounded-2xl border border-amber-500/70 bg-amber-500/10 px-3 py-3 text-center text-amber-400 transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
-            title="Batter leaves without being dismissed — not out, may return later. No ball, no runs, no wicket."
-          >
-            <div className="text-base font-black uppercase tracking-[0.15em] leading-none">
-              RETIRE HURT
+      <section className="rounded-2xl border border-primary/30 bg-card/60 p-4 mb-3">
+        <div className="text-[11px] font-bold tracking-[0.15em] text-primary uppercase">On strike</div>
+        <div className="mt-1 flex items-baseline justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-2xl font-bold truncate">
+              <CaptainName match={current} playerId={innings.currentBatterId} players={players} className="text-2xl font-bold" />
+              {innings.currentBatterId ? "*" : ""}
             </div>
-            <div className="mt-1 text-[10px] uppercase tracking-[0.15em] opacity-80">
-              Not out · no ball · may return
+            <div className="text-xs text-muted-foreground mt-1">
+              SR {strikerSR} · 4s {striker?.fours ?? 0} · 6s {striker?.sixes ?? 0}
             </div>
-          </button>
-
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <button
-              disabled={scoringBlocked}
-              onClick={() => setFieldingPick("boundary-save")}
-              className="rounded-2xl border border-emerald-600/50 bg-emerald-600/10 px-3 py-3 text-center text-emerald-400 transition active:scale-[0.97] disabled:opacity-40"
-            >
-              <div className="text-sm font-black leading-none">SAVE</div>
-              <div className="mt-1 text-[10px] uppercase tracking-[0.15em] opacity-80">
-                Boundary Save
-              </div>
-            </button>
-            <button
-              disabled={scoringBlocked}
-              onClick={() => setFieldingPick("catch-drop")}
-              className="rounded-2xl border border-orange-600/50 bg-orange-600/10 px-3 py-3 text-center text-orange-400 transition active:scale-[0.97] disabled:opacity-40"
-            >
-              <div className="text-sm font-black leading-none">DROP</div>
-              <div className="mt-1 text-[10px] uppercase tracking-[0.15em] opacity-80">
-                Catch Drop
-              </div>
-            </button>
           </div>
+          <div className="text-right tabular-nums shrink-0">
+            <div className="text-3xl font-black">{striker?.runs ?? 0}</div>
+            <div className="text-xs text-muted-foreground">({striker?.balls ?? 0})</div>
+          </div>
+        </div>
+        <div className="mt-3 pt-3 border-t border-border/40 flex items-baseline justify-between text-sm">
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Bowler</div>
+            <div className="font-semibold truncate">
+              <CaptainName match={current} playerId={innings.currentBowlerId} players={players} className="font-semibold" />
+            </div>
+          </div>
+          <div className="text-right tabular-nums text-xs text-muted-foreground">
+            {bowler?.wickets ?? 0}/{bowler?.runs ?? 0} · {bowlerOversStr} ov · econ {bowlerEcon}
+          </div>
+        </div>
+      </section>
 
-          {canDeclare(current) && (
-            <Button
-              variant="score"
-              className="mt-2 w-full"
-              onClick={() => {
-                declareInnings();
-                toast.success(`${battingTeam.name} declared at ${innings.runs}/${innings.wickets}`);
-              }}
-            >
-              Declare Innings
-            </Button>
-          )}
+      <div className="mb-3">
+        <ProbabilityBar match={current} />
+      </div>
 
-          {!current.result && (
-            <button
-              onClick={() => setWinDStep({ step: "pick" })}
-              className="mt-2 w-full rounded-xl border border-red-600 bg-red-600 px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white transition active:scale-[0.98] hover:bg-red-700"
-            >
-              WIN-D
-            </button>
-          )}
+      <div className="mb-3">
+        <TeamMomentumMeter match={current} />
+      </div>
 
-          {!current.result && (
-            <button
-              onClick={() => {
-                setPenaltyPlayer(null);
-                setPenaltySelecting(true);
-              }}
-              className="mt-2 w-full rounded-xl border border-purple-600 bg-purple-600 px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white transition active:scale-[0.98] hover:bg-purple-700 disabled:opacity-40"
-              disabled={scoringBlocked}
-            >
-              <Scale className="inline-block w-4 h-4 mr-2" /> PENALTY
-            </button>
-          )}
+      <div className="mb-4">
+        <CommentaryFeed entries={current.commentary ?? []} />
+      </div>
 
-          {!current.result && (
-            <button
-              onClick={() => setAbandonStep(true)}
-              className="mt-2 w-full rounded-xl border border-zinc-500 bg-zinc-700 px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white transition active:scale-[0.98] hover:bg-zinc-800"
-            >
-              ABANDON MATCH
-            </button>
-          )}
+      <div className="mb-4">
+        <RecordAlerts match={current} players={players} />
+      </div>
 
-          {winDStep && (
-            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-4">
-              <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-card p-5">
-                {winDStep.step === "pick" ? (
-                  <>
-                    <div className="text-sm font-bold">
-                      Which team is declaring the win to the opponent?
-                    </div>
-                    <div className="mt-4 grid gap-2">
-                      {(["A", "B"] as const).map((t) => (
-                        <button
-                          key={t}
-                          onClick={() => setWinDStep({ step: "confirm", team: t })}
-                          className="rounded-xl border border-border/60 bg-secondary/60 px-4 py-3 text-sm font-bold hover:border-primary"
-                        >
-                          {t === "A" ? current.teamA.name : current.teamB.name}
-                        </button>
-                      ))}
-                    </div>
+      <div className="mb-4">
+        <PlayerRivalries match={current} matches={matches} players={players} />
+      </div>
+
+      <div className="flex items-center gap-2 mb-4 min-h-[40px] overflow-x-auto">
+        {lastSix.length === 0 ? (
+          <div className="text-xs text-muted-foreground">No balls bowled yet</div>
+        ) : (
+          lastSix.map((e) => <BallToken key={e.id} ev={e} />)
+        )}
+      </div>
+
+      <ScoringPad
+        disabled={scoringBlocked}
+        ballPendingL2={!!ballPendingL2}
+        onPress={press}
+      />
+
+      <button
+        disabled={scoringBlocked || !innings.currentBatterId}
+        onClick={() => {
+          if (innings.currentBatterId) {
+            retireHurt(innings.currentBatterId);
+          }
+        }}
+        className="mt-2 w-full rounded-2xl border border-amber-500/70 bg-amber-500/10 px-3 py-3 text-center text-amber-400 transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+        title="Batter leaves without being dismissed — not out, may return later. No ball, no runs, no wicket."
+      >
+        <div className="text-base font-black uppercase tracking-[0.15em] leading-none">RETIRE HURT</div>
+        <div className="mt-1 text-[10px] uppercase tracking-[0.15em] opacity-80">Not out · no ball · may return</div>
+      </button>
+
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <button
+          disabled={scoringBlocked}
+          onClick={() => setFieldingPick("boundary-save")}
+          className="rounded-2xl border border-emerald-600/50 bg-emerald-600/10 px-3 py-3 text-center text-emerald-400 transition active:scale-[0.97] disabled:opacity-40"
+        >
+          <div className="text-sm font-black leading-none">SAVE</div>
+          <div className="mt-1 text-[10px] uppercase tracking-[0.15em] opacity-80">Boundary Save</div>
+        </button>
+        <button
+          disabled={scoringBlocked}
+          onClick={() => setFieldingPick("catch-drop")}
+          className="rounded-2xl border border-orange-600/50 bg-orange-600/10 px-3 py-3 text-center text-orange-400 transition active:scale-[0.97] disabled:opacity-40"
+        >
+          <div className="text-sm font-black leading-none">DROP</div>
+          <div className="mt-1 text-[10px] uppercase tracking-[0.15em] opacity-80">Catch Drop</div>
+        </button>
+      </div>
+
+      {canDeclare(current) && (
+        <Button
+          variant="score"
+          className="mt-2 w-full"
+          onClick={() => {
+            declareInnings();
+            toast.success(`${battingTeam.name} declared at ${innings.runs}/${innings.wickets}`);
+          }}
+        >
+          Declare Innings
+        </Button>
+      )}
+
+      {!current.result && (
+        <button
+          onClick={() => setWinDStep({ step: "pick" })}
+          className="mt-2 w-full rounded-xl border border-red-600 bg-red-600 px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white transition active:scale-[0.98] hover:bg-red-700"
+        >
+          WIN-D
+        </button>
+      )}
+
+      {!current.result && (
+        <button
+          onClick={() => { setPenaltyPlayer(null); setPenaltySelecting(true); }}
+          className="mt-2 w-full rounded-xl border border-purple-600 bg-purple-600 px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white transition active:scale-[0.98] hover:bg-purple-700 disabled:opacity-40"
+          disabled={scoringBlocked}
+        >
+          <Scale className="inline-block w-4 h-4 mr-2" /> PENALTY
+        </button>
+      )}
+
+      {!current.result && (
+        <button
+          onClick={() => setAbandonStep(true)}
+          className="mt-2 w-full rounded-xl border border-zinc-500 bg-zinc-700 px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white transition active:scale-[0.98] hover:bg-zinc-800"
+        >
+          ABANDON MATCH
+        </button>
+      )}
+
+      {winDStep && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-card p-5">
+            {winDStep.step === "pick" ? (
+              <>
+                <div className="text-sm font-bold">Which team is declaring the win to the opponent?</div>
+                <div className="mt-4 grid gap-2">
+                  {(["A", "B"] as const).map((t) => (
                     <button
-                      onClick={() => setWinDStep(null)}
-                      className="mt-4 w-full text-xs text-muted-foreground"
+                      key={t}
+                      onClick={() => setWinDStep({ step: "confirm", team: t })}
+                      className="rounded-xl border border-border/60 bg-secondary/60 px-4 py-3 text-sm font-bold hover:border-primary"
                     >
-                      Cancel
+                      {t === "A" ? current.teamA.name : current.teamB.name}
                     </button>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-sm font-bold">
-                      {winDStep.team === "A" ? current.teamA.name : current.teamB.name} declared the
-                      win to {winDStep.team === "A" ? current.teamB.name : current.teamA.name}.
-                    </div>
-                    <p className="mt-2 text-sm text-muted-foreground">Have you accepted defeat?</p>
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => {
-                          const team = winDStep.team;
-                          setWinDStep(null);
-                          concedeMatch(team);
-                          toast.success("Win declaration accepted — match concluded");
-                        }}
-                        className="rounded-xl bg-red-600 px-4 py-3 text-sm font-black text-white hover:bg-red-700"
-                      >
-                        🟥 YES
-                      </button>
-                      <button
-                        onClick={() => setWinDStep(null)}
-                        className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-700"
-                      >
-                        🟩 NO
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Abandon Match Confirmation Dialog */}
-          {abandonStep && (
-            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-4">
-              <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-card p-5">
-                <div className="text-sm font-bold text-red-500">⚠️ ABANDON MATCH</div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  This will permanently discard ALL active match data. No match history will be
-                  created, no PTS awarded, and no achievements updated. Previously saved matches
-                  remain untouched.
-                </p>
+                  ))}
+                </div>
+                <button onClick={() => setWinDStep(null)} className="mt-4 w-full text-xs text-muted-foreground">
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="text-sm font-bold">
+                  {(winDStep.team === "A" ? current.teamA.name : current.teamB.name)} declared the win to{" "}
+                  {(winDStep.team === "A" ? current.teamB.name : current.teamA.name)}.
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">Have you accepted defeat?</p>
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <button
                     onClick={() => {
-                      setAbandonStep(false);
-                      abandonMatch();
-                      toast.success("Match abandoned");
-                      navigate({ to: "/" });
+                      const team = winDStep.team;
+                      setWinDStep(null);
+                      concedeMatch(team);
+                      toast.success("Win declaration accepted — match concluded");
                     }}
                     className="rounded-xl bg-red-600 px-4 py-3 text-sm font-black text-white hover:bg-red-700"
                   >
-                    🟥 YES, ABANDON
+                    🟥 YES
                   </button>
                   <button
-                    onClick={() => setAbandonStep(false)}
+                    onClick={() => setWinDStep(null)}
                     className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-700"
                   >
-                    🟩 CANCEL
+                    🟩 NO
                   </button>
                 </div>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-center text-sm text-primary">
-            {situation}
+              </>
+            )}
           </div>
+        </div>
+      )}
 
-          <Button
-            variant="gold"
-            className="mt-3 w-full"
-            onClick={() => navigate({ to: "/match/$id", params: { id: current.id } })}
-          >
-            View Full Scorecard & Analytics
-          </Button>
-        </>
+      {/* Abandon Match Confirmation Dialog */}
+      {abandonStep && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-card p-5">
+            <div className="text-sm font-bold text-red-500">⚠️ ABANDON MATCH</div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              This will permanently discard ALL active match data. No match history will be created, no PTS
+              awarded, and no achievements updated. Previously saved matches remain untouched.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  setAbandonStep(false);
+                  abandonMatch();
+                  toast.success("Match abandoned");
+                  navigate({ to: "/" });
+                }}
+                className="rounded-xl bg-red-600 px-4 py-3 text-sm font-black text-white hover:bg-red-700"
+              >
+                🟥 YES, ABANDON
+              </button>
+              <button
+                onClick={() => setAbandonStep(false)}
+                className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-700"
+              >
+                🟩 CANCEL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-center text-sm text-primary">
+        {situation}
+      </div>
+
+      <Button
+        variant="gold"
+        className="mt-3 w-full"
+        onClick={() => navigate({ to: "/match/$id", params: { id: current.id } })}
+      >
+        View Full Scorecard & Analytics
+      </Button>
+      </>
       )}
 
       <PlayerSelectModal
         open={needNextBatter}
-        title={
-          innings.legalBalls === 0 && innings.batters.length === 0
-            ? "Select opening batter"
-            : "Select next batter"
-        }
+        title={innings.legalBalls === 0 && innings.batters.length === 0 ? "Select opening batter" : "Select next batter"}
         options={batterOptions}
         onPick={setNextBatter}
         match={current}
@@ -557,13 +501,13 @@ function Live() {
         title={innings.legalBalls === 0 ? "Select opening bowler" : "Select next bowler"}
         options={bowlerOptions}
         onPick={setNextBowler}
-        lockReason={(id) =>
+        lockReason={(id) => (
           (current.totalPlayers ?? 0) === 2
             ? undefined
             : id === innings.lastOverBowlerId
               ? "bowled last over"
               : undefined
-        }
+        )}
         excludeIds={
           (current.totalPlayers ?? 0) === 2 || !innings.lastOverBowlerId
             ? []
@@ -618,14 +562,8 @@ function Live() {
           ...current.teamA.playerIds.map((id) => ({ id, name: playerName(players, id) })),
           ...current.teamB.playerIds.map((id) => ({ id, name: playerName(players, id) })),
         ]}
-        onClose={() => {
-          setPenaltySelecting(false);
-          setPenaltyPlayer(null);
-        }}
-        onPick={(id) => {
-          setPenaltySelecting(false);
-          setPenaltyPlayer(id);
-        }}
+        onClose={() => { setPenaltySelecting(false); setPenaltyPlayer(null); }}
+        onPick={(id) => { setPenaltySelecting(false); setPenaltyPlayer(id); }}
       />
 
       {/* Penalty Runs Slider Modal */}
@@ -647,17 +585,7 @@ function Live() {
   );
 }
 
-function Meta({
-  label,
-  value,
-  gold,
-  small,
-}: {
-  label: string;
-  value: string;
-  gold?: boolean;
-  small?: boolean;
-}) {
+function Meta({ label, value, gold, small }: { label: string; value: string; gold?: boolean; small?: boolean }) {
   return (
     <div className="min-w-0">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>

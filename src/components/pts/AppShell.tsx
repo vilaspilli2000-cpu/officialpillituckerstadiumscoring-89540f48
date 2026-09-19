@@ -22,19 +22,11 @@ function Shell({ children, title }: { children: ReactNode; title?: string }) {
               PTS
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-bold text-gradient-gold truncate">
-                Pilli Tucker Stadium
-              </div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                Every Touch Counts
-              </div>
+              <div className="text-sm font-bold text-gradient-gold truncate">Pilli Tucker Stadium</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Every Touch Counts</div>
             </div>
           </Link>
-          {title && (
-            <div className="text-xs uppercase tracking-widest text-primary/80 truncate">
-              {title}
-            </div>
-          )}
+          {title && <div className="text-xs uppercase tracking-widest text-primary/80 truncate">{title}</div>}
         </div>
         <CloudBar />
       </header>

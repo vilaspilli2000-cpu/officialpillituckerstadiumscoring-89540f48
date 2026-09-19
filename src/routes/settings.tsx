@@ -78,10 +78,7 @@ function Settings() {
           <li>Six = batter out automatically.</li>
           <li>Dead ball = no legal ball, no run.</li>
           <li>Wide = +1 extra, not a legal ball.</li>
-          <li>
-            No-ball = +1 extra, not legal; scorer picks runs from bat (credit batter; bowler
-            concedes both).
-          </li>
+          <li>No-ball = +1 extra, not legal; scorer picks runs from bat (credit batter; bowler concedes both).</li>
           <li>L1 = leg touch pending; next valid leg ball becomes L2 = OUT.</li>
           <li>L sequence resets on no-ball, 0, or boundary 4. Wide / re-ball preserves it.</li>
           <li>After every over: next bowler must be selected (no consecutive overs).</li>
@@ -90,35 +87,18 @@ function Settings() {
 
       <section className="card-gold rounded-xl p-4 mt-4 space-y-2 text-sm">
         <h2 className="text-primary font-bold">How Calculations Work</h2>
-        <p className="text-muted-foreground">
-          <strong>Probability</strong>: deterministic from runs needed, balls left, wickets in hand,
-          batter & bowler ratings, momentum.
-        </p>
-        <p className="text-muted-foreground">
-          <strong>Ranking</strong>: composite of runs, hundreds/fifties, wickets, catches, awards,
-          with SR boost and economy penalty.
-        </p>
-        <p className="text-muted-foreground">
-          <strong>Awards</strong>: Player of Match (winning side, impact); Fighter (losing side,
-          pressure); Batsman/Bowler/Fielder (either side, performance).
-        </p>
+        <p className="text-muted-foreground"><strong>Probability</strong>: deterministic from runs needed, balls left, wickets in hand, batter & bowler ratings, momentum.</p>
+        <p className="text-muted-foreground"><strong>Ranking</strong>: composite of runs, hundreds/fifties, wickets, catches, awards, with SR boost and economy penalty.</p>
+        <p className="text-muted-foreground"><strong>Awards</strong>: Player of Match (winning side, impact); Fighter (losing side, pressure); Batsman/Bowler/Fielder (either side, performance).</p>
       </section>
 
       <section className="card-gold rounded-xl p-4 mt-4">
         <h2 className="text-primary font-bold mb-2">Backup</h2>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={exportJson}>
-            Export players
-          </Button>
-          <Button variant="outline" onClick={() => fileRef.current?.click()}>
-            Import players
-          </Button>
-          <Button variant="outline" onClick={exportMatchesJson}>
-            Export matches
-          </Button>
-          <Button variant="outline" onClick={() => matchFileRef.current?.click()}>
-            Import matches
-          </Button>
+          <Button variant="outline" onClick={exportJson}>Export players</Button>
+          <Button variant="outline" onClick={() => fileRef.current?.click()}>Import players</Button>
+          <Button variant="outline" onClick={exportMatchesJson}>Export matches</Button>
+          <Button variant="outline" onClick={() => matchFileRef.current?.click()}>Import matches</Button>
           <input
             ref={fileRef}
             type="file"
@@ -146,14 +126,7 @@ function Settings() {
 
       <section className="card-gold rounded-xl p-4 mt-4">
         <h2 className="text-primary font-bold mb-2">Danger Zone</h2>
-        <Button
-          variant="destructive"
-          onClick={() => {
-            if (confirm("Reset all PTS data?")) resetAll();
-          }}
-        >
-          Reset all PTS data
-        </Button>
+        <Button variant="destructive" onClick={() => { if (confirm("Reset all PTS data?")) resetAll(); }}>Reset all PTS data</Button>
       </section>
     </AppShell>
   );

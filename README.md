@@ -2,23 +2,41 @@
 
 PTS SCORER — COMPLETE MOBILE CRICKET SCORING APP
 
+
+
 Build and upgrade Pilli Tucker Stadium Scorer (PTS Scorer) into a premium, mobile-first Android cricket scoring app for custom cricket formats.
 
+
+
 Use a professional black-and-gold sports theme, inspired by IPL/ICC apps.
+
+
 
 Brand: PTS — Pilli Tucker Stadium
 
 Slogan: Every Touch Counts
 
+
+
 Keep all existing data, screens, player records, history, and current black-and-gold design safe. Do not remove existing features unless this prompt specifically says to replace them.
+
+
 
 The app must be responsive for mobile, tablet, and desktop, offline-first, and ready for Android APK deployment.
 
+
+
 ---
+
+
 
 1. MAIN APP SCREENS
 
+
+
 Create or improve these main screens:
+
+
 
 - Home: New Match, Continue Match, Records, Almanac, Player Profiles, Match History
 
@@ -44,13 +62,23 @@ Create or improve these main screens:
 
 - Settings / How Calculations Work
 
+
+
 Allow export of match reports and scorecards as PDF.
+
+
 
 ---
 
+
+
 2. PLAYER DATABASE
 
+
+
 Preload these players:
+
+
 
 Player| 100s| 50s| Highest
 
@@ -70,6 +98,8 @@ Karunya| 0| 0| 38
 
 Jayden| 0| 0| 0
 
+
+
 - Remove Mahesh completely, including his previous statistics.
 
 - Jayden is a beginner and must always appear last in default records tables until he earns better statistics.
@@ -78,13 +108,23 @@ Jayden| 0| 0| 0
 
 - Keep career records for runs, matches, centuries, fifties, highest score, wickets, catches, run-outs, strike rate, economy, awards, and rankings.
 
+
+
 ---
+
+
 
 3. MATCH SETUP, TEAMS, LINEUPS & JOKER
 
+
+
 Support teams of 3–4 players.
 
+
+
 Allow manual selection of:
+
+
 
 - Team A and Team B
 
@@ -100,11 +140,19 @@ Allow manual selection of:
 
 - Every next bowler after every over — this must be compulsory.
 
+
+
 Joker Player
+
+
 
 Add a JOKER button on team selection.
 
+
+
 Use Joker when teams do not have equal players:
+
+
 
 - Joker plays for both teams.
 
@@ -114,9 +162,15 @@ Use Joker when teams do not have equal players:
 
 - Joker statistics must be credited correctly to the same player profile.
 
+
+
 Batting System
 
+
+
 Use a single-batsman scoring system:
+
+
 
 - No non-striker in normal PTS matches.
 
@@ -124,11 +178,19 @@ Use a single-batsman scoring system:
 
 - Do not force automatic next batter without allowing scorer choice.
 
+
+
 ---
+
+
 
 4. FORMATS AND INNINGS RULES
 
+
+
 Format A — 6 Overs
+
+
 
 - 6 overs per team.
 
@@ -142,7 +204,11 @@ Format A — 6 Overs
 
   Won by X runs or Won by X wickets.
 
+
+
 Format B — 2 Innings, Unlimited Balls
+
+
 
 - Each team bats once.
 
@@ -156,7 +222,11 @@ Format B — 2 Innings, Unlimited Balls
 
 - Show correct final result.
 
+
+
 Format C — Classic Test, 4 Innings
+
+
 
 - Four innings.
 
@@ -166,7 +236,11 @@ Format C — Classic Test, 4 Innings
 
 - Correctly calculate chase, lead, trail, aggregate scores, and final target.
 
+
+
 Test Match Flow
+
+
 
 1. Team A first innings
 
@@ -176,7 +250,11 @@ Test Match Flow
 
 4. Team B final innings chases final target
 
+
+
 Show messages such as:
+
+
 
 - Need X runs to win
 
@@ -186,15 +264,27 @@ Show messages such as:
 
 - Bowling team needs Y wickets to win
 
+
+
 Compulsory Follow-On
+
+
 
 After Team B first innings:
 
+
+
 "Lead = Team A first innings − Team B first innings"
+
+
 
 If Team B trails by selected margin, automatically enforce follow-on.
 
+
+
 Follow-on margin options:
+
+
 
 - 200
 
@@ -204,21 +294,39 @@ Follow-on margin options:
 
 - Custom
 
+
+
 Show:
+
+
 
 FOLLOW-ON ENFORCED — Team B trail by X runs and must bat again.
 
+
+
 If Team B’s combined two innings score is lower than Team A’s first innings score:
+
+
 
 Team A won by an innings and X runs
 
+
+
 If Team B creates a target, Team A starts final chase.
+
+
 
 ---
 
+
+
 5. LIVE SCORING BUTTONS & CUSTOM RULES
 
+
+
 Use these scoring buttons:
+
+
 
 - 0 Runs
 
@@ -246,9 +354,15 @@ Use these scoring buttons:
 
 - Undo Last Ball
 
+
+
 Remove +2 Touch and +3 Touch.
 
+
+
 Custom Rules
+
+
 
 - Every touch = 1 run.
 
@@ -276,7 +390,11 @@ Custom Rules
 
 - No-ball runs must count in bowler’s runs conceded.
 
+
+
 L1 and L2 Rule
+
+
 
 - L1: Ball touches leg = first leg event.
 
@@ -292,13 +410,23 @@ L1 and L2 Rule
 
 - If the next ball is Wide or Reball, the next valid ball remains a leg ball in the sequence.
 
+
+
 ---
+
+
 
 6. LIVE SCORECARD + BOWLING SCORECARD
 
+
+
 Show a tab beside the scoring page for Live Scorecard.
 
+
+
 Batting Scorecard Columns
+
+
 
 - Player
 
@@ -318,7 +446,11 @@ Batting Scorecard Columns
 
 - Bowler who took wicket
 
+
+
 Bowling Scorecard Columns
+
+
 
 - Bowler
 
@@ -336,13 +468,23 @@ Bowling Scorecard Columns
 
 - Wides
 
+
+
 Bowling figures must update live but must not update player career records unless specifically enabled later.
+
+
 
 ---
 
+
+
 7. LIVE ACHIEVEMENTS, RECORDS & RANKINGS
 
+
+
 During scoring, show achievement popups and save them to Almanac:
+
+
 
 - Player reaches 50
 
@@ -362,11 +504,19 @@ During scoring, show achievement popups and save them to Almanac:
 
 - Ranking change
 
+
+
 Show player’s live match stats during innings.
+
+
 
 Records by Format
 
+
+
 Create separate records for:
+
+
 
 - Format A
 
@@ -376,7 +526,11 @@ Create separate records for:
 
 - Overall career records
 
+
+
 Show:
+
+
 
 - Highest score
 
@@ -398,13 +552,23 @@ Show:
 
 - Awards
 
+
+
 Dynamic Rankings
+
+
 
 Create player rankings using performance, not random values.
 
+
+
 When a player outperforms the player above them, move them above that player in rankings.
 
+
+
 Use:
+
+
 
 - Runs
 
@@ -424,13 +588,23 @@ Use:
 
 - Recent form
 
+
+
 ---
+
+
 
 8. RESULT DETECTION AND RESULT PAGE
 
+
+
 Fix all match-completion bugs.
 
+
+
 Immediately save the match and open the MATCH RESULT PAGE when:
+
+
 
 - Target is reached
 
@@ -444,7 +618,11 @@ Immediately save the match and open the MATCH RESULT PAGE when:
 
 - Test match ends
 
+
+
 Show correct result:
+
+
 
 - [Team] won by X wickets
 
@@ -458,17 +636,31 @@ Show correct result:
 
 - Super Over result
 
+
+
 Never leave the app on the scoring page after match completion.
+
+
 
 Match Story
 
+
+
 Below the result, add:
+
+
 
 MATCH STORY
 
+
+
 Generate a detailed paragraph using actual match data only.
 
+
+
 Include when available:
+
+
 
 - Format
 
@@ -494,15 +686,27 @@ Include when available:
 
 - Super Over or Follow-On details
 
+
+
 Do not invent statistics.
+
+
 
 ---
 
+
+
 9. SUPER OVER
+
+
 
 For tied Format A matches, add Super Over.
 
+
+
 Fixed Batting Order
+
+
 
 - Team that batted second in main match bats first in Super Over.
 
@@ -510,9 +714,15 @@ Fixed Batting Order
 
 - Do not allow reversal.
 
+
+
 Player Selection
 
+
+
 Before each Super Over innings, manually select:
+
+
 
 - Striker
 
@@ -522,7 +732,11 @@ Before each Super Over innings, manually select:
 
 - Bowler
 
+
+
 Rules
+
+
 
 - 6 legal balls.
 
@@ -538,17 +752,31 @@ Rules
 
 - Save all Super Over details separately.
 
+
+
 Do not allow final-over bowler from main match to bowl first Super Over unless scorer uses:
+
+
 
 ALLOW LAST-OVER BOWLER OVERRIDE
 
+
+
 If Super Over ties, allow another Super Over or declare match tied.
+
+
 
 ---
 
+
+
 10. LIVE WIN PROBABILITY
 
+
+
 Add a premium LIVE WIN PROBABILITY bar.
+
+
 
 - Both teams must total exactly 100%.
 
@@ -560,7 +788,11 @@ Add a premium LIVE WIN PROBABILITY bar.
 
 - After completion: winner 100%, loser 0%.
 
+
+
 Use real calculation based on:
+
+
 
 - Runs needed
 
@@ -592,7 +824,11 @@ Use real calculation based on:
 
 - Match format
 
+
+
 Important Bowler Rule
+
+
 
 - Weak bowler must increase batting side probability.
 
@@ -602,19 +838,33 @@ Important Bowler Rule
 
 - Do not use random values.
 
+
+
 Show a short explanation below the bar, such as:
+
+
 
 Team A ahead: 12 needed from 10 balls with 6 wickets remaining.
 
 Team B advantage: strong bowler is bowling under pressure.
 
+
+
 ---
+
+
 
 11. PLAYER AWARDS
 
+
+
 Add awards after every completed match.
 
+
+
 1. 👑 Player of the Match
+
+
 
 - Must come only from winning team.
 
@@ -622,11 +872,19 @@ Add awards after every completed match.
 
 - Consider meaningful runs, pressure, strike rate, finishing, crucial wickets, economy, catches, run-outs, and winning contribution.
 
+
+
 2. 👑 Batsman of the Match
+
+
 
 Can come from either team.
 
+
+
 Use:
+
+
 
 - Runs
 
@@ -640,11 +898,19 @@ Use:
 
 - Match-winning/saving innings
 
+
+
 3. 👑 Bowler of the Match
+
+
 
 Can come from either team.
 
+
+
 Use:
+
+
 
 - Wickets
 
@@ -660,13 +926,23 @@ Use:
 
 - Match-changing wickets
 
+
+
 A wicket of a batter on 110 and close to winning must be worth more than easy wickets.
+
+
 
 4. 👑 Fielder of the Match
 
+
+
 Can come from either team.
 
+
+
 Use:
+
+
 
 - Catches
 
@@ -680,7 +956,11 @@ Use:
 
 - Boundary saves
 
+
+
 5. 🔥 Fighter of the Match
+
+
 
 - Must come only from losing team.
 
@@ -690,15 +970,25 @@ Use:
 
 - Do not choose only highest scorer/wicket-taker; use pressure and effort.
 
+
+
 Example:
+
+
 
 🔥 Fighter of the Match — Rithu
 
 48 (22), kept the chase alive until the final over despite defeat
 
+
+
 Award Display
 
+
+
 After Match Story, show award cards in this order:
+
+
 
 1. Player of the Match
 
@@ -710,7 +1000,11 @@ After Match Story, show award cards in this order:
 
 5. Fielder of the Match
 
+
+
 Each card must show:
+
+
 
 - Award icon
 
@@ -724,13 +1018,23 @@ Each card must show:
 
 - “Why this award?” expandable explanation
 
+
+
 Save awards to player profile and award history.
+
+
 
 ---
 
+
+
 12. DATA, HISTORY & TESTING
 
+
+
 Save:
+
+
 
 - Ball-by-ball data
 
@@ -756,7 +1060,11 @@ Save:
 
 - Probability timeline
 
+
+
 Handle edge cases:
+
+
 
 - Target reached on final ball
 
@@ -782,7 +1090,11 @@ Handle edge cases:
 
 - Shared awards if scores are truly equal
 
+
+
 Test these examples:
+
+
 
 - Need 45 runs in 27 balls
 
@@ -799,6 +1111,8 @@ Test these examples:
 - Losing player scores 48 (22) and keeps team alive → Fighter eligible
 
 - Result page always opens after target, all-out, overs complete, tie, Super Over, or Test result.
+
+
 
 Build this as a polished, exciting, reliable PTS cricket platform where every touch, wicket, record, and player contribution becomes part of Pilli Tucker Stadium history.
 

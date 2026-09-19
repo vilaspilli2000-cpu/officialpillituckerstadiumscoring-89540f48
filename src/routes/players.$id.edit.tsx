@@ -37,9 +37,7 @@ function EditPlayer() {
       <AppShell title="Edit">
         <p>
           Player not found.{" "}
-          <Link to="/players" className="text-primary underline">
-            Back
-          </Link>
+          <Link to="/players" className="text-primary underline">Back</Link>
         </p>
       </AppShell>
     );
@@ -101,11 +99,7 @@ function EditPlayer() {
           options={["—", "Batter", "Bowler", "All-rounder", "Wicketkeeper"]}
           onChange={(v) => setDraft({ ...draft, role: v as Player["role"] })}
         />
-        <Text
-          label="Notes"
-          value={draft.notes ?? ""}
-          onChange={(v) => setDraft({ ...draft, notes: v })}
-        />
+        <Text label="Notes" value={draft.notes ?? ""} onChange={(v) => setDraft({ ...draft, notes: v })} />
       </Section>
 
       <Section title="Batting">
@@ -113,30 +107,9 @@ function EditPlayer() {
         <Num label="Innings" v={c.innings ?? 0} on={(v) => setCareer("innings", v)} />
         <Num label="Runs" v={c.runs} on={(v) => setCareer("runs", v)} />
         <Num label="Balls" v={c.balls} on={(v) => setCareer("balls", v)} />
-        <Num
-          label="Highest"
-          v={Math.max(draft.seed.highest, c.highest)}
-          on={(v) => {
-            setSeed("highest", v);
-            setCareer("highest", v);
-          }}
-        />
-        <Num
-          label="50s"
-          v={draft.seed.fifties + c.fifties}
-          on={(v) => {
-            setSeed("fifties", v);
-            setCareer("fifties", 0);
-          }}
-        />
-        <Num
-          label="100s"
-          v={draft.seed.hundreds + c.hundreds}
-          on={(v) => {
-            setSeed("hundreds", v);
-            setCareer("hundreds", 0);
-          }}
-        />
+        <Num label="Highest" v={Math.max(draft.seed.highest, c.highest)} on={(v) => { setSeed("highest", v); setCareer("highest", v); }} />
+        <Num label="50s" v={draft.seed.fifties + c.fifties} on={(v) => { setSeed("fifties", v); setCareer("fifties", 0); }} />
+        <Num label="100s" v={draft.seed.hundreds + c.hundreds} on={(v) => { setSeed("hundreds", v); setCareer("hundreds", 0); }} />
         <Num label="150s" v={c.hundred50s ?? 0} on={(v) => setCareer("hundred50s", v)} />
         <Num label="200s" v={c.doubleHundreds ?? 0} on={(v) => setCareer("doubleHundreds", v)} />
         <Num label="Fours" v={c.fours} on={(v) => setCareer("fours", v)} />
@@ -152,86 +125,36 @@ function EditPlayer() {
         <Num label="Dot balls" v={c.dots ?? 0} on={(v) => setCareer("dots", v)} />
         <Num label="Wides" v={c.wides ?? 0} on={(v) => setCareer("wides", v)} />
         <Num label="No balls" v={c.noBalls ?? 0} on={(v) => setCareer("noBalls", v)} />
-        <Num
-          label="Best — wkts"
-          v={c.bestBowlingWkts ?? 0}
-          on={(v) => setCareer("bestBowlingWkts", v)}
-        />
-        <Num
-          label="Best — runs"
-          v={c.bestBowlingRuns ?? 0}
-          on={(v) => setCareer("bestBowlingRuns", v)}
-        />
+        <Num label="Best — wkts" v={c.bestBowlingWkts ?? 0} on={(v) => setCareer("bestBowlingWkts", v)} />
+        <Num label="Best — runs" v={c.bestBowlingRuns ?? 0} on={(v) => setCareer("bestBowlingRuns", v)} />
       </Section>
 
       <Section title="Fielding & Awards">
         <Num label="Catches" v={c.catches} on={(v) => setCareer("catches", v)} />
-        <Num
-          label="Boundary saves"
-          v={c.boundarySaves ?? 0}
-          on={(v) => setCareer("boundarySaves", v)}
-        />
+        <Num label="Boundary saves" v={c.boundarySaves ?? 0} on={(v) => setCareer("boundarySaves", v)} />
         <Num label="Catch drops" v={c.catchDrops ?? 0} on={(v) => setCareer("catchDrops", v)} />
         <Num label="Total Awards" v={c.awards} on={(v) => setCareer("awards", v)} />
         <Num label="POM" v={c.pomAwards ?? 0} on={(v) => setCareer("pomAwards", v)} />
-        <Num
-          label="Batsman of Match"
-          v={c.batsmanAwards ?? 0}
-          on={(v) => setCareer("batsmanAwards", v)}
-        />
-        <Num
-          label="Bowler of Match"
-          v={c.bowlerAwards ?? 0}
-          on={(v) => setCareer("bowlerAwards", v)}
-        />
-        <Num
-          label="Fielder of Match"
-          v={c.fielderAwards ?? 0}
-          on={(v) => setCareer("fielderAwards", v)}
-        />
-        <Num
-          label="Fighter of Match"
-          v={c.fighterAwards ?? 0}
-          on={(v) => setCareer("fighterAwards", v)}
-        />
-        <Num
-          label="Worst of Match"
-          v={c.worstAwards ?? 0}
-          on={(v) => setCareer("worstAwards", v)}
-        />
+        <Num label="Batsman of Match" v={c.batsmanAwards ?? 0} on={(v) => setCareer("batsmanAwards", v)} />
+        <Num label="Bowler of Match" v={c.bowlerAwards ?? 0} on={(v) => setCareer("bowlerAwards", v)} />
+        <Num label="Fielder of Match" v={c.fielderAwards ?? 0} on={(v) => setCareer("fielderAwards", v)} />
+        <Num label="Fighter of Match" v={c.fighterAwards ?? 0} on={(v) => setCareer("fighterAwards", v)} />
+        <Num label="Worst of Match" v={c.worstAwards ?? 0} on={(v) => setCareer("worstAwards", v)} />
       </Section>
 
       <Section title="Ratings (0–100)">
-        {(
-          [
-            ["overall", "Overall"],
-            ["batting", "Batting"],
-            ["bowling", "Bowling"],
-            ["fielding", "Fielding"],
-            ["pressure", "Pressure"],
-            ["matchWinning", "Match-winning"],
-            ["wicketTaking", "Wicket-taking"],
-            ["sixHitting", "Six-hitting"],
-            ["deathBat", "Death bat"],
-            ["deathBowl", "Death bowl"],
-            ["recentForm", "Recent form"],
-          ] as Array<[keyof NonNullable<Player["ratings"]>, string]>
-        ).map(([k, label]) => (
-          <Num
-            key={k}
-            label={label}
-            v={r[k] ?? 0}
-            on={(v) => setRating(k, Math.min(100, Math.max(0, v)))}
-          />
+        {([
+          ["overall", "Overall"], ["batting", "Batting"], ["bowling", "Bowling"],
+          ["fielding", "Fielding"], ["pressure", "Pressure"], ["matchWinning", "Match-winning"],
+          ["wicketTaking", "Wicket-taking"], ["sixHitting", "Six-hitting"],
+          ["deathBat", "Death bat"], ["deathBowl", "Death bowl"], ["recentForm", "Recent form"],
+        ] as Array<[keyof NonNullable<Player["ratings"]>, string]>).map(([k, label]) => (
+          <Num key={k} label={label} v={r[k] ?? 0} on={(v) => setRating(k, Math.min(100, Math.max(0, v)))} />
         ))}
       </Section>
 
       <div className="sticky bottom-3 mt-6 flex gap-2">
-        <Button
-          variant="outline"
-          className="flex-1"
-          onClick={() => navigate({ to: "/players/$id", params: { id: draft.id } })}
-        >
+        <Button variant="outline" className="flex-1" onClick={() => navigate({ to: "/players/$id", params: { id: draft.id } })}>
           Cancel
         </Button>
         <Button variant="gold" className="flex-1" onClick={save}>
@@ -280,15 +203,7 @@ function Num({ label, v, on }: { label: string; v: number; on: (v: number) => vo
   );
 }
 
-function Text({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
+function Text({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <label className="block col-span-2 min-w-0">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
@@ -301,17 +216,7 @@ function Text({
   );
 }
 
-function Select({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: string[];
-  onChange: (v: string) => void;
-}) {
+function Select({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
   return (
     <label className="block col-span-2 min-w-0">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
@@ -321,9 +226,7 @@ function Select({
         className="mt-1 w-full rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-base focus:border-primary outline-none"
       >
         {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
+          <option key={o} value={o}>{o}</option>
         ))}
       </select>
     </label>

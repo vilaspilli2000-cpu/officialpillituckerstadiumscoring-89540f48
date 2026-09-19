@@ -19,18 +19,11 @@ function Home() {
   return (
     <AppShell>
       <section className="relative overflow-hidden rounded-2xl card-gold p-6 md:p-10 mb-8">
-        <div
-          className="absolute inset-0 opacity-30 pointer-events-none gradient-gold blur-3xl"
-          style={{ clipPath: "circle(35% at 100% 0)" }}
-        />
+        <div className="absolute inset-0 opacity-30 pointer-events-none gradient-gold blur-3xl" style={{ clipPath: "circle(35% at 100% 0)" }} />
         <div className="relative">
           <p className="text-xs tracking-[0.3em] text-primary/80 uppercase">PTS Scorer</p>
-          <h1 className="mt-2 text-4xl md:text-5xl font-black text-gradient-gold leading-tight">
-            Pilli Tucker Stadium
-          </h1>
-          <p className="mt-2 text-muted-foreground max-w-md">
-            A premium mobile-first scoring platform for PTS cricket. Every touch counts.
-          </p>
+          <h1 className="mt-2 text-4xl md:text-5xl font-black text-gradient-gold leading-tight">Pilli Tucker Stadium</h1>
+          <p className="mt-2 text-muted-foreground max-w-md">A premium mobile-first scoring platform for PTS cricket. Every touch counts.</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button asChild variant="hero" size="xl">
               <Link to="/match/setup">New Match</Link>
@@ -50,7 +43,6 @@ function Home() {
         <Tile to="/almanac" title="Almanac" sub="Live achievements" />
         <Tile to="/history" title="History" sub={`${matches.length} matches`} />
         <Tile to="/settings" title="Settings" sub="Rules & calculations" />
-        <Tile to="/challenges" title="Challenges" sub="Active player goals" />
       </section>
     </AppShell>
   );

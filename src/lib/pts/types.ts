@@ -128,12 +128,7 @@ export interface Player {
     meltdownLevel: number;
   };
   /** Current streaks used only by the post-v3.3 achievement engine. */
-  achievementStreaks?: {
-    duckDodge: number;
-    economyGuardian: number;
-    fiftyStreak?: number;
-    hundredStreak?: number;
-  };
+  achievementStreaks?: { duckDodge: number; economyGuardian: number };
 }
 
 /** Official PTS ranking buckets (SR|BIG|CONS|AWD|4S|WKT|MATCH). */
@@ -326,16 +321,6 @@ export interface Match {
   penalties?: Penalty[];
   /** Total selected players in the match (used for the two-player bowling exception). */
   totalPlayers?: number;
-  /** Challenge assignments for batting and bowling (optional, generated at match start). */
-  challengeBatting?: import("./challengesEngine").ChallengeAssignment[];
-  challengeBowling?: import("./challengesEngine").ChallengeAssignment[];
-  /** Per-player challenge assignments for batting and bowling. */
-  challengeAssignments?: {
-    [playerId: string]: {
-      batting: import("./challengesEngine").ChallengeAssignment[];
-      bowling: import("./challengesEngine").ChallengeAssignment[];
-    };
-  };
 }
 
 /** Penalty event: modifies score/target without consuming balls or affecting player stats.

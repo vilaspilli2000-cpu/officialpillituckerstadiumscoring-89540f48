@@ -17,15 +17,10 @@ export function RecordAlerts({ match, players }: { match?: Match; players: Playe
     const priority = computePriorityAlerts(match, players);
     const focus = computeRecordAlerts(match, players, focusIds);
     const live = computeLiveMilestoneAlerts(match, players, focusIds).map((m) => ({
-      id: m.id,
-      icon: m.icon,
-      tone: m.tone,
-      text: m.text,
+      id: m.id, icon: m.icon, tone: m.tone, text: m.text,
     }));
     const seen = new Set<string>();
-    return [...priority, ...focus, ...live].filter((x) =>
-      seen.has(x.id) ? false : (seen.add(x.id), true),
-    );
+    return [...priority, ...focus, ...live].filter((x) => (seen.has(x.id) ? false : (seen.add(x.id), true)));
   }, [match, players, focusIds]);
 
   if (alerts.length === 0) {

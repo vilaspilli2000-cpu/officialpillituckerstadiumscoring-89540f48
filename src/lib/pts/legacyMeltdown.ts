@@ -34,52 +34,30 @@ export interface LayeredResult {
 
 /** Legacy multipliers for positive PTS. L1 through L19. */
 const LEGACY_POSITIVE = [
-  2.0, 2.3334, 2.6668, 3.0002, 3.3336, 3.667, 4.0004, 4.3338, 4.6672, 5.0006, 5.334, 5.6674, 6.0008,
-  6.3342, 6.6676, 7.001, 7.3344, 7.6678, 8.0012,
+  2.0000, 2.3334, 2.6668, 3.0002, 3.3336,
+  3.6670, 4.0004, 4.3338, 4.6672, 5.0006,
+  5.3340, 5.6674, 6.0008, 6.3342, 6.6676,
+  7.0010, 7.3344, 7.6678, 8.0012,
 ];
 
 /** Legacy multipliers for negative PTS. L1 through L19. */
 const LEGACY_NEGATIVE = [0.7, 0.4, 0.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 /** Meltdown multipliers for positive PTS. M1 through M11. */
-const MELTDOWN_POSITIVE = [0.8, 0.71, 0.62, 0.53, 0.44, 0.35, 0.26, 0.17, 0.1, 0.1, 0.1];
+const MELTDOWN_POSITIVE = [0.80, 0.71, 0.62, 0.53, 0.44, 0.35, 0.26, 0.17, 0.10, 0.10, 0.10];
 
 /** Meltdown multipliers for negative PTS. M1 through M11. */
-const MELTDOWN_NEGATIVE = [1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5, 3.75, 4.0, 4.25];
+const MELTDOWN_NEGATIVE = [1.75, 2.00, 2.25, 2.50, 2.75, 3.00, 3.25, 3.50, 3.75, 4.00, 4.25];
 
 const LEGACY_PERKS = [
-  "First Light",
-  "Rising Standard",
-  "Crafted Under Pressure",
-  "Reliable Hand",
-  "Match Memory",
-  "Golden Thread",
-  "Big-Match Instinct",
-  "Legacy Builder",
-  "Stadium Favourite",
-  "Elite Standard",
-  "Record Chaser",
-  "Fearless Finisher",
-  "Era Shaper",
-  "PTS Royalty",
-  "Hallmark Performer",
-  "Immortal Form",
-  "Generational Class",
-  "Icon Status",
-  "Pilli Tucker Legend",
+  "First Light", "Rising Standard", "Crafted Under Pressure", "Reliable Hand", "Match Memory",
+  "Golden Thread", "Big-Match Instinct", "Legacy Builder", "Stadium Favourite", "Elite Standard",
+  "Record Chaser", "Fearless Finisher", "Era Shaper", "PTS Royalty", "Hallmark Performer",
+  "Immortal Form", "Generational Class", "Icon Status", "Pilli Tucker Legend",
 ];
 const MELTDOWN_PERKS = [
-  "Warning Track",
-  "Pressure Leak",
-  "Crack In The Armour",
-  "Momentum Lost",
-  "Red Zone",
-  "Collapse Watch",
-  "Critical Spell",
-  "Deep Trouble",
-  "Danger Level",
-  "Meltdown Alert",
-  "Total Meltdown",
+  "Warning Track", "Pressure Leak", "Crack In The Armour", "Momentum Lost", "Red Zone",
+  "Collapse Watch", "Critical Spell", "Deep Trouble", "Danger Level", "Meltdown Alert", "Total Meltdown",
 ];
 
 const clampLevel = (value: number, max: number) => Math.max(0, Math.min(max, value));
@@ -118,14 +96,9 @@ export function perkFor(system: "legacy" | "meltdown", level: number) {
  */
 export function multiplierFor(system: "legacy" | "meltdown", level: number, positive: boolean) {
   if (level <= 0) return 1;
-  const values =
-    system === "legacy"
-      ? positive
-        ? LEGACY_POSITIVE
-        : LEGACY_NEGATIVE
-      : positive
-        ? MELTDOWN_POSITIVE
-        : MELTDOWN_NEGATIVE;
+  const values = system === "legacy"
+    ? (positive ? LEGACY_POSITIVE : LEGACY_NEGATIVE)
+    : (positive ? MELTDOWN_POSITIVE : MELTDOWN_NEGATIVE);
   return values[Math.min(level, values.length) - 1] ?? 1;
 }
 
@@ -184,11 +157,7 @@ export function progressionFromAchievements(player: Player): ProgressionState {
  * - Level 0 (no achievements) uses the neutral multiplier 1 — L1/M1 are
  *   never applied to a player with zero unlocked achievements.
  */
-export function layerResult(
-  baseNet: number,
-  legacyLevel: number,
-  meltdownLevel: number,
-): LayeredResult {
+export function layerResult(baseNet: number, legacyLevel: number, meltdownLevel: number): LayeredResult {
   const baseResult = baseNet;
   const positive = baseResult > 0;
   const legacyActive = legacyLevel > 0;

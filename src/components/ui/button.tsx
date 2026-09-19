@@ -19,11 +19,9 @@ const buttonVariants = cva(
         hero: "gradient-gold text-primary-foreground font-bold shadow-gold hover:brightness-110 active:brightness-95",
         gold: "bg-primary text-primary-foreground font-semibold hover:bg-primary/90 shadow-gold",
         ghostGold: "border border-primary/40 text-primary hover:bg-primary/10",
-        score:
-          "bg-card border border-primary/30 text-foreground font-bold hover:bg-primary/15 hover:border-primary active:scale-95 transition-all",
+        score: "bg-card border border-primary/30 text-foreground font-bold hover:bg-primary/15 hover:border-primary active:scale-95 transition-all",
         scoreGold: "gradient-gold text-primary-foreground font-bold active:scale-95 shadow-gold",
-        scoreDanger:
-          "bg-destructive/15 border border-destructive/40 text-destructive font-bold hover:bg-destructive/25 active:scale-95",
+        scoreDanger: "bg-destructive/15 border border-destructive/40 text-destructive font-bold hover:bg-destructive/25 active:scale-95",
       },
       size: {
         default: "h-9 px-4 py-2",

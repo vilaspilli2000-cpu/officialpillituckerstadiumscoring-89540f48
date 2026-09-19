@@ -8,16 +8,9 @@ export interface RecordAlert {
 }
 
 type StatKey =
-  | "runs"
-  | "highest"
-  | "fifties"
-  | "hundreds"
-  | "hundred50s"
-  | "doubleHundreds"
+  | "runs" | "highest" | "fifties" | "hundreds" | "hundred50s" | "doubleHundreds"
   | "fours"
-  | "wickets"
-  | "dots"
-  | "maidens"
+  | "wickets" | "dots" | "maidens"
   | "catches"
   | "awards";
 
@@ -30,66 +23,18 @@ interface StatDef {
 }
 
 const STATS: StatDef[] = [
-  {
-    key: "runs",
-    label: "highest run scorer",
-    icon: "🏆",
-    higherIsBetter: true,
-    singularUnit: "run",
-  },
-  {
-    key: "highest",
-    label: "highest individual score",
-    icon: "🌟",
-    higherIsBetter: true,
-    singularUnit: "run",
-  },
+  { key: "runs", label: "highest run scorer", icon: "🏆", higherIsBetter: true, singularUnit: "run" },
+  { key: "highest", label: "highest individual score", icon: "🌟", higherIsBetter: true, singularUnit: "run" },
   { key: "fifties", label: "most 50s", icon: "5️⃣", higherIsBetter: true, singularUnit: "fifty" },
-  {
-    key: "hundreds",
-    label: "most 100s",
-    icon: "💯",
-    higherIsBetter: true,
-    singularUnit: "century",
-  },
+  { key: "hundreds", label: "most 100s", icon: "💯", higherIsBetter: true, singularUnit: "century" },
   { key: "hundred50s", label: "most 150s", icon: "🎯", higherIsBetter: true, singularUnit: "150" },
-  {
-    key: "doubleHundreds",
-    label: "most double centuries",
-    icon: "👑",
-    higherIsBetter: true,
-    singularUnit: "double",
-  },
+  { key: "doubleHundreds", label: "most double centuries", icon: "👑", higherIsBetter: true, singularUnit: "double" },
   { key: "fours", label: "most fours", icon: "🎯", higherIsBetter: true, singularUnit: "four" },
-  {
-    key: "wickets",
-    label: "leading wicket-taker",
-    icon: "🔥",
-    higherIsBetter: true,
-    singularUnit: "wicket",
-  },
+  { key: "wickets", label: "leading wicket-taker", icon: "🔥", higherIsBetter: true, singularUnit: "wicket" },
   { key: "dots", label: "most dot balls", icon: "🧱", higherIsBetter: true, singularUnit: "dot" },
-  {
-    key: "maidens",
-    label: "most maidens",
-    icon: "🛡️",
-    higherIsBetter: true,
-    singularUnit: "maiden",
-  },
-  {
-    key: "catches",
-    label: "catching record",
-    icon: "🧤",
-    higherIsBetter: true,
-    singularUnit: "catch",
-  },
-  {
-    key: "awards",
-    label: "most match awards",
-    icon: "🏅",
-    higherIsBetter: true,
-    singularUnit: "award",
-  },
+  { key: "maidens", label: "most maidens", icon: "🛡️", higherIsBetter: true, singularUnit: "maiden" },
+  { key: "catches", label: "catching record", icon: "🧤", higherIsBetter: true, singularUnit: "catch" },
+  { key: "awards", label: "most match awards", icon: "🏅", higherIsBetter: true, singularUnit: "award" },
 ];
 
 function pluralUnit(n: number, unit: string) {
@@ -157,8 +102,7 @@ function projected(player: Player, match: Match | undefined, key: StatKey): numb
         for (const ev of inn.events) if (ev.catcherId === player.id) live += 1;
         break;
       }
-      default:
-        break;
+      default: break;
     }
   }
   if (key === "highest") return Math.max(base, liveMax);
@@ -189,14 +133,10 @@ export function computeRecordAlerts(
     for (const focusId of focus) {
       const me = ranked.find((r) => r.p.id === focusId);
       if (!me) continue;
-      const careerVal =
-        (me.p.career as unknown as Record<StatKey, number | undefined>)[stat.key] ?? 0;
+      const careerVal = (me.p.career as unknown as Record<StatKey, number | undefined>)[stat.key] ?? 0;
       // Only fire if projected value beat the previous holder AND career value was behind.
       const prevHolder = players
-        .map((p) => ({
-          p,
-          val: (p.career as unknown as Record<StatKey, number | undefined>)[stat.key] ?? 0,
-        }))
+        .map((p) => ({ p, val: (p.career as unknown as Record<StatKey, number | undefined>)[stat.key] ?? 0 }))
         .filter((r) => r.p.id !== focusId)
         .sort((a, b) => b.val - a.val)[0];
       if (prevHolder && me.val > prevHolder.val && careerVal <= prevHolder.val && me.val > 0) {
@@ -295,60 +235,12 @@ interface PriorityStat {
 }
 
 const PRIORITY_STATS: PriorityStat[] = [
-  {
-    key: "hundreds",
-    icon: "💯",
-    unit: "century",
-    unitPl: "centuries",
-    rankNoun: "century scorer",
-    step: 1,
-    window: 1,
-  },
-  {
-    key: "fifties",
-    icon: "⭐",
-    unit: "fifty",
-    unitPl: "fifties",
-    rankNoun: "fifty scorer",
-    step: 1,
-    window: 2,
-  },
-  {
-    key: "runs",
-    icon: "👑",
-    unit: "run",
-    unitPl: "runs",
-    rankNoun: "run scorer",
-    step: 500,
-    window: 150,
-  },
-  {
-    key: "wickets",
-    icon: "🎯",
-    unit: "wicket",
-    unitPl: "wickets",
-    rankNoun: "wicket taker",
-    step: 50,
-    window: 15,
-  },
-  {
-    key: "fours",
-    icon: "💥",
-    unit: "four",
-    unitPl: "fours",
-    rankNoun: "four hitter",
-    step: 100,
-    window: 25,
-  },
-  {
-    key: "catches",
-    icon: "🧤",
-    unit: "catch",
-    unitPl: "catches",
-    rankNoun: "fielder",
-    step: 25,
-    window: 6,
-  },
+  { key: "hundreds", icon: "💯", unit: "century", unitPl: "centuries", rankNoun: "century scorer", step: 1, window: 1 },
+  { key: "fifties",  icon: "⭐", unit: "fifty", unitPl: "fifties", rankNoun: "fifty scorer", step: 1, window: 2 },
+  { key: "runs",     icon: "👑", unit: "run", unitPl: "runs", rankNoun: "run scorer", step: 500, window: 150 },
+  { key: "wickets",  icon: "🎯", unit: "wicket", unitPl: "wickets", rankNoun: "wicket taker", step: 50, window: 15 },
+  { key: "fours",    icon: "💥", unit: "four", unitPl: "fours", rankNoun: "four hitter", step: 100, window: 25 },
+  { key: "catches",  icon: "🧤", unit: "catch", unitPl: "catches", rankNoun: "fielder", step: 25, window: 6 },
 ];
 
 function careerVal(p: Player, key: PriorityStat["key"]) {
@@ -361,7 +253,10 @@ function careerVal(p: Player, key: PriorityStat["key"]) {
  *   2. Live batting alerts (runs needed for next century/fifty this innings)
  *   3. Overtake alerts (needs N more to pass the player above them in the ranking)
  *   4. Career milestone alerts (next round step) */
-export function computePriorityAlerts(match: Match | undefined, players: Player[]): RecordAlert[] {
+export function computePriorityAlerts(
+  match: Match | undefined,
+  players: Player[],
+): RecordAlert[] {
   const out: RecordAlert[] = [];
   const inn = match?.innings[match.currentInnings];
   const strikerId = inn?.currentBatterId;
@@ -370,28 +265,17 @@ export function computePriorityAlerts(match: Match | undefined, players: Player[
   const battingTeam: "A" | "B" | undefined = inn?.battingTeam;
   const bowlingTeam: "A" | "B" | undefined = inn?.bowlingTeam;
   const battingIds = new Set<string>(
-    match && battingTeam
-      ? battingTeam === "A"
-        ? match.teamA.playerIds
-        : match.teamB.playerIds
-      : [],
+    match && battingTeam ? (battingTeam === "A" ? match.teamA.playerIds : match.teamB.playerIds) : [],
   );
   const fieldingIds = new Set<string>(
-    match && bowlingTeam
-      ? bowlingTeam === "A"
-        ? match.teamA.playerIds
-        : match.teamB.playerIds
-      : [],
+    match && bowlingTeam ? (bowlingTeam === "A" ? match.teamA.playerIds : match.teamB.playerIds) : [],
   );
   const dismissedIds = new Set<string>(
     (inn?.batters ?? []).filter((b) => b.out).map((b) => b.playerId),
   );
-  const teamSize =
-    match && battingTeam
-      ? battingTeam === "A"
-        ? match.teamA.playerIds.length
-        : match.teamB.playerIds.length
-      : 11;
+  const teamSize = match && battingTeam
+    ? (battingTeam === "A" ? match.teamA.playerIds.length : match.teamB.playerIds.length)
+    : 11;
   const wicketsRemaining = inn ? Math.max(0, teamSize - inn.wickets - 1) : 0;
   const ballsRemaining = inn?.oversCap ? Math.max(0, inn.oversCap - inn.legalBalls) : Infinity;
 
@@ -436,11 +320,7 @@ export function computePriorityAlerts(match: Match | undefined, players: Player[
   for (const stat of PRIORITY_STATS) {
     // Ranked by projected value (careerVal + live match contribution via `projected`).
     const ranked = players
-      .map((p) => ({
-        p,
-        val: projected(p, match, stat.key as StatKey),
-        career: careerVal(p, stat.key),
-      }))
+      .map((p) => ({ p, val: projected(p, match, stat.key as StatKey), career: careerVal(p, stat.key) }))
       .sort((a, b) => b.val - a.val);
     if (ranked.length === 0) continue;
 
@@ -460,11 +340,7 @@ export function computePriorityAlerts(match: Match | undefined, players: Player[
     }
 
     // 2) Live batting alerts (only for hundreds / fifties / runs on striker)
-    if (
-      inn &&
-      strikerId &&
-      (stat.key === "hundreds" || stat.key === "fifties" || stat.key === "runs")
-    ) {
+    if (inn && strikerId && (stat.key === "hundreds" || stat.key === "fifties" || stat.key === "runs")) {
       const bc = inn.batters.find((b) => b.playerId === strikerId);
       const pl = players.find((p) => p.id === strikerId);
       if (bc && pl && bc.runs >= 0 && !bc.out) {

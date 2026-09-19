@@ -2,91 +2,27 @@ import { useEffect, useState } from "react";
 import { usePtsStore, playerName } from "@/lib/pts/store";
 import type { Achievement } from "@/lib/pts/types";
 
-type ThemeKey = "hat4" | "wkt3" | "hatWkt" | "pr" | "fifty" | "hundred" | "150" | "200" | "default";
+type ThemeKey =
+  | "hat4" | "wkt3" | "hatWkt" | "pr"
+  | "fifty" | "hundred" | "150" | "200" | "default";
 
-const THEMES: Record<
-  ThemeKey,
-  {
-    title: string;
-    duration: number;
-    gradient: string;
-    ring: string;
-    accent: string;
-    tagline: string;
-  }
-> = {
-  hat4: {
-    title: "HAT-TRICK OF FOURS",
-    duration: 6000,
-    gradient: "from-[#2F80ED] via-[#56CCF2] to-[#0B0B0A]",
-    ring: "#56CCF2",
-    accent: "#56CCF2",
-    tagline: "Three boundaries in a row. The bowler has no answer.",
-  },
-  wkt3: {
-    title: "THREE-WICKET HAUL",
-    duration: 6000,
-    gradient: "from-[#27AE60] via-[#6FCF97] to-[#0B0B0A]",
-    ring: "#6FCF97",
-    accent: "#6FCF97",
-    tagline: "A spell that has changed the match.",
-  },
-  hatWkt: {
-    title: "BOWLING HAT-TRICK",
-    duration: 6000,
-    gradient: "from-[#F2C94C] via-[#F4C542] to-[#0B0B0A]",
-    ring: "#F4C542",
-    accent: "#F4C542",
-    tagline: "Three in three. A piece of history.",
-  },
-  pr: {
-    title: "NEW PERSONAL RECORD",
-    duration: 8000,
-    gradient: "from-[#9B51E0] via-[#BB6BD9] to-[#0B0B0A]",
-    ring: "#BB6BD9",
-    accent: "#BB6BD9",
-    tagline: "A career-best performance.",
-  },
-  fifty: {
-    title: "HALF CENTURY",
-    duration: 10000,
-    gradient: "from-[#F4C542] via-[#D9A928] to-[#0B0B0A]",
-    ring: "#F4C542",
-    accent: "#F4C542",
-    tagline: "Fifty up. The platform is set.",
-  },
-  hundred: {
-    title: "CENTURY — RED HOT",
-    duration: 16000,
-    gradient: "from-[#EB5757] via-[#C62828] to-[#0B0B0A]",
-    ring: "#EB5757",
-    accent: "#EB5757",
-    tagline: "Pure fire. Total control.",
-  },
-  "150": {
-    title: "150 RUNS",
-    duration: 24000,
-    gradient: "from-[#FF5FA2] via-[#E84393] to-[#0B0B0A]",
-    ring: "#FF5FA2",
-    accent: "#FF5FA2",
-    tagline: "An elite PTS innings.",
-  },
-  "200": {
-    title: "DOUBLE CENTURY",
-    duration: 30000,
-    gradient: "from-[#F4F1EA] via-[#F4C542] to-[#0B0B0A]",
-    ring: "#F4F1EA",
-    accent: "#F4C542",
-    tagline: "A historic PTS masterpiece.",
-  },
-  default: {
-    title: "MILESTONE",
-    duration: 6000,
-    gradient: "from-[#F4C542] via-[#D9A928] to-[#0B0B0A]",
-    ring: "#F4C542",
-    accent: "#F4C542",
-    tagline: "",
-  },
+const THEMES: Record<ThemeKey, {
+  title: string;
+  duration: number;
+  gradient: string;
+  ring: string;
+  accent: string;
+  tagline: string;
+}> = {
+  hat4:     { title: "HAT-TRICK OF FOURS", duration: 6000,  gradient: "from-[#2F80ED] via-[#56CCF2] to-[#0B0B0A]", ring: "#56CCF2", accent: "#56CCF2", tagline: "Three boundaries in a row. The bowler has no answer." },
+  wkt3:     { title: "THREE-WICKET HAUL",  duration: 6000,  gradient: "from-[#27AE60] via-[#6FCF97] to-[#0B0B0A]", ring: "#6FCF97", accent: "#6FCF97", tagline: "A spell that has changed the match." },
+  hatWkt:   { title: "BOWLING HAT-TRICK",  duration: 6000,  gradient: "from-[#F2C94C] via-[#F4C542] to-[#0B0B0A]", ring: "#F4C542", accent: "#F4C542", tagline: "Three in three. A piece of history." },
+  pr:       { title: "NEW PERSONAL RECORD",duration: 8000,  gradient: "from-[#9B51E0] via-[#BB6BD9] to-[#0B0B0A]", ring: "#BB6BD9", accent: "#BB6BD9", tagline: "A career-best performance." },
+  fifty:    { title: "HALF CENTURY",       duration: 10000, gradient: "from-[#F4C542] via-[#D9A928] to-[#0B0B0A]", ring: "#F4C542", accent: "#F4C542", tagline: "Fifty up. The platform is set." },
+  hundred:  { title: "CENTURY — RED HOT",  duration: 16000, gradient: "from-[#EB5757] via-[#C62828] to-[#0B0B0A]", ring: "#EB5757", accent: "#EB5757", tagline: "Pure fire. Total control." },
+  "150":    { title: "150 RUNS",           duration: 24000, gradient: "from-[#FF5FA2] via-[#E84393] to-[#0B0B0A]", ring: "#FF5FA2", accent: "#FF5FA2", tagline: "An elite PTS innings." },
+  "200":    { title: "DOUBLE CENTURY",     duration: 30000, gradient: "from-[#F4F1EA] via-[#F4C542] to-[#0B0B0A]", ring: "#F4F1EA", accent: "#F4C542", tagline: "A historic PTS masterpiece." },
+  default:  { title: "MILESTONE",          duration: 6000,  gradient: "from-[#F4C542] via-[#D9A928] to-[#0B0B0A]", ring: "#F4C542", accent: "#F4C542", tagline: "" },
 };
 
 function themeFor(a: Achievement): ThemeKey {
@@ -161,40 +97,29 @@ export function MilestoneOverlay() {
       style={{ background: "#050505" }}
     >
       {/* Ambient gradient + vignette */}
-      <div
-        className={`absolute inset-0 bg-gradient-to-br ${theme.gradient} opacity-70 animate-[fadeIn_400ms_ease-out]`}
-      />
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.95) 100%)",
-        }}
-      />
+      <div className={`absolute inset-0 bg-gradient-to-br ${theme.gradient} opacity-70 animate-[fadeIn_400ms_ease-out]`} />
+      <div className="absolute inset-0" style={{
+        background: "radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.95) 100%)",
+      }} />
       {/* Light beams */}
-      <div
-        className="pointer-events-none absolute -top-1/2 left-1/2 h-[200vmax] w-[60vmax] -translate-x-1/2 rotate-12 opacity-30 blur-3xl"
-        style={{ background: `linear-gradient(180deg, ${theme.accent}66, transparent 70%)` }}
-      />
-      <div
-        className="pointer-events-none absolute -bottom-1/2 left-1/2 h-[200vmax] w-[40vmax] -translate-x-1/2 -rotate-12 opacity-20 blur-3xl"
-        style={{ background: `linear-gradient(0deg, ${theme.accent}66, transparent 70%)` }}
-      />
+      <div className="pointer-events-none absolute -top-1/2 left-1/2 h-[200vmax] w-[60vmax] -translate-x-1/2 rotate-12 opacity-30 blur-3xl"
+           style={{ background: `linear-gradient(180deg, ${theme.accent}66, transparent 70%)` }} />
+      <div className="pointer-events-none absolute -bottom-1/2 left-1/2 h-[200vmax] w-[40vmax] -translate-x-1/2 -rotate-12 opacity-20 blur-3xl"
+           style={{ background: `linear-gradient(0deg, ${theme.accent}66, transparent 70%)` }} />
       {/* Particles */}
       <Particles color={theme.accent} count={42} />
 
       <div className="relative z-10 px-8 text-center text-[#F4F1EA] max-w-xl">
-        <div className="text-[10px] md:text-xs uppercase tracking-[0.45em] text-white/70 animate-[fadeUp_500ms_ease-out_both]">
+        <div
+          className="text-[10px] md:text-xs uppercase tracking-[0.45em] text-white/70 animate-[fadeUp_500ms_ease-out_both]"
+        >
           Pilli Tucker Stadium
         </div>
         <h1
           className="mt-3 font-black tracking-tight leading-[1.05] animate-[fadeUp_700ms_ease-out_150ms_both]"
           style={{
             fontFamily: "Cinzel, serif",
-            fontSize:
-              themeFor(active) === "200"
-                ? "clamp(2.5rem, 11vw, 5.5rem)"
-                : "clamp(1.8rem, 8vw, 4rem)",
+            fontSize: themeFor(active) === "200" ? "clamp(2.5rem, 11vw, 5.5rem)" : "clamp(1.8rem, 8vw, 4rem)",
             textShadow: `0 0 40px ${theme.accent}99`,
           }}
         >
@@ -222,11 +147,7 @@ export function MilestoneOverlay() {
         <div className="mx-auto mt-10 h-1.5 w-48 overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full transition-[width] duration-100"
-            style={{
-              width: `${progress * 100}%`,
-              background: theme.accent,
-              boxShadow: `0 0 16px ${theme.accent}`,
-            }}
+            style={{ width: `${progress * 100}%`, background: theme.accent, boxShadow: `0 0 16px ${theme.accent}` }}
           />
         </div>
       </div>
@@ -261,18 +182,16 @@ function Particles({ color, count }: { color: string; count: number }) {
           <span
             key={i}
             className="absolute bottom-0 rounded-full"
-            style={
-              {
-                left: `${left}%`,
-                width: size,
-                height: size,
-                background: color,
-                boxShadow: `0 0 ${size * 3}px ${color}`,
-                opacity: 0.85,
-                animation: `floatUp ${dur}s linear ${delay}s infinite`,
-                ["--x" as string]: `${xDrift}px`,
-              } as React.CSSProperties
-            }
+            style={{
+              left: `${left}%`,
+              width: size,
+              height: size,
+              background: color,
+              boxShadow: `0 0 ${size * 3}px ${color}`,
+              opacity: 0.85,
+              animation: `floatUp ${dur}s linear ${delay}s infinite`,
+              ["--x" as string]: `${xDrift}px`,
+            } as React.CSSProperties}
           />
         );
       })}

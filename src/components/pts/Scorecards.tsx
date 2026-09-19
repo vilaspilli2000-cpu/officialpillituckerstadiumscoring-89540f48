@@ -10,14 +10,7 @@ export function BattingScorecard({ innings, match }: { innings: Innings; match: 
     <div className="overflow-x-auto card-gold rounded-xl">
       <table className="w-full text-sm">
         <thead className="text-xs uppercase tracking-widest text-primary/80">
-          <tr>
-            <th className="text-left p-2">Batter</th>
-            <th>R</th>
-            <th>B</th>
-            <th>SR</th>
-            <th>4s</th>
-            <th className="text-left">Out</th>
-          </tr>
+          <tr><th className="text-left p-2">Batter</th><th>R</th><th>B</th><th>SR</th><th>4s</th><th className="text-left">Out</th></tr>
         </thead>
         <tbody>
           {innings.batters.map((b) => {
@@ -25,17 +18,9 @@ export function BattingScorecard({ innings, match }: { innings: Innings; match: 
             const isCurrent = innings.currentBatterId === b.playerId;
             const status = previousMatchStatusFor(prevMatch, b.playerId);
             return (
-              <tr
-                key={b.playerId}
-                className={`border-t border-border/40 ${isCurrent ? "bg-primary/10" : ""} ${status ? "pts-glow-card pts-glow-" + status : ""}`}
-              >
+              <tr key={b.playerId} className={`border-t border-border/40 ${isCurrent ? "bg-primary/10" : ""} ${status ? "pts-glow-card pts-glow-" + status : ""}`}>
                 <td className="p-2 font-medium">
-                  <CaptainName
-                    match={match}
-                    playerId={b.playerId}
-                    players={players}
-                    className="font-medium"
-                  />
+                  <CaptainName match={match} playerId={b.playerId} players={players} className="font-medium" />
                   {isCurrent && " *"}
                 </td>
                 <td className="text-center font-bold">{b.runs}</td>
@@ -43,11 +28,7 @@ export function BattingScorecard({ innings, match }: { innings: Innings; match: 
                 <td className="text-center">{sr}</td>
                 <td className="text-center">{b.fours}</td>
                 <td className="text-xs">
-                  {b.out ? (
-                    dismissalText(b, players, match)
-                  ) : (
-                    <span className="text-success">not out</span>
-                  )}
+                  {b.out ? dismissalText(b, players, match) : <span className="text-success">not out</span>}
                 </td>
               </tr>
             );
@@ -64,46 +45,19 @@ function dismissalText(
   match: Match,
 ) {
   const bowler = b.bowlerId ? (
-    <span>
-      b <CaptainName match={match} playerId={b.bowlerId} players={players} className="text-xs" />
-    </span>
+    <span>b <CaptainName match={match} playerId={b.bowlerId} players={players} className="text-xs" /></span>
   ) : null;
   const catcher = b.catcherId ? (
-    <span>
-      c{" "}
-      <CaptainName
-        match={match}
-        playerId={b.catcherId}
-        players={players}
-        className="text-xs"
-      />{" "}
-    </span>
+    <span>c <CaptainName match={match} playerId={b.catcherId} players={players} className="text-xs" /> </span>
   ) : null;
   switch (b.dismissalType) {
-    case "bowled":
-      return bowler;
-    case "caught":
-      return (
-        <span>
-          {catcher}
-          {bowler}
-        </span>
-      );
-    case "caught-one-bounce":
-      return (
-        <span>
-          c¹ {catcher}
-          {bowler}
-        </span>
-      );
-    case "six-and-out":
-      return <span>six &amp; out</span>;
-    case "leg-l2":
-      return <span>L2</span>;
-    case "run-out":
-      return <span>run out</span>;
-    default:
-      return <span>out</span>;
+    case "bowled": return bowler;
+    case "caught": return <span>{catcher}{bowler}</span>;
+    case "caught-one-bounce": return <span>c¹ {catcher}{bowler}</span>;
+    case "six-and-out": return <span>six &amp; out</span>;
+    case "leg-l2": return <span>L2</span>;
+    case "run-out": return <span>run out</span>;
+    default: return <span>out</span>;
   }
 }
 
@@ -114,33 +68,16 @@ export function BowlingScorecard({ innings, match }: { innings: Innings; match: 
     <div className="overflow-x-auto card-gold rounded-xl">
       <table className="w-full text-sm">
         <thead className="text-xs uppercase tracking-widest text-primary/80">
-          <tr>
-            <th className="text-left p-2">Bowler</th>
-            <th>O</th>
-            <th>W</th>
-            <th>R</th>
-            <th>Econ</th>
-            <th>•</th>
-            <th>NB</th>
-            <th>Wd</th>
-          </tr>
+          <tr><th className="text-left p-2">Bowler</th><th>O</th><th>W</th><th>R</th><th>Econ</th><th>•</th><th>NB</th><th>Wd</th></tr>
         </thead>
         <tbody>
           {innings.bowlers.map((b) => {
             const econ = b.balls ? ((b.runs / b.balls) * 6).toFixed(1) : "-";
             const status = previousMatchStatusFor(prevMatch, b.playerId);
             return (
-              <tr
-                key={b.playerId}
-                className={`border-t border-border/40 ${status ? "pts-glow-card pts-glow-" + status : ""}`}
-              >
+              <tr key={b.playerId} className={`border-t border-border/40 ${status ? "pts-glow-card pts-glow-" + status : ""}`}>
                 <td className="p-2 font-medium">
-                  <CaptainName
-                    match={match}
-                    playerId={b.playerId}
-                    players={players}
-                    className="font-medium"
-                  />
+                  <CaptainName match={match} playerId={b.playerId} players={players} className="font-medium" />
                 </td>
                 <td className="text-center">{oversString(b.balls)}</td>
                 <td className="text-center font-bold">{b.wickets}</td>

@@ -47,30 +47,20 @@ function completedSorted(matches: Match[]): Match[] {
 export function playerMatchLog(playerId: string, matches: Match[]): FormInnings[] {
   const out: FormInnings[] = [];
   for (const m of completedSorted(matches)) {
-    let runs = 0,
-      balls = 0,
-      out_ = false,
-      wickets = 0,
-      bowlRuns = 0,
-      bowlBalls = 0,
-      catches = 0;
+    let runs = 0, balls = 0, out_ = false, wickets = 0, bowlRuns = 0, bowlBalls = 0, catches = 0;
     let played = false;
     for (const inn of m.innings) {
       for (const b of inn.batters) {
         if (b.playerId !== playerId) continue;
         if (b.balls === 0 && !b.out) continue;
         played = true;
-        runs += b.runs;
-        balls += b.balls;
-        out_ = out_ || !!b.out;
+        runs += b.runs; balls += b.balls; out_ = out_ || !!b.out;
       }
       for (const bw of inn.bowlers) {
         if (bw.playerId !== playerId) continue;
         if (bw.balls === 0 && bw.wickets === 0) continue;
         played = true;
-        wickets += bw.wickets;
-        bowlRuns += bw.runs;
-        bowlBalls += bw.balls;
+        wickets += bw.wickets; bowlRuns += bw.runs; bowlBalls += bw.balls;
       }
       for (const ev of inn.events) {
         if (ev.isWicket && ev.catcherId === playerId) catches += 1;
@@ -90,13 +80,7 @@ export function playerMatchLog(playerId: string, matches: Match[]): FormInnings[
       matchId: m.id,
       ts: m.completedAt ?? m.createdAt ?? 0,
       label: `${m.teamA.name} v ${m.teamB.name}`,
-      runs,
-      balls,
-      out: out_,
-      wickets,
-      bowlRuns,
-      bowlBalls,
-      catches,
+      runs, balls, out: out_, wickets, bowlRuns, bowlBalls, catches,
       score: Math.round(clamp(score)),
     });
   }
@@ -108,17 +92,13 @@ export function computePlayerForm(player: Player, matches: Match[]): PlayerForm 
   const recent = log.slice(0, 5);
   if (recent.length === 0) {
     return {
-      score: 50,
-      label: "Good",
-      trend: "Stable",
-      recent: [],
+      score: 50, label: "Good", trend: "Stable", recent: [],
       summary: "No recent PTS matches — form starts at the neutral 50 baseline.",
     };
   }
   // Recency weighted: newest innings counts most.
   const weights = [1, 0.85, 0.7, 0.55, 0.4];
-  let wsum = 0,
-    total = 0;
+  let wsum = 0, total = 0;
   recent.forEach((r, i) => {
     const w = weights[i] ?? 0.35;
     total += r.score * w;
@@ -128,14 +108,14 @@ export function computePlayerForm(player: Player, matches: Match[]): PlayerForm 
 
   const newest = recent.slice(0, Math.min(2, recent.length));
   const older = recent.slice(newest.length);
-  const avg = (a: FormInnings[]) =>
-    a.length ? a.reduce((s, x) => s + x.score, 0) / a.length : score;
+  const avg = (a: FormInnings[]) => (a.length ? a.reduce((s, x) => s + x.score, 0) / a.length : score);
   const delta = avg(newest) - avg(older);
   const trend: FormTrend = delta >= 8 ? "Improving" : delta <= -8 ? "Declining" : "Stable";
 
   const runs = recent.reduce((s, r) => s + r.runs, 0);
   const wkts = recent.reduce((s, r) => s + r.wickets, 0);
-  const summary = `${runs} runs and ${wkts} wicket${wkts === 1 ? "" : "s"} across the last ${recent.length} match${recent.length === 1 ? "" : "es"}.`;
+  const summary =
+    `${runs} runs and ${wkts} wicket${wkts === 1 ? "" : "s"} across the last ${recent.length} match${recent.length === 1 ? "" : "es"}.`;
 
   return { score, label: formLabelOf(score), trend, recent, summary };
 }
@@ -168,12 +148,8 @@ export function pressureLabelOf(score: number): PressureLabel {
 
 /** Chasing + death-over + clutch-wicket performance across all matches. */
 export function computePressure(player: Player, matches: Match[]): PressureProfile {
-  let chaseRuns = 0,
-    chaseBalls = 0,
-    deathRuns = 0,
-    deathBalls = 0;
-  let clutchWickets = 0,
-    situations = 0;
+  let chaseRuns = 0, chaseBalls = 0, deathRuns = 0, deathBalls = 0;
+  let clutchWickets = 0, situations = 0;
 
   for (const m of completedSorted(matches)) {
     m.innings.forEach((inn, idx) => {
@@ -184,23 +160,18 @@ export function computePressure(player: Player, matches: Match[]): PressureProfi
       for (const b of inn.batters) {
         if (b.playerId !== player.id) continue;
         if (chasing && b.balls > 0) {
-          chaseRuns += b.runs;
-          chaseBalls += b.balls;
-          situations += 1;
+          chaseRuns += b.runs; chaseBalls += b.balls; situations += 1;
         }
       }
       for (const ev of inn.events) {
-        const inDeath =
-          ev.isLegal && (inn.legalBalls ?? 0) > 0 && deathFrom !== Infinity
-            ? (ev.overNumber ?? 0) * 6 + (ev.ballInOver ?? 0) >= deathFrom
-            : false;
+        const inDeath = ev.isLegal && (inn.legalBalls ?? 0) > 0 && deathFrom !== Infinity
+          ? (ev.overNumber ?? 0) * 6 + (ev.ballInOver ?? 0) >= deathFrom
+          : false;
         if (inDeath && ev.batterId === player.id) {
-          deathRuns += ev.runsToBatter;
-          deathBalls += 1;
+          deathRuns += ev.runsToBatter; deathBalls += 1;
         }
         if (ev.isWicket && ev.bowlerId === player.id && (chasing || inDeath)) {
-          clutchWickets += 1;
-          situations += 1;
+          clutchWickets += 1; situations += 1;
         }
       }
     });
@@ -212,16 +183,9 @@ export function computePressure(player: Player, matches: Match[]): PressureProfi
   if (situations === 0 && deathBalls === 0) {
     const base = clamp(player.ratings?.pressure ?? 50);
     return {
-      score: Math.round(base),
-      label: pressureLabelOf(base),
-      chaseRuns,
-      chaseBalls,
-      chaseSr,
-      deathRuns,
-      deathBalls,
-      deathSr,
-      clutchWickets,
-      situations,
+      score: Math.round(base), label: pressureLabelOf(base),
+      chaseRuns, chaseBalls, chaseSr, deathRuns, deathBalls, deathSr,
+      clutchWickets, situations,
       summary: "No pressure situations recorded yet — showing the baseline rating.",
     };
   }
@@ -239,16 +203,9 @@ export function computePressure(player: Player, matches: Match[]): PressureProfi
   if (clutchWickets) bits.push(`${clutchWickets} clutch wickets`);
 
   return {
-    score: Math.round(score),
-    label: pressureLabelOf(score),
-    chaseRuns,
-    chaseBalls,
-    chaseSr,
-    deathRuns,
-    deathBalls,
-    deathSr,
-    clutchWickets,
-    situations,
+    score: Math.round(score), label: pressureLabelOf(score),
+    chaseRuns, chaseBalls, chaseSr, deathRuns, deathBalls, deathSr,
+    clutchWickets, situations,
     summary: bits.join(" · ") || "Building a pressure record.",
   };
 }
@@ -280,14 +237,9 @@ export function teamMomentum(match: Match): TeamMomentum {
     const boundaries = legal.filter((e) => e.runsToBatter >= 4).length;
     const wks = evs.filter((e) => e.isWicket).length;
     const rr = (runs / legal.length) * 6;
-    const par =
-      match.target && inn.oversCap
-        ? ((match.target - inn.runs) / Math.max(1, inn.oversCap - inn.legalBalls)) * 6
-        : match.format === "A"
-          ? 10
-          : match.format === "B"
-            ? 7
-            : 4.5;
+    const par = match.target && inn.oversCap
+      ? ((match.target - inn.runs) / Math.max(1, inn.oversCap - inn.legalBalls)) * 6
+      : match.format === "A" ? 10 : match.format === "B" ? 7 : 4.5;
     m = (rr - par) * 8 + boundaries * 8 - dots * 3 - wks * 22;
     m = Math.max(-100, Math.min(100, m));
   }

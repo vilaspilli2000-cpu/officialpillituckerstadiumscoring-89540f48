@@ -2,18 +2,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { toast } from "sonner";
 import type {
-  Achievement,
-  AwardFeedEntry,
-  BallEventType,
-  FormatId,
-  Match,
-  MilestoneEntry,
-  Player,
-  RecordEntry,
-  Team,
-  FieldingEventKind,
-  AchUnlock,
-  Penalty,
+  Achievement, AwardFeedEntry, BallEventType, FormatId, Match, MilestoneEntry,
+  Player, RecordEntry, Team, FieldingEventKind, AchUnlock, Penalty,
 } from "./types";
 import { SEED_PLAYERS, OFFICIAL_AWARD_SPLITS, correctCareerMilestones } from "./seed";
 import { applyEvent, type ApplyOptions } from "./engine";
@@ -24,40 +14,18 @@ import { computeProbability } from "./probability";
 import { generateCommentaryFor } from "./commentary";
 import { MILESTONE_STEPS, totalAwards } from "./milestones";
 import { computeMatchPoints, buildStreakSnapshot } from "./matchPoints";
-import {
-  layerResult,
-  legacyLevelFromAchievements,
-  meltdownLevelFromAchievements,
-} from "./legacyMeltdown";
+import { layerResult, legacyLevelFromAchievements, meltdownLevelFromAchievements } from "./legacyMeltdown";
 import { buildPointsBreakdown } from "./pointsBreakdown";
 import { applyHistoricBaselineAll } from "./historicBaseline";
 import {
-  achievementCommentary,
-  applyUnlocks,
-  careerAchStats,
-  evaluateAchievements,
-  resetAchievementBaseline,
-  addAchProgress,
-  liveAchStats,
-  RESULT_ONLY_STATS,
-  type AchStats,
-  type StatKey,
+  achievementCommentary, applyUnlocks, careerAchStats, evaluateAchievements,
+  resetAchievementBaseline, addAchProgress, liveAchStats, RESULT_ONLY_STATS,
+  type AchStats, type StatKey,
 } from "./achievements";
 import {
-  OFFICIAL_BUCKETS,
-  playerBuckets,
-  addBuckets,
-  matchBucketDeltas,
-  ZERO_BUCKETS,
+  OFFICIAL_BUCKETS, playerBuckets, addBuckets, matchBucketDeltas, ZERO_BUCKETS,
   OFFICIAL_CAREER,
 } from "./buckets";
-import {
-  ChallengesEngine,
-  type ChallengeAssignment,
-  type ChallengeTier,
-  type ChallengeType,
-} from "./challengesEngine";
-import { addChallengePoints, getTierEmoji, type ChallengePointsEntry } from "./challengesPoints";
 
 function teamOfPlayer(m: Match, playerId: string): "A" | "B" {
   if (m.teamA.playerIds.includes(playerId)) return "A";
@@ -68,12 +36,7 @@ function teamOfPlayer(m: Match, playerId: string): "A" | "B" {
 function runAchievements(
   players: Player[],
   targets: Array<{ id: string; only?: StatKey[] }>,
-  ctx: {
-    matchId?: string;
-    matchLabel?: string;
-    opponent?: (t: "A" | "B") => string;
-    match?: Match;
-  },
+  ctx: { matchId?: string; matchLabel?: string; opponent?: (t: "A" | "B") => string; match?: Match },
   mode: "live" | "final",
 ): { players: Player[]; unlocks: AchUnlock[] } {
   let out = players;
@@ -84,9 +47,7 @@ function runAchievements(
     const stats = mode === "live" ? liveAchStats(p, ctx.match) : careerAchStats(p);
     const team = ctx.match ? teamOfPlayer(ctx.match, p.id) : "A";
     const u = evaluateAchievements(
-      p,
-      stats,
-      out,
+      p, stats, out,
       { matchId: ctx.matchId, matchLabel: ctx.matchLabel, opponent: ctx.opponent?.(team) },
       t.only,
     );
@@ -98,7 +59,8 @@ function runAchievements(
   return { players: out, unlocks };
 }
 
-const uid = () => globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
+const uid = () =>
+  globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
 
 /** Seed players with official career values, official ranking buckets and a
  *  zeroed achievement progress baseline (v3.3.4). */
@@ -153,8 +115,8 @@ interface State {
   milestoneFeed: MilestoneEntry[];
   recordFeed: RecordEntry[];
   awardFeed: AwardFeedEntry[];
-  /** Additive Challenge Points Bucket — only challenge-earned PTS enter. */
-  challengePoints: import("./challengesPoints").ChallengePointsEntry[];
+
+
 
   startMatch: (input: SetupInput) => void;
   setCurrent: (m: Match | undefined) => void;
@@ -193,7 +155,6 @@ export const usePtsStore = create<State>()(
       milestoneFeed: [],
       recordFeed: [],
       awardFeed: [],
-      challengePoints: [],
 
       startMatch: (input) => {
         const lineup = input.firstBattingTeam === "A" ? input.lineupA : input.lineupB;
@@ -216,9 +177,6 @@ export const usePtsStore = create<State>()(
           currentInnings: 0,
           probability: [],
           totalPlayers,
-          // Initialize empty challenge assignments - will be populated when first innings begins
-          challengeBatting: [],
-          challengeBowling: [],
         };
         set({ current: match, undoStack: [] });
       },
@@ -231,9 +189,7 @@ export const usePtsStore = create<State>()(
         const snapshot = structuredClone(current);
         const prevProb = computeProbability(current, players);
         const prevBatPct = current.innings[current.currentInnings]
-          ? current.innings[current.currentInnings].battingTeam === "A"
-            ? prevProb.teamA
-            : prevProb.teamB
+          ? (current.innings[current.currentInnings].battingTeam === "A" ? prevProb.teamA : prevProb.teamB)
           : 50;
         const res = applyEvent(current, type, opts);
         let m = res.match;
@@ -264,12 +220,9 @@ export const usePtsStore = create<State>()(
         const inn = m.innings[res.inningsClosed ? m.currentInnings : m.currentInnings];
         const lastEv = inn?.events[inn.events.length - 1];
         if (lastEv) {
-          const newBatPct =
-            lastEv.inningsIndex >= 0
-              ? m.innings[lastEv.inningsIndex].battingTeam === "A"
-                ? prob.teamA
-                : prob.teamB
-              : 50;
+          const newBatPct = lastEv.inningsIndex >= 0
+            ? ((m.innings[lastEv.inningsIndex].battingTeam === "A") ? prob.teamA : prob.teamB)
+            : 50;
           const entry = generateCommentaryFor(m, players, lastEv, prevBatPct, newBatPct);
           m.commentary = [...(m.commentary ?? []), entry];
         }
@@ -290,172 +243,8 @@ export const usePtsStore = create<State>()(
           m.story = buildStory(m, players);
         }
 
-        // ── Challenge Progress (§1) — live update after stats change.
-        // Only updates progress; does NOT award rewards yet (except economy at innings end).
-        // FIXED ORDER: playersOut assigned first, then challenge loop uses updated players.
-        let playersOut = players;
-        let newChallengePoints: import("./challengesPoints").ChallengePointsEntry[] =
-          get().challengePoints ?? [];
-        const currentMatch = m;
-        const formatId = currentMatch.format;
-        const inningsIdx = res.inningsClosed
-          ? Math.max(0, currentMatch.currentInnings - 1)
-          : currentMatch.currentInnings;
-        const isInningsComplete = res.inningsClosed;
-        const cycleNumber = Math.floor(inningsIdx / 2); // 0 for innings 0-1, 1 for 2-3, etc.
-
-        // Get all unique player IDs in the match (from both lineups)
-        const allPlayerIds = new Set([
-          ...currentMatch.teamA.playerIds,
-          ...currentMatch.teamB.playerIds,
-        ]);
-
-        for (const playerId of allPlayerIds) {
-          const pl = playersOut.find((p) => p.id === playerId);
-          if (!pl) continue;
-
-          // Get or generate batting assignments for this player for the current match and cycle
-          let battingAssignments = (currentMatch as any).challengeAssignments?.[pl.id]?.batting
-            ?.assignments;
-          let bowlingAssignments = (currentMatch as any).challengeAssignments?.[pl.id]?.bowling
-            ?.assignments;
-
-          // If we don't have assignments, generate them.
-          if (!battingAssignments) {
-            const assignments = ChallengesEngine.assignChallengesForFormat(
-              formatId,
-              true,
-              cycleNumber,
-            );
-            assignments.forEach((a) => {
-              a.matchId = currentMatch.id;
-              a.cycleNumber = cycleNumber;
-            });
-            (currentMatch as any).challengeAssignments =
-              (currentMatch as any).challengeAssignments || {};
-            (currentMatch as any).challengeAssignments[pl.id] =
-              (currentMatch as any).challengeAssignments[pl.id] || {};
-            (currentMatch as any).challengeAssignments[pl.id].batting = {
-              assignments,
-              cycleNumber,
-              matchId: currentMatch.id,
-            };
-            battingAssignments = assignments;
-          }
-          if (!bowlingAssignments) {
-            const assignments = ChallengesEngine.assignChallengesForFormat(
-              formatId,
-              false,
-              cycleNumber,
-            );
-            assignments.forEach((a) => {
-              a.matchId = currentMatch.id;
-              a.cycleNumber = cycleNumber;
-            });
-            (currentMatch as any).challengeAssignments =
-              (currentMatch as any).challengeAssignments || {};
-            (currentMatch as any).challengeAssignments[pl.id] =
-              (currentMatch as any).challengeAssignments[pl.id] || {};
-            (currentMatch as any).challengeAssignments[pl.id].bowling = {
-              assignments,
-              cycleNumber,
-              matchId: currentMatch.id,
-            };
-            bowlingAssignments = assignments;
-          }
-
-          // Update progress for batting assignments
-          if (battingAssignments) {
-            for (const assignment of battingAssignments) {
-              if (assignment.completed) continue;
-              const updated = ChallengesEngine.updateChallengeProgress(
-                assignment,
-                currentMatch,
-                pl.id,
-                inningsIdx,
-                true,
-              );
-              // Update the stored assignment with the new progress
-              Object.assign(assignment, updated);
-              if (updated.progress >= updated.target && !updated.completed) {
-                const completion = ChallengesEngine.checkChallengeCompletion(
-                  updated,
-                  currentMatch,
-                  pl.id,
-                  inningsIdx,
-                  true,
-                  !!isInningsComplete,
-                );
-                if (completion.completed) {
-                  // Avoid duplicate awards: check if this assignment is already marked as completed
-                  if (!assignment.completed) {
-                    const entry = addChallengePoints(
-                      currentMatch,
-                      pl,
-                      {
-                        ...updated,
-                        completed: true,
-                        actualValue: completion.actualValue ?? updated.progress,
-                      },
-                      inningsIdx,
-                      true,
-                    );
-                    newChallengePoints = [...newChallengePoints, entry];
-                    // Mark as completed
-                    assignment.completed = true;
-                    assignment.actualValue = completion.actualValue ?? updated.progress;
-                  }
-                }
-              }
-            }
-          }
-
-          // Update progress for bowling assignments
-          if (bowlingAssignments) {
-            for (const assignment of bowlingAssignments) {
-              if (assignment.completed) continue;
-              const updated = ChallengesEngine.updateChallengeProgress(
-                assignment,
-                currentMatch,
-                pl.id,
-                inningsIdx,
-                false,
-              );
-              Object.assign(assignment, updated);
-              if (updated.progress >= updated.target && !updated.completed) {
-                const completion = ChallengesEngine.checkChallengeCompletion(
-                  updated,
-                  currentMatch,
-                  pl.id,
-                  inningsIdx,
-                  false,
-                  !!isInningsComplete,
-                );
-                if (completion.completed) {
-                  // Avoid duplicate awards
-                  if (!assignment.completed) {
-                    const entry = addChallengePoints(
-                      currentMatch,
-                      pl,
-                      {
-                        ...updated,
-                        completed: true,
-                        actualValue: completion.actualValue ?? updated.progress,
-                      },
-                      inningsIdx,
-                      false,
-                    );
-                    newChallengePoints = [...newChallengePoints, entry];
-                    assignment.completed = true;
-                    assignment.actualValue = completion.actualValue ?? updated.progress;
-                  }
-                }
-              }
-            }
-          }
-        }
-
         // ── Live Achievement Engine (§10) — only the stats this ball touched.
+        let playersOut = players;
         let newUnlocks: AchUnlock[] = [];
         if (lastEv) {
           const matchLabel = `${m.teamA.name} vs ${m.teamB.name}`;
@@ -467,16 +256,9 @@ export const usePtsStore = create<State>()(
               only: ["runs", "fours", "fifties", "hundreds", "matchSR", "streak30"],
             });
           }
-          if (lastEv.isWicket && lastEv.bowlerId)
-            targets.push({ id: lastEv.bowlerId, only: ["wickets"] });
-          if (lastEv.catcherId)
-            targets.push({ id: lastEv.catcherId, only: ["catches", "oneBounceCatches"] });
-          const ran = runAchievements(
-            players,
-            targets,
-            { matchId: m.id, matchLabel, opponent, match: m },
-            "live",
-          );
+          if (lastEv.isWicket && lastEv.bowlerId) targets.push({ id: lastEv.bowlerId, only: ["wickets"] });
+          if (lastEv.catcherId) targets.push({ id: lastEv.catcherId, only: ["catches", "oneBounceCatches"] });
+          const ran = runAchievements(players, targets, { matchId: m.id, matchLabel, opponent, match: m }, "live");
           playersOut = ran.players;
           newUnlocks = ran.unlocks;
           for (const u of newUnlocks) {
@@ -486,13 +268,9 @@ export const usePtsStore = create<State>()(
             m.commentary = [
               ...(m.commentary ?? []),
               {
-                id: uid(),
-                ts: Date.now(),
-                inningsIndex: m.currentInnings,
+                id: uid(), ts: Date.now(), inningsIndex: m.currentInnings,
                 ballIndex: innAt?.events.length ?? 0,
-                overLabel: innAt
-                  ? `${Math.floor(innAt.legalBalls / 6)}.${innAt.legalBalls % 6}`
-                  : "0.0",
+                overLabel: innAt ? `${Math.floor(innAt.legalBalls / 6)}.${innAt.legalBalls % 6}` : "0.0",
                 text: achievementCommentary(nm, u.achId, first),
                 kind: "milestone",
               },
@@ -506,7 +284,6 @@ export const usePtsStore = create<State>()(
           achievements: [...acks, ...get().achievements].slice(0, 500),
           achFeed: [...newUnlocks, ...get().achFeed].slice(0, 5000),
           undoStack: [...undoStack, snapshot].slice(-50),
-          challengePoints: newChallengePoints,
         });
       },
 
@@ -575,9 +352,7 @@ export const usePtsStore = create<State>()(
         m.commentary = [
           ...(m.commentary ?? []),
           {
-            id: uid(),
-            ts: Date.now(),
-            inningsIndex: m.currentInnings,
+            id: uid(), ts: Date.now(), inningsIndex: m.currentInnings,
             ballIndex: inn.events.length,
             overLabel: `${Math.floor(inn.legalBalls / 6)}.${inn.legalBalls % 6}`,
             text,
@@ -623,9 +398,7 @@ export const usePtsStore = create<State>()(
         m.commentary = [
           ...(m.commentary ?? []),
           {
-            id: uid(),
-            ts: Date.now(),
-            inningsIndex: m.currentInnings,
+            id: uid(), ts: Date.now(), inningsIndex: m.currentInnings,
             ballIndex: inn?.events.length ?? 0,
             overLabel: inn ? `${Math.floor(inn.legalBalls / 6)}.${inn.legalBalls % 6}` : "0.0",
             text: `${loserName} declared the win to ${winnerName}. The opposing team accepted the win declaration and conceded the match.`,
@@ -770,8 +543,7 @@ export const usePtsStore = create<State>()(
             pl.career.sixes += b.sixes;
             if (b.runs >= 100) pl.career.hundreds += 1;
             else if (b.runs >= 50) pl.career.fifties += 1;
-            if (b.runs >= 150 && b.runs < 200)
-              pl.career.hundred50s = (pl.career.hundred50s ?? 0) + 1;
+            if (b.runs >= 150 && b.runs < 200) pl.career.hundred50s = (pl.career.hundred50s ?? 0) + 1;
             if (b.runs >= 200) pl.career.doubleHundreds = (pl.career.doubleHundreds ?? 0) + 1;
             if (b.runs > pl.career.highest) {
               pl.career.highest = b.runs;
@@ -780,11 +552,9 @@ export const usePtsStore = create<State>()(
             if (!b.out) pl.career.notOuts += 1;
             pl.career.innings = (pl.career.innings ?? 0) + 1;
             if (b.runs === 0 && b.out) pl.career.ducks = (pl.career.ducks ?? 0) + 1;
-            if (b.runs === 0 && b.out && b.balls <= 1)
-              pl.career.goldenDucks = (pl.career.goldenDucks ?? 0) + 1;
+            if (b.runs === 0 && b.out && b.balls <= 1) pl.career.goldenDucks = (pl.career.goldenDucks ?? 0) + 1;
             if (b.dismissalType === "six-and-out") pl.career.sixOuts = (pl.career.sixOuts ?? 0) + 1;
-            if (b.dismissalType === "hit-wicket")
-              pl.career.hitWickets = (pl.career.hitWickets ?? 0) + 1;
+            if (b.dismissalType === "hit-wicket") pl.career.hitWickets = (pl.career.hitWickets ?? 0) + 1;
             if (b.dismissalType === "caught" || b.dismissalType === "caught-one-bounce") {
               pl.career.caughtOuts = (pl.career.caughtOuts ?? 0) + 1;
             }
@@ -795,10 +565,7 @@ export const usePtsStore = create<State>()(
             // Consistency streak (consecutive innings of 30+).
             if (b.runs >= 30) {
               pl.career.streak30Current = (pl.career.streak30Current ?? 0) + 1;
-              pl.career.streak30Best = Math.max(
-                pl.career.streak30Best ?? 0,
-                pl.career.streak30Current,
-              );
+              pl.career.streak30Best = Math.max(pl.career.streak30Best ?? 0, pl.career.streak30Current);
             } else {
               pl.career.streak30Current = 0;
             }
@@ -832,11 +599,8 @@ export const usePtsStore = create<State>()(
             if (bw.wickets > (pl.career.bestBowlingWkts ?? 0)) {
               pl.career.bestBowlingWkts = bw.wickets;
               pl.career.bestBowlingRuns = bw.runs;
-            } else if (
-              bw.wickets === (pl.career.bestBowlingWkts ?? 0) &&
-              bw.wickets > 0 &&
-              bw.runs < (pl.career.bestBowlingRuns ?? Infinity)
-            ) {
+            } else if (bw.wickets === (pl.career.bestBowlingWkts ?? 0) && bw.wickets > 0 &&
+                       bw.runs < (pl.career.bestBowlingRuns ?? Infinity)) {
               pl.career.bestBowlingRuns = bw.runs;
             }
             counted.add(bw.playerId);
@@ -852,8 +616,7 @@ export const usePtsStore = create<State>()(
         for (const inn of current.innings) {
           for (const bw of inn.bowlers) {
             const a = bowlAgg.get(bw.playerId) ?? { balls: 0, runs: 0 };
-            a.balls += bw.balls;
-            a.runs += bw.runs;
+            a.balls += bw.balls; a.runs += bw.runs;
             bowlAgg.set(bw.playerId, a);
           }
         }
@@ -876,17 +639,12 @@ export const usePtsStore = create<State>()(
           if (!pl) continue;
           pl.career.awards += 1;
           const map: Record<string, keyof Player["career"]> = {
-            pom: "pomAwards",
-            batsman: "batsmanAwards",
-            bowler: "bowlerAwards",
-            fielder: "fielderAwards",
-            fighter: "fighterAwards",
-            worst: "worstAwards",
+            pom: "pomAwards", batsman: "batsmanAwards", bowler: "bowlerAwards",
+            fielder: "fielderAwards", fighter: "fighterAwards", worst: "worstAwards",
           };
           const k = map[aw.type];
-          if (k)
-            (pl.career as unknown as Record<string, number>)[k] =
-              ((pl.career as unknown as Record<string, number>)[k] ?? 0) + 1;
+          if (k) (pl.career as unknown as Record<string, number>)[k] =
+            ((pl.career as unknown as Record<string, number>)[k] ?? 0) + 1;
         }
 
         // --- Build permanent feed entries ---------------------------------
@@ -903,14 +661,10 @@ export const usePtsStore = create<State>()(
           if (!pre) continue;
           const check = (key: keyof typeof MILESTONE_STEPS, label: string) => {
             const step = MILESTONE_STEPS[key];
-            const preVal =
-              key === "awards"
-                ? totalAwards(pre)
-                : ((pre.career as unknown as Record<string, number | undefined>)[key] ?? 0);
-            const postVal =
-              key === "awards"
-                ? totalAwards(pl)
-                : ((pl.career as unknown as Record<string, number | undefined>)[key] ?? 0);
+            const preVal = key === "awards" ? totalAwards(pre) :
+              (pre.career as unknown as Record<string, number | undefined>)[key] ?? 0;
+            const postVal = key === "awards" ? totalAwards(pl) :
+              (pl.career as unknown as Record<string, number | undefined>)[key] ?? 0;
             const crossed = Math.floor(postVal / step) - Math.floor(preVal / step);
             for (let i = 1; i <= crossed; i++) {
               const value = (Math.floor(preVal / step) + i) * step;
@@ -918,20 +672,13 @@ export const usePtsStore = create<State>()(
               const team = teamOfPlayer(current, pl.id);
               newMilestones.push({
                 id: `${pl.id}-${key}-${value}-${now}-${i}`,
-                ts: now,
-                matchId: current.id,
-                playerId: pl.id,
-                statKey: key,
-                statLabel: label,
-                value,
-                opponent: opponent(team),
+                ts: now, matchId: current.id, playerId: pl.id, statKey: key,
+                statLabel: label, value, opponent: opponent(team),
                 matchLabel,
               });
               newRecords.push({
                 id: `mr-${pl.id}-${key}-${value}-${now}-${i}`,
-                ts: now,
-                matchId: current.id,
-                playerId: pl.id,
+                ts: now, matchId: current.id, playerId: pl.id,
                 kind: "career-milestone",
                 recordName: `${value.toLocaleString()} ${label}`,
                 value: String(value),
@@ -958,9 +705,7 @@ export const usePtsStore = create<State>()(
             const team = teamOfPlayer(current, pl.id);
             newRecords.push({
               id: `pb-hs-${pl.id}-${now}`,
-              ts: now,
-              matchId: current.id,
-              playerId: pl.id,
+              ts: now, matchId: current.id, playerId: pl.id,
               kind: "highest-score",
               recordName: "New Highest Score",
               value: `${pl.career.highest}${pl.career.highestNotOut ? "*" : ""}`,
@@ -968,18 +713,14 @@ export const usePtsStore = create<State>()(
               matchLabel,
             });
           }
-          if (
-            (pre.career.bestBowlingWkts ?? 0) < (pl.career.bestBowlingWkts ?? 0) ||
-            ((pre.career.bestBowlingWkts ?? 0) === (pl.career.bestBowlingWkts ?? 0) &&
-              (pl.career.bestBowlingRuns ?? 0) < (pre.career.bestBowlingRuns ?? Infinity) &&
-              (pl.career.bestBowlingWkts ?? 0) > 0)
-          ) {
+          if ((pre.career.bestBowlingWkts ?? 0) < (pl.career.bestBowlingWkts ?? 0) ||
+              ((pre.career.bestBowlingWkts ?? 0) === (pl.career.bestBowlingWkts ?? 0) &&
+               (pl.career.bestBowlingRuns ?? 0) < (pre.career.bestBowlingRuns ?? Infinity) &&
+               (pl.career.bestBowlingWkts ?? 0) > 0)) {
             const team = teamOfPlayer(current, pl.id);
             newRecords.push({
               id: `pb-bb-${pl.id}-${now}`,
-              ts: now,
-              matchId: current.id,
-              playerId: pl.id,
+              ts: now, matchId: current.id, playerId: pl.id,
               kind: "best-bowling",
               recordName: "New Best Bowling",
               value: `${pl.career.bestBowlingWkts}/${pl.career.bestBowlingRuns}`,
@@ -993,14 +734,9 @@ export const usePtsStore = create<State>()(
         for (const aw of current.awards ?? []) {
           newAwards.push({
             id: `af-${current.id}-${aw.type}-${aw.playerId}`,
-            ts: now,
-            matchId: current.id,
-            matchLabel,
-            awardType: aw.type,
-            playerId: aw.playerId,
-            headline: aw.headline,
-            reason: aw.reason,
-            team: aw.team,
+            ts: now, matchId: current.id, matchLabel,
+            awardType: aw.type, playerId: aw.playerId, headline: aw.headline,
+            reason: aw.reason, team: aw.team,
           });
         }
 
@@ -1062,7 +798,7 @@ export const usePtsStore = create<State>()(
         // Duck Dodger: No-duck streak (a duck resets the streak)
         const duckStreak: Record<string, number> = {};
         for (const pl of players) duckStreak[pl.id] = pl.achievementStreaks?.duckDodge ?? 0;
-        for (const b of current.innings.flatMap((i) => i.batters)) {
+        for (const b of current.innings.flatMap(i => i.batters)) {
           if (b.runs === 0 && b.out) {
             // Duck - reset streak
             duckStreak[b.playerId] = 0;
@@ -1075,16 +811,12 @@ export const usePtsStore = create<State>()(
         // Persist duck streak back to player.achievementStreaks
         for (const pl of updated) {
           const streak = duckStreak[pl.id] ?? 0;
-          pl.achievementStreaks = {
-            duckDodge: streak,
-            economyGuardian: pl.achievementStreaks?.economyGuardian ?? 0,
-          };
+          pl.achievementStreaks = { duckDodge: streak, economyGuardian: pl.achievementStreaks?.economyGuardian ?? 0 };
         }
 
         // Economy Guardian: Economy ≤8 streak (economy > 8 resets streak)
         const economyStreak: Record<string, number> = {};
-        for (const pl of players)
-          economyStreak[pl.id] = pl.achievementStreaks?.economyGuardian ?? 0;
+        for (const pl of players) economyStreak[pl.id] = pl.achievementStreaks?.economyGuardian ?? 0;
         for (const [pid, a] of bowlAgg) {
           const econ = a.balls > 0 ? (a.runs / a.balls) * 6 : 0;
           if (econ > 8) {
@@ -1099,10 +831,7 @@ export const usePtsStore = create<State>()(
         // Persist economy streak back to player.achievementStreaks
         for (const pl of updated) {
           const streak = economyStreak[pl.id] ?? 0;
-          pl.achievementStreaks = {
-            duckDodge: pl.achievementStreaks?.duckDodge ?? 0,
-            economyGuardian: streak,
-          };
+          pl.achievementStreaks = { duckDodge: pl.achievementStreaks?.duckDodge ?? 0, economyGuardian: streak };
         }
 
         // Match Appearances: one per player who participated in the match
@@ -1113,9 +842,7 @@ export const usePtsStore = create<State>()(
         // Chase Survivor: Not-out innings while chasing
         const target = current.target;
         for (const inn of current.innings) {
-          const isChase =
-            target !== undefined &&
-            inn.battingTeam === (current.innings[0].battingTeam === "A" ? "B" : "A");
+          const isChase = target !== undefined && inn.battingTeam === (current.innings[0].battingTeam === "A" ? "B" : "A");
           if (!isChase) continue;
           for (const b of inn.batters) {
             if (!b.out) {
@@ -1154,208 +881,6 @@ export const usePtsStore = create<State>()(
           }
         }
 
-        // ── New v5 Achievement Progress (10 categories) ──
-        // Dot Ball Counter — career dot balls bowled (additive)
-        for (const inn of current.innings) {
-          for (const bw of inn.bowlers) {
-            if (bw.dots > 0) bump(bw.playerId, "dotsBowled", bw.dots);
-          }
-        }
-
-        // Four Frenzy / Endurance Batter / Single Runner / Dot Ball Eater / Dot Ball Bowler
-        // Personal-best per-innings stats (max)
-        const bestInningsFours = new Map<string, number>();
-        const bestInningsBalls = new Map<string, number>();
-        const bestInningsOnes = new Map<string, number>();
-        const bestInningsDotsFaced = new Map<string, number>();
-        const bestInningsDotsBowled = new Map<string, number>();
-        for (const inn of current.innings) {
-          for (const b of inn.batters) {
-            const pid = b.playerId;
-            bestInningsFours.set(pid, Math.max(bestInningsFours.get(pid) ?? 0, b.fours));
-            bestInningsBalls.set(pid, Math.max(bestInningsBalls.get(pid) ?? 0, b.balls));
-            // Ones: count "1" events for this batter in this innings
-            const ones = inn.events.filter(
-              (e) => e.batterId === pid && e.type === "1" && e.isLegal,
-            ).length;
-            bestInningsOnes.set(pid, Math.max(bestInningsOnes.get(pid) ?? 0, ones));
-          }
-          for (const bw of inn.bowlers) {
-            bestInningsDotsBowled.set(
-              bw.playerId,
-              Math.max(bestInningsDotsBowled.get(bw.playerId) ?? 0, bw.dots),
-            );
-          }
-          // Dot balls faced: legal "0" / L1 / L2 events where batter faced
-          for (const ev of inn.events) {
-            if (!ev.isLegal) continue;
-            if (ev.type === "0" || ev.type === "L1" || ev.type === "L2") {
-              const pid = ev.batterId;
-              // Count only if batter was actually facing (exists in innings)
-              if (inn.batters.some((bx) => bx.playerId === pid)) {
-                bestInningsDotsFaced.set(
-                  pid,
-                  Math.max(
-                    bestInningsDotsFaced.get(pid) ?? 0,
-                    (bestInningsDotsFaced.get(pid) ?? 0) + 1,
-                  ),
-                );
-              }
-            }
-          }
-        }
-        // Apply max bumps by comparing to career progress; since addAchProgress uses additive for non-max,
-        // we handle personal-bests by manually computing the new career max and setting via max logic.
-        // Simplest: compute current career best from pre-match career + match best, then bump with max=true.
-        for (const [pid, v] of bestInningsFours) {
-          const pre = preById.get(pid);
-          const currentBest = (pre?.achProgress?.mostFoursInnings ?? 0) as number;
-          bump(pid, "mostFoursInnings", Math.max(currentBest, v), true);
-        }
-        for (const [pid, v] of bestInningsBalls) {
-          const pre = preById.get(pid);
-          const currentBest = (pre?.achProgress?.mostBallsFaced ?? 0) as number;
-          bump(pid, "mostBallsFaced", Math.max(currentBest, v), true);
-        }
-        for (const [pid, v] of bestInningsOnes) {
-          const pre = preById.get(pid);
-          const currentBest = (pre?.achProgress?.mostOnesInnings ?? 0) as number;
-          bump(pid, "mostOnesInnings", Math.max(currentBest, v), true);
-        }
-        for (const [pid, v] of bestInningsDotsBowled) {
-          const pre = preById.get(pid);
-          const currentBest = (pre?.achProgress?.mostDotsBowled ?? 0) as number;
-          bump(pid, "mostDotsBowled", Math.max(currentBest, v), true);
-        }
-        // Dot balls faced: calculate max per innings properly
-        const inningsDotsFaced: Record<string, number[]> = {};
-        for (const inn of current.innings) {
-          const dotsFacedInThisInn = new Map<string, number>();
-          for (const ev of inn.events) {
-            if (!ev.isLegal) continue;
-            if (ev.type === "0" || ev.type === "L1" || ev.type === "L2") {
-              const pid = ev.batterId;
-              if (inn.batters.some((bx) => bx.playerId === pid)) {
-                dotsFacedInThisInn.set(pid, (dotsFacedInThisInn.get(pid) ?? 0) + 1);
-              }
-            }
-          }
-          for (const [pid, count] of dotsFacedInThisInn) {
-            if (!inningsDotsFaced[pid]) inningsDotsFaced[pid] = [];
-            inningsDotsFaced[pid].push(count);
-          }
-        }
-        for (const [pid, counts] of Object.entries(inningsDotsFaced)) {
-          const pre = preById.get(pid);
-          const currentBest = (pre?.achProgress?.mostDotsFaced ?? 0) as number;
-          const matchBest = Math.max(...counts);
-          bump(pid, "mostDotsFaced", Math.max(currentBest, matchBest), true);
-        }
-
-        // Effective Bowler — qualifying overs (career count, additive)
-        // Need to calculate economy per over, not per bowler spell
-        const overEconomies: Record<string, Map<number, { runs: number; balls: number }>> = {};
-        for (const inn of current.innings) {
-          const overStats = new Map<number, { runs: number; balls: number }>();
-          for (const ev of inn.events) {
-            if (ev.isLegal) {
-              const o = ev.overNumber;
-              const stats = overStats.get(o) ?? { runs: 0, balls: 0 };
-              stats.runs += ev.runsToBatter + ev.runsExtras;
-              stats.balls += 1;
-              overStats.set(o, stats);
-            }
-          }
-          // Store for this innings (innings are keyed by index, but we need per bowler)
-          // Actually, we need to track which bowler bowled which over
-          // Simpler approach: accumulate per bowler per over
-          for (const [overNum, stats] of overStats) {
-            // Find which bowler bowled this over (last bowler with ball in this over)
-            // This is complex; approximate using bowler spell economy for safety
-            // Better: track per bowler per over during initial loop
-          }
-        }
-        // Fallback: use bowler spell economy (conservative approximation)
-        for (const [pid, a] of bowlAgg) {
-          if (a.balls > 0 && (a.runs / a.balls) * 6 < 3) {
-            // Count completed qualifying overs (each over = 6 legal balls; partial doesn't count)
-            const completedOvers = Math.floor(a.balls / 6);
-            bump(pid, "oversBelow3Economy", completedOvers);
-          }
-        }
-
-        // Fifty Streak / Century Streak — consecutive 50+ / 100+ innings streak
-        // Initialize from existing achievementStreaks if available, otherwise 0
-        const fiftyStreak: Record<string, number> = {};
-        const hundredStreak: Record<string, number> = {};
-        for (const pl of players) {
-          fiftyStreak[pl.id] = (pl.achievementStreaks?.fiftyStreak ?? 0) || 0;
-          hundredStreak[pl.id] = (pl.achievementStreaks?.hundredStreak ?? 0) || 0;
-        }
-        // Process each innings to update streaks
-        for (const inn of current.innings) {
-          for (const b of inn.batters) {
-            const pid = b.playerId;
-            if (b.runs >= 50) {
-              // Inning qualifies - increment streak
-              fiftyStreak[pid] = (fiftyStreak[pid] ?? 0) + 1;
-              bump(pid, "consecutiveFifties", fiftyStreak[pid], true);
-            } else {
-              // Inning doesn't qualify - reset streak to 0
-              fiftyStreak[pid] = 0;
-              bump(pid, "consecutiveFifties", 0, true);
-            }
-            if (b.runs >= 100) {
-              // Inning qualifies - increment streak
-              hundredStreak[pid] = (hundredStreak[pid] ?? 0) + 1;
-              bump(pid, "consecutiveHundreds", hundredStreak[pid], true);
-            } else {
-              // Inning doesn't qualify - reset streak to 0
-              hundredStreak[pid] = 0;
-              bump(pid, "consecutiveHundreds", 0, true);
-            }
-          }
-        }
-        // Persist streaks back to achievementStreaks for next match
-        for (const pl of updated) {
-          pl.achievementStreaks = {
-            ...(pl.achievementStreaks || { duckDodge: 0, economyGuardian: 0 }),
-            fiftyStreak: fiftyStreak[pl.id] ?? 0,
-            hundredStreak: hundredStreak[pl.id] ?? 0,
-          };
-        }
-
-        // 16+ Run Overs — batting over runs >= 16 (additive career count)
-        // Calculate runs per over properly
-        const overRuns: Record<string, Map<number, number>> = {};
-        for (const inn of current.innings) {
-          const runsPerOver = new Map<number, number>();
-          for (const ev of inn.events) {
-            if (ev.isLegal) {
-              const o = ev.overNumber;
-              runsPerOver.set(o, (runsPerOver.get(o) ?? 0) + ev.runsToBatter + ev.runsExtras);
-            }
-          }
-          // Store per player? Actually need per batting team per over
-          // Simpler: count qualifying overs per batting team, then distribute to batters
-          // For now, use approximation: if over has >=16 runs, each batter gets credit
-          for (const [overNum, runs] of runsPerOver) {
-            if (runs >= 16) {
-              // Each batter who faced in this over gets credit
-              for (const b of inn.batters) {
-                // Check if batter had any balls in this over
-                const facedInOver = inn.events.some(
-                  (e) => e.isLegal && e.overNumber === overNum && e.batterId === b.playerId,
-                );
-                if (facedInOver || b.balls > 0) {
-                  // Approximation
-                  bump(b.playerId, "overs16plusRuns", 1);
-                }
-              }
-            }
-          }
-        }
-
         // Extras Given (wides + no-balls from bowler)
         for (const inn of current.innings) {
           for (const bw of inn.bowlers) {
@@ -1378,22 +903,11 @@ export const usePtsStore = create<State>()(
         // re-checked too so nothing is ever skipped.
         const participants = Array.from(counted).map((id) => ({
           id,
-          only: [
-            ...RESULT_ONLY_STATS,
-            "runs",
-            "fifties",
-            "hundreds",
-            "matchSR",
-            "wickets",
-            "fours",
-            "catches",
-            "oneBounceCatches",
-            "streak30",
-          ] as StatKey[],
+          only: [...RESULT_ONLY_STATS, "runs", "fifties", "hundreds", "matchSR",
+                 "wickets", "fours", "catches", "oneBounceCatches", "streak30"] as StatKey[],
         }));
         const finalRun = runAchievements(
-          updated,
-          participants,
+          updated, participants,
           { matchId: current.id, matchLabel, opponent, match: current },
           "final",
         );
@@ -1436,11 +950,8 @@ export const usePtsStore = create<State>()(
           commentary: [
             ...(current.commentary ?? []),
             ...finalRun.unlocks.map((u, i) => ({
-              id: `ach-${u.id}-${i}`,
-              ts: u.ts,
-              inningsIndex: current.currentInnings,
-              ballIndex: 0,
-              overLabel: "—",
+              id: `ach-${u.id}-${i}`, ts: u.ts, inningsIndex: current.currentInnings,
+              ballIndex: 0, overLabel: "—",
               text: achievementCommentary(playerName(finalPlayers, u.playerId), u.achId, true),
               kind: "milestone" as const,
             })),
@@ -1459,18 +970,11 @@ export const usePtsStore = create<State>()(
         });
       },
 
-      resetAll: () =>
-        set({
-          players: BASE_PLAYERS,
-          matches: [],
-          current: undefined,
-          achievements: [],
-          achFeed: [],
-          undoStack: [],
-          milestoneFeed: [],
-          recordFeed: [],
-          awardFeed: [],
-        }),
+      resetAll: () => set({
+        players: BASE_PLAYERS, matches: [], current: undefined,
+        achievements: [], achFeed: [], undoStack: [],
+        milestoneFeed: [], recordFeed: [], awardFeed: [],
+      }),
 
       addPlayer: (name, role) => {
         const trimmed = name.trim();
@@ -1482,35 +986,15 @@ export const usePtsStore = create<State>()(
           role: role ?? "—",
           seed: { hundreds: 0, fifties: 0, highest: 0, highestNotOut: false },
           career: {
-            matches: 0,
-            runs: 0,
-            balls: 0,
-            fours: 0,
-            sixes: 0,
-            hundreds: 0,
-            fifties: 0,
-            highest: 0,
-            highestNotOut: false,
-            wickets: 0,
-            bowlBalls: 0,
-            bowlRuns: 0,
-            catches: 0,
-            runOuts: 0,
-            awards: 0,
-            notOuts: 0,
+            matches: 0, runs: 0, balls: 0, fours: 0, sixes: 0,
+            hundreds: 0, fifties: 0, highest: 0, highestNotOut: false,
+            wickets: 0, bowlBalls: 0, bowlRuns: 0, catches: 0,
+            runOuts: 0, awards: 0, notOuts: 0,
           },
           ratings: {
-            overall: 50,
-            batting: 50,
-            bowling: 50,
-            fielding: 50,
-            pressure: 50,
-            matchWinning: 50,
-            wicketTaking: 50,
-            sixHitting: 50,
-            deathBat: 50,
-            deathBowl: 50,
-            recentForm: 50,
+            overall: 50, batting: 50, bowling: 50, fielding: 50,
+            pressure: 50, matchWinning: 50, wicketTaking: 50,
+            sixHitting: 50, deathBat: 50, deathBowl: 50, recentForm: 50,
           },
           notes: "New player, default rating 50.",
         };
@@ -1548,12 +1032,8 @@ export const usePtsStore = create<State>()(
         const players = get().players.map((p) =>
           p.id === id
             ? {
-                ...p,
-                seed: seed.seed,
-                career: seed.career,
-                ratings: undefined,
-                manualOverride: false,
-                edits: [],
+                ...p, seed: seed.seed, career: seed.career, ratings: undefined,
+                manualOverride: false, edits: [],
                 historicRankingPoints: seed.historicRankingPoints ?? 0,
               }
             : p,
@@ -1586,7 +1066,7 @@ export const usePtsStore = create<State>()(
 
       /** Return the most recent completed match, or undefined if none. */
       previousCompletedMatch: () => {
-        const completed = get().matches.filter((m) => !!m.completedAt);
+        const completed = get().matches.filter(m => !!m.completedAt);
         if (completed.length === 0) return undefined;
         const sorted = [...completed].sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
         return sorted[0];
@@ -1597,16 +1077,11 @@ export const usePtsStore = create<State>()(
       version: 12,
       migrate: (persisted: unknown) => {
         const s = (persisted ?? {}) as {
-          players?: Player[];
-          matches?: Match[];
-          milestoneFeed?: MilestoneEntry[];
-          recordFeed?: RecordEntry[];
-          awardFeed?: AwardFeedEntry[];
+          players?: Player[]; matches?: Match[]; milestoneFeed?: MilestoneEntry[];
+          recordFeed?: RecordEntry[]; awardFeed?: AwardFeedEntry[];
           achFeed?: AchUnlock[];
-          awardsSeededV6?: boolean;
-          historicRankingFrozenV7?: boolean;
-          historicBonusV9?: boolean;
-          achBaselineV334?: boolean;
+          awardsSeededV6?: boolean; historicRankingFrozenV7?: boolean;
+          historicBonusV9?: boolean; achBaselineV334?: boolean;
           milestonesCorrectedV13?: boolean;
           pointsBaselineV14?: boolean;
         };
@@ -1628,41 +1103,20 @@ export const usePtsStore = create<State>()(
             notes: p.notes ?? "",
             edits: p.edits ?? [],
             manualOverride: p.manualOverride ?? false,
-            ratings:
-              p.ratings && Object.keys(p.ratings).length > 0
-                ? p.ratings
-                : {
-                    overall: 50,
-                    batting: 50,
-                    bowling: 50,
-                    fielding: 50,
-                    pressure: 50,
-                    matchWinning: 50,
-                    wicketTaking: 50,
-                    sixHitting: 50,
-                    deathBat: 50,
-                    deathBowl: 50,
-                    recentForm: 50,
-                  },
+            ratings: p.ratings && Object.keys(p.ratings).length > 0
+              ? p.ratings
+              : {
+                  overall: 50, batting: 50, bowling: 50, fielding: 50,
+                  pressure: 50, matchWinning: 50, wicketTaking: 50,
+                  sixHitting: 50, deathBat: 50, deathBowl: 50, recentForm: 50,
+                },
             career: {
-              innings: 0,
-              ducks: 0,
-              hundred50s: 0,
-              doubleHundreds: 0,
-              maidens: 0,
-              dots: 0,
-              wides: 0,
-              noBalls: 0,
-              bestBowlingWkts: 0,
-              bestBowlingRuns: 0,
-              catchDrops: 0,
-              boundarySaves: 0,
-              pomAwards: 0,
-              batsmanAwards: 0,
-              bowlerAwards: 0,
-              fielderAwards: 0,
-              fighterAwards: 0,
-              worstAwards: 0,
+              innings: 0, ducks: 0, hundred50s: 0, doubleHundreds: 0,
+              maidens: 0, dots: 0, wides: 0, noBalls: 0,
+              bestBowlingWkts: 0, bestBowlingRuns: 0,
+              catchDrops: 0, boundarySaves: 0,
+              pomAwards: 0, batsmanAwards: 0, bowlerAwards: 0,
+              fielderAwards: 0, fighterAwards: 0, worstAwards: 0,
               ...p.career,
             },
           });
@@ -1694,21 +1148,11 @@ export const usePtsStore = create<State>()(
             const cur = byId.get(pid);
             if (!cur) continue;
             const hasCustomAwards =
-              (cur.career.pomAwards ?? 0) +
-                (cur.career.batsmanAwards ?? 0) +
-                (cur.career.bowlerAwards ?? 0) +
-                (cur.career.fielderAwards ?? 0) +
-                (cur.career.fighterAwards ?? 0) +
-                (cur.career.worstAwards ?? 0) >
-              0;
+              (cur.career.pomAwards ?? 0) + (cur.career.batsmanAwards ?? 0) +
+              (cur.career.bowlerAwards ?? 0) + (cur.career.fielderAwards ?? 0) +
+              (cur.career.fighterAwards ?? 0) + (cur.career.worstAwards ?? 0) > 0;
             if (hasCustomAwards) continue;
-            const total =
-              split.pom +
-              split.batsman +
-              split.bowler +
-              split.fielder +
-              split.fighter +
-              split.worst;
+            const total = split.pom + split.batsman + split.bowler + split.fielder + split.fighter + split.worst;
             byId.set(pid, {
               ...cur,
               career: {
@@ -1738,7 +1182,9 @@ export const usePtsStore = create<State>()(
         }
         // v9: restore legacy historic ranking contributions from the seed.
         if (!s.historicBonusV9) {
-          const bonusById = new Map(SEED_PLAYERS.map((p) => [p.id, p.historicRankingPoints ?? 0]));
+          const bonusById = new Map(
+            SEED_PLAYERS.map((p) => [p.id, p.historicRankingPoints ?? 0]),
+          );
           s.players = s.players.map((p) => ({
             ...p,
             historicRankingPoints: p.historicRankingPoints ?? bonusById.get(p.id) ?? 0,
@@ -1778,17 +1224,13 @@ export const usePtsStore = create<State>()(
         // corrected total; no other field changes.
         if (!s.pointsBaselineV14) {
           const TARGET: Record<string, number> = {
-            sunny: 8513,
-            deva: 1137,
-            atharv: 3482,
-            sathvik: 5444,
+            sunny: 8513, deva: 1137, atharv: 3482, sathvik: 5444,
           };
           s.players = s.players.map((p) => {
             const target = TARGET[p.id];
             if (target === undefined) return p;
             const cur = playerBuckets(p);
-            const curTotal =
-              cur.sr + cur.big + cur.cons + cur.awd + cur.fours + cur.wkt + cur.match;
+            const curTotal = cur.sr + cur.big + cur.cons + cur.awd + cur.fours + cur.wkt + cur.match;
             const delta = target - curTotal;
             if (delta === 0) return p;
             return { ...p, buckets: { ...cur, match: cur.match + delta } };

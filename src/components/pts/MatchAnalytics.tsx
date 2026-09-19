@@ -36,9 +36,7 @@ function LineChart({
   const maxY = Math.max(yMax ?? 0, ...ys, baseline?.y ?? 0, 1);
   const sx = (x: number) => PAD + ((x - minX) / (maxX - minX || 1)) * (W - PAD * 2);
   const sy = (y: number) => H - PAD - (y / maxY) * (H - PAD * 2);
-  const d = series
-    .map((p, i) => `${i === 0 ? "M" : "L"} ${sx(p.x).toFixed(1)} ${sy(p.y).toFixed(1)}`)
-    .join(" ");
+  const d = series.map((p, i) => `${i === 0 ? "M" : "L"} ${sx(p.x).toFixed(1)} ${sy(p.y).toFixed(1)}`).join(" ");
   return (
     <div className="card-gold rounded-xl p-3">
       <div className="text-[10px] uppercase tracking-widest text-primary/80 mb-1">{title}</div>
@@ -60,9 +58,7 @@ function LineChart({
         {series.map((p, i) => (
           <circle key={i} cx={sx(p.x)} cy={sy(p.y)} r={1.8} fill={color} />
         ))}
-        <text x={PAD} y={PAD - 6} fontSize={8} fill="currentColor" opacity="0.6">
-          0–{Math.round(maxY)}
-        </text>
+        <text x={PAD} y={PAD - 6} fontSize={8} fill="currentColor" opacity="0.6">0–{Math.round(maxY)}</text>
         <text x={W - PAD} y={H - 6} fontSize={8} fill="currentColor" opacity="0.6" textAnchor="end">
           Ov {Math.round(maxX)}
         </text>
@@ -71,15 +67,7 @@ function LineChart({
   );
 }
 
-function BarChart({
-  data,
-  color,
-  title,
-}: {
-  data: { x: number; y: number; flag?: boolean }[];
-  color: string;
-  title: string;
-}) {
+function BarChart({ data, color, title }: { data: { x: number; y: number; flag?: boolean }[]; color: string; title: string }) {
   if (data.length === 0) {
     return (
       <div className="card-gold rounded-xl p-3">
@@ -100,22 +88,8 @@ function BarChart({
           const h = (d.y / maxY) * (H - PAD * 2);
           return (
             <g key={i}>
-              <rect
-                x={x}
-                y={H - PAD - h}
-                width={bw * 0.7}
-                height={h}
-                fill={d.flag ? "#dc2626" : color}
-                rx={1.5}
-              />
-              <text
-                x={x + bw * 0.35}
-                y={H - PAD + 8}
-                fontSize={7}
-                textAnchor="middle"
-                fill="currentColor"
-                opacity="0.6"
-              >
+              <rect x={x} y={H - PAD - h} width={bw * 0.7} height={h} fill={d.flag ? "#dc2626" : color} rx={1.5} />
+              <text x={x + bw * 0.35} y={H - PAD + 8} fontSize={7} textAnchor="middle" fill="currentColor" opacity="0.6">
                 {d.x + 1}
               </text>
             </g>
@@ -134,11 +108,7 @@ export function MatchAnalytics({ match }: { match: Match }) {
       {match.innings.map((inn, idx) => {
         const buckets = overBuckets(inn);
         const wormPoints = worm(inn).map((w) => ({ x: w.overNumber, y: w.runs }));
-        const runsPerOver = buckets.map((b) => ({
-          x: b.overNumber,
-          y: b.runs,
-          flag: b.wickets > 0,
-        }));
+        const runsPerOver = buckets.map((b) => ({ x: b.overNumber, y: b.runs, flag: b.wickets > 0 }));
         const rrSeries = buckets.map((b, i) => {
           const cum = buckets.slice(0, i + 1).reduce((s, x) => s + x.runs, 0);
           const balls = buckets.slice(0, i + 1).reduce((s, x) => s + x.legalBalls, 0);
@@ -179,11 +149,7 @@ export function MatchAnalytics({ match }: { match: Match }) {
               {battingName} · Innings {idx + 1}
             </h3>
             <LineChart series={wormPoints} color="#D9A928" title="Worm — cumulative runs" />
-            <BarChart
-              data={runsPerOver}
-              color="#D9A928"
-              title="Runs per over (red = wicket over)"
-            />
+            <BarChart data={runsPerOver} color="#D9A928" title="Runs per over (red = wicket over)" />
             <MomentumChart match={match} inningsIndex={idx} title={`Momentum — ${battingName}`} />
             <LineChart
               series={rrSeries}
@@ -202,13 +168,7 @@ export function MatchAnalytics({ match }: { match: Match }) {
               <BarChart data={wktsSeries} color="#dc2626" title="Wickets timeline" />
             )}
             {idx === match.currentInnings && match.probability.length > 0 && (
-              <LineChart
-                series={probForInning}
-                color="#D9A928"
-                title={`Win probability — ${battingName}`}
-                yMax={100}
-                baseline={{ y: 50, label: "50", color: "#888" }}
-              />
+              <LineChart series={probForInning} color="#D9A928" title={`Win probability — ${battingName}`} yMax={100} baseline={{ y: 50, label: "50", color: "#888" }} />
             )}
           </div>
         );

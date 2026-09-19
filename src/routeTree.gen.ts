@@ -9,56 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AchievementsRouteImport } from './routes/achievements'
-import { Route as AlmanacRouteImport } from './routes/almanac'
-import { Route as ChallengesRouteImport } from './routes/challenges'
-import { Route as HistoryRouteImport } from './routes/history'
-import { Route as PlayersRouteImport } from './routes/players'
-import { Route as RecordsRouteImport } from './routes/records'
-import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as MatchIdRouteImport } from './routes/match.$id'
-import { Route as MatchLiveRouteImport } from './routes/match.live'
-import { Route as MatchResultRouteImport } from './routes/match.result'
-import { Route as MatchSetupRouteImport } from './routes/match.setup'
-import { Route as PlayersIdRouteImport } from './routes/players.$id'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as RecordsRouteImport } from './routes/records'
+import { Route as PlayersRouteImport } from './routes/players'
+import { Route as HistoryRouteImport } from './routes/history'
+import { Route as AlmanacRouteImport } from './routes/almanac'
+import { Route as AchievementsRouteImport } from './routes/achievements'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlayersCompareRouteImport } from './routes/players.compare'
+import { Route as PlayersIdRouteImport } from './routes/players.$id'
+import { Route as MatchSetupRouteImport } from './routes/match.setup'
+import { Route as MatchResultRouteImport } from './routes/match.result'
+import { Route as MatchLiveRouteImport } from './routes/match.live'
+import { Route as MatchIdRouteImport } from './routes/match.$id'
 import { Route as PlayersIdEditRouteImport } from './routes/players.$id.edit'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AchievementsRoute = AchievementsRouteImport.update({
-  id: '/achievements',
-  path: '/achievements',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AlmanacRoute = AlmanacRouteImport.update({
-  id: '/almanac',
-  path: '/almanac',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChallengesRoute = ChallengesRouteImport.update({
-  id: '/challenges',
-  path: '/challenges',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HistoryRoute = HistoryRouteImport.update({
-  id: '/history',
-  path: '/history',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlayersRoute = PlayersRouteImport.update({
-  id: '/players',
-  path: '/players',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecordsRoute = RecordsRouteImport.update({
-  id: '/records',
-  path: '/records',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -66,19 +35,49 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const RecordsRoute = RecordsRouteImport.update({
+  id: '/records',
+  path: '/records',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MatchIdRoute = MatchIdRouteImport.update({
-  id: '/match/$id',
-  path: '/match/$id',
+const PlayersRoute = PlayersRouteImport.update({
+  id: '/players',
+  path: '/players',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MatchLiveRoute = MatchLiveRouteImport.update({
-  id: '/match/live',
-  path: '/match/live',
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlmanacRoute = AlmanacRouteImport.update({
+  id: '/almanac',
+  path: '/almanac',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AchievementsRoute = AchievementsRouteImport.update({
+  id: '/achievements',
+  path: '/achievements',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlayersCompareRoute = PlayersCompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
+  getParentRoute: () => PlayersRoute,
+} as any)
+const PlayersIdRoute = PlayersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => PlayersRoute,
+} as any)
+const MatchSetupRoute = MatchSetupRouteImport.update({
+  id: '/match/setup',
+  path: '/match/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MatchResultRoute = MatchResultRouteImport.update({
@@ -86,20 +85,15 @@ const MatchResultRoute = MatchResultRouteImport.update({
   path: '/match/result',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MatchSetupRoute = MatchSetupRouteImport.update({
-  id: '/match/setup',
-  path: '/match/setup',
+const MatchLiveRoute = MatchLiveRouteImport.update({
+  id: '/match/live',
+  path: '/match/live',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlayersIdRoute = PlayersIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => PlayersRoute,
-} as any)
-const PlayersCompareRoute = PlayersCompareRouteImport.update({
-  id: '/compare',
-  path: '/compare',
-  getParentRoute: () => PlayersRoute,
+const MatchIdRoute = MatchIdRouteImport.update({
+  id: '/match/$id',
+  path: '/match/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PlayersIdEditRoute = PlayersIdEditRouteImport.update({
   id: '/edit',
@@ -111,7 +105,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/achievements': typeof AchievementsRoute
   '/almanac': typeof AlmanacRoute
-  '/challenges': typeof ChallengesRoute
   '/history': typeof HistoryRoute
   '/players': typeof PlayersRouteWithChildren
   '/records': typeof RecordsRoute
@@ -129,7 +122,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/achievements': typeof AchievementsRoute
   '/almanac': typeof AlmanacRoute
-  '/challenges': typeof ChallengesRoute
   '/history': typeof HistoryRoute
   '/players': typeof PlayersRouteWithChildren
   '/records': typeof RecordsRoute
@@ -148,7 +140,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/achievements': typeof AchievementsRoute
   '/almanac': typeof AlmanacRoute
-  '/challenges': typeof ChallengesRoute
   '/history': typeof HistoryRoute
   '/players': typeof PlayersRouteWithChildren
   '/records': typeof RecordsRoute
@@ -168,7 +159,6 @@ export interface FileRouteTypes {
     | '/'
     | '/achievements'
     | '/almanac'
-    | '/challenges'
     | '/history'
     | '/players'
     | '/records'
@@ -186,7 +176,6 @@ export interface FileRouteTypes {
     | '/'
     | '/achievements'
     | '/almanac'
-    | '/challenges'
     | '/history'
     | '/players'
     | '/records'
@@ -204,7 +193,6 @@ export interface FileRouteTypes {
     | '/'
     | '/achievements'
     | '/almanac'
-    | '/challenges'
     | '/history'
     | '/players'
     | '/records'
@@ -223,7 +211,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AchievementsRoute: typeof AchievementsRoute
   AlmanacRoute: typeof AlmanacRoute
-  ChallengesRoute: typeof ChallengesRoute
   HistoryRoute: typeof HistoryRoute
   PlayersRoute: typeof PlayersRouteWithChildren
   RecordsRoute: typeof RecordsRoute
@@ -237,53 +224,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/achievements': {
-      id: '/achievements'
-      path: '/achievements'
-      fullPath: '/achievements'
-      preLoaderRoute: typeof AchievementsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/almanac': {
-      id: '/almanac'
-      path: '/almanac'
-      fullPath: '/almanac'
-      preLoaderRoute: typeof AlmanacRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/challenges': {
-      id: '/challenges'
-      path: '/challenges'
-      fullPath: '/challenges'
-      preLoaderRoute: typeof ChallengesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/history': {
-      id: '/history'
-      path: '/history'
-      fullPath: '/history'
-      preLoaderRoute: typeof HistoryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/players': {
-      id: '/players'
-      path: '/players'
-      fullPath: '/players'
-      preLoaderRoute: typeof PlayersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/records': {
-      id: '/records'
-      path: '/records'
-      fullPath: '/records'
-      preLoaderRoute: typeof RecordsRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -293,25 +238,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
+    '/records': {
+      id: '/records'
+      path: '/records'
+      fullPath: '/records'
+      preLoaderRoute: typeof RecordsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/match/$id': {
-      id: '/match/$id'
-      path: '/match/$id'
-      fullPath: '/match/$id'
-      preLoaderRoute: typeof MatchIdRouteImport
+    '/players': {
+      id: '/players'
+      path: '/players'
+      fullPath: '/players'
+      preLoaderRoute: typeof PlayersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/match/live': {
-      id: '/match/live'
-      path: '/match/live'
-      fullPath: '/match/live'
-      preLoaderRoute: typeof MatchLiveRouteImport
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/almanac': {
+      id: '/almanac'
+      path: '/almanac'
+      fullPath: '/almanac'
+      preLoaderRoute: typeof AlmanacRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/achievements': {
+      id: '/achievements'
+      path: '/achievements'
+      fullPath: '/achievements'
+      preLoaderRoute: typeof AchievementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/players/compare': {
+      id: '/players/compare'
+      path: '/compare'
+      fullPath: '/players/compare'
+      preLoaderRoute: typeof PlayersCompareRouteImport
+      parentRoute: typeof PlayersRoute
+    }
+    '/players/$id': {
+      id: '/players/$id'
+      path: '/$id'
+      fullPath: '/players/$id'
+      preLoaderRoute: typeof PlayersIdRouteImport
+      parentRoute: typeof PlayersRoute
+    }
+    '/match/setup': {
+      id: '/match/setup'
+      path: '/match/setup'
+      fullPath: '/match/setup'
+      preLoaderRoute: typeof MatchSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/match/result': {
@@ -321,26 +308,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MatchResultRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/match/setup': {
-      id: '/match/setup'
-      path: '/match/setup'
-      fullPath: '/match/setup'
-      preLoaderRoute: typeof MatchSetupRouteImport
+    '/match/live': {
+      id: '/match/live'
+      path: '/match/live'
+      fullPath: '/match/live'
+      preLoaderRoute: typeof MatchLiveRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/players/$id': {
-      id: '/players/$id'
-      path: '/$id'
-      fullPath: '/players/$id'
-      preLoaderRoute: typeof PlayersIdRouteImport
-      parentRoute: typeof PlayersRoute
-    }
-    '/players/compare': {
-      id: '/players/compare'
-      path: '/compare'
-      fullPath: '/players/compare'
-      preLoaderRoute: typeof PlayersCompareRouteImport
-      parentRoute: typeof PlayersRoute
+    '/match/$id': {
+      id: '/match/$id'
+      path: '/match/$id'
+      fullPath: '/match/$id'
+      preLoaderRoute: typeof MatchIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/players/$id/edit': {
       id: '/players/$id/edit'
@@ -381,7 +361,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AchievementsRoute: AchievementsRoute,
   AlmanacRoute: AlmanacRoute,
-  ChallengesRoute: ChallengesRoute,
   HistoryRoute: HistoryRoute,
   PlayersRoute: PlayersRouteWithChildren,
   RecordsRoute: RecordsRoute,

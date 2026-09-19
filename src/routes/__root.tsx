@@ -84,28 +84,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "author", content: "PTS — Pilli Tucker Stadium" },
       { name: "theme-color", content: "#0d0a06" },
       { property: "og:title", content: "PTS Scorer — Pilli Tucker Stadium" },
-      {
-        property: "og:description",
-        content: "Premium cricket scoring app for PTS — Every Touch Counts.",
-      },
+      { property: "og:description", content: "Premium cricket scoring app for PTS — Every Touch Counts." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "PTS Scorer — Pilli Tucker Stadium" },
-      {
-        name: "twitter:description",
-        content: "Premium cricket scoring app for PTS — Every Touch Counts.",
-      },
-      {
-        property: "og:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/W7do7ydBk9SFzal2XFg50E2Is4B3/social-images/social-1782026315702-1000044189.webp",
-      },
-      {
-        name: "twitter:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/W7do7ydBk9SFzal2XFg50E2Is4B3/social-images/social-1782026315702-1000044189.webp",
-      },
+      { name: "twitter:description", content: "Premium cricket scoring app for PTS — Every Touch Counts." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/W7do7ydBk9SFzal2XFg50E2Is4B3/social-images/social-1782026315702-1000044189.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/W7do7ydBk9SFzal2XFg50E2Is4B3/social-images/social-1782026315702-1000044189.webp" },
     ],
     links: [
       {

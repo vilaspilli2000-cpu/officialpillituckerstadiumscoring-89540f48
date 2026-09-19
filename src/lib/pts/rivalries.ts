@@ -10,14 +10,14 @@ export interface BatterVsBowler {
   sixes: number;
   dots: number;
   dismissed: number;
-  highest: number; // most runs off this bowler in a single innings
+  highest: number;      // most runs off this bowler in a single innings
   highestNotOut: boolean;
   strikeRate: number;
   average: number;
   lastDismissal?: string;
   lastMatchLabel?: string;
   lastMatchTs?: number;
-  encounters: number; // innings where they faced each other
+  encounters: number;   // innings where they faced each other
 }
 
 export interface BowlerVsBatter {
@@ -58,32 +58,18 @@ export function batterVsBowler(
   bowlerId: string,
 ): BatterVsBowler {
   const out: BatterVsBowler = {
-    runs: 0,
-    balls: 0,
-    fours: 0,
-    sixes: 0,
-    dots: 0,
-    dismissed: 0,
-    highest: 0,
-    highestNotOut: false,
-    strikeRate: 0,
-    average: 0,
+    runs: 0, balls: 0, fours: 0, sixes: 0, dots: 0, dismissed: 0,
+    highest: 0, highestNotOut: false, strikeRate: 0, average: 0,
     encounters: 0,
   };
   for (const m of iterAllMatches(matches, current)) {
     for (let ii = 0; ii < m.innings.length; ii++) {
       const inn = m.innings[ii];
-      let innRuns = 0,
-        innBalls = 0,
-        faced = false,
-        outOff = false;
+      let innRuns = 0, innBalls = 0, faced = false, outOff = false;
       for (const ev of inn.events) {
         if (ev.batterId !== batterId || ev.bowlerId !== bowlerId) continue;
         faced = true;
-        if (ev.isLegal) {
-          innBalls += 1;
-          out.balls += 1;
-        }
+        if (ev.isLegal) { innBalls += 1; out.balls += 1; }
         out.runs += ev.runsToBatter;
         innRuns += ev.runsToBatter;
         if (ev.type === "4") out.fours += 1;
@@ -122,39 +108,22 @@ export function bowlerVsBatter(
   batterId: string,
 ): BowlerVsBatter {
   const out: BowlerVsBatter = {
-    wickets: 0,
-    runs: 0,
-    balls: 0,
-    dots: 0,
-    economy: 0,
-    average: 0,
-    strikeRate: 0,
-    bestWickets: 0,
-    bestRuns: 0,
-    maidens: 0,
+    wickets: 0, runs: 0, balls: 0, dots: 0, economy: 0, average: 0,
+    strikeRate: 0, bestWickets: 0, bestRuns: 0, maidens: 0,
   };
   let bestBallsRun = Infinity;
   for (const m of iterAllMatches(matches, current)) {
     for (const inn of m.innings) {
-      let innW = 0,
-        innR = 0;
+      let innW = 0, innR = 0;
       for (const ev of inn.events) {
         if (ev.bowlerId !== bowlerId || ev.batterId !== batterId) continue;
-        if (ev.isLegal) {
-          out.balls += 1;
-        }
+        if (ev.isLegal) { out.balls += 1; }
         // runs conceded to this pairing = runs to batter + extras that came off this ball to bowler
-        out.runs +=
-          ev.runsToBatter + (ev.type === "wide" || ev.type === "no-ball" ? ev.runsExtras : 0);
+        out.runs += ev.runsToBatter + (ev.type === "wide" || ev.type === "no-ball" ? ev.runsExtras : 0);
         innR += ev.runsToBatter;
         if (ev.isLegal && ev.runsToBatter === 0 && !ev.isWicket) out.dots += 1;
-        if (
-          ev.isWicket &&
-          ev.dismissedPlayerId === batterId &&
-          ev.dismissalType &&
-          ev.dismissalType !== "run-out" &&
-          ev.dismissalType !== "retired"
-        ) {
+        if (ev.isWicket && ev.dismissedPlayerId === batterId &&
+            ev.dismissalType && ev.dismissalType !== "run-out" && ev.dismissalType !== "retired") {
           out.wickets += 1;
           innW += 1;
         }
@@ -180,8 +149,7 @@ export function fielderVsBatter(
   fielderIds: string[],
 ): FielderVsBatter[] {
   const map = new Map<string, FielderVsBatter>();
-  for (const id of fielderIds)
-    map.set(id, { fielderId: id, caught: 0, runOut: 0, stumped: 0, total: 0 });
+  for (const id of fielderIds) map.set(id, { fielderId: id, caught: 0, runOut: 0, stumped: 0, total: 0 });
   for (const m of iterAllMatches(matches, current)) {
     for (const inn of m.innings) {
       for (const ev of inn.events) {
@@ -196,16 +164,10 @@ export function fielderVsBatter(
       }
     }
   }
-  return Array.from(map.values())
-    .filter((f) => f.total > 0)
-    .sort((a, b) => b.total - a.total);
+  return Array.from(map.values()).filter((f) => f.total > 0).sort((a, b) => b.total - a.total);
 }
 
-export interface RivalryAlert {
-  id: string;
-  icon: string;
-  text: string;
-}
+export interface RivalryAlert { id: string; icon: string; text: string; }
 
 /** Rivalry milestone alerts for the current batter+bowler pairing. */
 export function rivalryAlerts(
