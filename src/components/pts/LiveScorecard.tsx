@@ -12,11 +12,7 @@ import {
   requiredRunRate,
   highestPartnership,
 } from "@/lib/pts/analytics";
-import {
-  CaptainName,
-  previousMatchStatusFor,
-  getPreviousMatchGlow,
-} from "./CaptainName";
+import { CaptainName, previousMatchStatusFor, getPreviousMatchGlow } from "./CaptainName";
 
 function fmt(n: number, d = 1) {
   if (!isFinite(n)) return "—";
@@ -55,7 +51,9 @@ function Stat({ label, value, small }: { label: string; value: string; small?: b
   return (
     <div>
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className={`${small ? "text-xs" : "text-sm"} font-bold text-primary truncate`}>{value}</div>
+      <div className={`${small ? "text-xs" : "text-sm"} font-bold text-primary truncate`}>
+        {value}
+      </div>
     </div>
   );
 }
@@ -71,7 +69,15 @@ function situationLine(match: Match) {
   return `Innings ${match.currentInnings + 1}`;
 }
 
-function InningsBlock({ match, innings, players }: { match: Match; innings: Innings; players: Player[] }) {
+function InningsBlock({
+  match,
+  innings,
+  players,
+}: {
+  match: Match;
+  innings: Innings;
+  players: Player[];
+}) {
   // ROLLING PREVIOUS-MATCH GLOW SOURCE — the most recent completed match.
   const prevMatch = usePtsStore((s) => s.previousCompletedMatch());
   const battingName = innings.battingTeam === "A" ? match.teamA.name : match.teamB.name;
@@ -95,9 +101,12 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
     <section className="space-y-3">
       <div className="flex items-baseline justify-between">
         <h3 className="text-sm uppercase tracking-widest text-primary/80">
-          {battingName} — {innings.runs}/{innings.wickets}{innings.declared ? " Declared" : ""}
+          {battingName} — {innings.runs}/{innings.wickets}
+          {innings.declared ? " Declared" : ""}
           {innings.declared && <span className="ml-1 text-primary">d</span>}
-          {innings.followOnApplied && <span className="ml-1 normal-case text-[10px] text-muted-foreground">(f/o)</span>}
+          {innings.followOnApplied && (
+            <span className="ml-1 normal-case text-[10px] text-muted-foreground">(f/o)</span>
+          )}
         </h3>
         <div className="text-xs text-muted-foreground tabular-nums">
           {oversString(innings.legalBalls)} ov · CRR {fmt(currentRunRate(innings), 2)}
@@ -109,8 +118,15 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
           <thead className="text-[10px] uppercase tracking-widest text-primary/80">
             <tr>
               <th className="text-left p-2">Batter</th>
-              <th>R</th><th>B</th><th>4s</th><th>Dots</th><th>SR</th>
-              <th>B%</th><th>Dot%</th><th>B:Bk</th><th>Dot:Bk</th>
+              <th>R</th>
+              <th>B</th>
+              <th>4s</th>
+              <th>Dots</th>
+              <th>SR</th>
+              <th>B%</th>
+              <th>Dot%</th>
+              <th>B:Bk</th>
+              <th>Dot:Bk</th>
               <th className="text-left">Dismissal</th>
             </tr>
           </thead>
@@ -122,9 +138,17 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
               const status = previousMatchStatusFor(prevMatch, b.playerId);
               const glow = getPreviousMatchGlow(status);
               return (
-                <tr key={b.playerId} className={`border-t border-border/40 ${isCurrent ? "bg-primary/10" : ""} ${status ? "pts-glow-card pts-glow-" + status : ""} ${glow.text}`}>
+                <tr
+                  key={b.playerId}
+                  className={`border-t border-border/40 ${isCurrent ? "bg-primary/10" : ""} ${status ? "pts-glow-card pts-glow-" + status : ""} ${glow.text}`}
+                >
                   <td className="p-2 font-medium text-left whitespace-nowrap">
-                    <CaptainName match={match} playerId={b.playerId} players={players} className="font-medium" />
+                    <CaptainName
+                      match={match}
+                      playerId={b.playerId}
+                      players={players}
+                      className="font-medium"
+                    />
                     {isCurrent && " *"}
                   </td>
                   <td className="text-center font-bold">{b.runs}</td>
@@ -137,7 +161,11 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
                   <td className="text-center">{ratio(adv.boundaryRatio)}</td>
                   <td className="text-center">{ratio(adv.dotRatio)}</td>
                   <td className="p-2 text-left text-[11px] whitespace-nowrap">
-                    {b.out ? dismissalText(b, players, match) : <span className="text-emerald-500">not out</span>}
+                    {b.out ? (
+                      dismissalText(b, players, match)
+                    ) : (
+                      <span className="text-emerald-500">not out</span>
+                    )}
                   </td>
                 </tr>
               );
@@ -155,9 +183,18 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
           <thead className="text-[10px] uppercase tracking-widest text-primary/80">
             <tr>
               <th className="text-left p-2">Bowler</th>
-              <th>O</th><th>M</th><th>R</th><th>W</th><th>Econ</th>
-              <th>Wd</th><th>NB</th><th>Dots</th>
-              <th>B%</th><th>Dot%</th><th>B:Bk</th><th>Dot:Bk</th>
+              <th>O</th>
+              <th>M</th>
+              <th>R</th>
+              <th>W</th>
+              <th>Econ</th>
+              <th>Wd</th>
+              <th>NB</th>
+              <th>Dots</th>
+              <th>B%</th>
+              <th>Dot%</th>
+              <th>B:Bk</th>
+              <th>Dot:Bk</th>
             </tr>
           </thead>
           <tbody>
@@ -167,9 +204,17 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
               const status = previousMatchStatusFor(prevMatch, b.playerId);
               const glow = getPreviousMatchGlow(status);
               return (
-                <tr key={b.playerId} className={`border-t border-border/40 ${status ? "pts-glow-card pts-glow-" + status : ""} ${glow.text}`}>
+                <tr
+                  key={b.playerId}
+                  className={`border-t border-border/40 ${status ? "pts-glow-card pts-glow-" + status : ""} ${glow.text}`}
+                >
                   <td className="p-2 font-medium text-left whitespace-nowrap">
-                    <CaptainName match={match} playerId={b.playerId} players={players} className="font-medium" />
+                    <CaptainName
+                      match={match}
+                      playerId={b.playerId}
+                      players={players}
+                      className="font-medium"
+                    />
                   </td>
                   <td className="text-center">{oversString(b.balls)}</td>
                   <td className="text-center">{adv.maidens}</td>
@@ -207,11 +252,20 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
 
       {fow.length > 0 && (
         <div className="card-gold rounded-xl p-3 text-xs">
-          <div className="text-[10px] uppercase tracking-widest text-primary/80 mb-1">Fall of Wickets</div>
+          <div className="text-[10px] uppercase tracking-widest text-primary/80 mb-1">
+            Fall of Wickets
+          </div>
           <div className="flex flex-wrap gap-2 tabular-nums">
             {fow.map((f) => (
               <span key={f.wicket} className="rounded-md border border-border/60 px-2 py-1">
-                {f.wicket}-{f.runs} (<CaptainName match={match} playerId={f.batterOutId} players={players} className="" />, {f.overLabel})
+                {f.wicket}-{f.runs} (
+                <CaptainName
+                  match={match}
+                  playerId={f.batterOutId}
+                  players={players}
+                  className=""
+                />
+                , {f.overLabel})
               </span>
             ))}
           </div>
@@ -228,16 +282,32 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
               <Fragment key={p.index}>
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate">
-                    {p.wicket} · <CaptainName match={match} playerId={p.batterAId} players={players} className="" />
+                    {p.wicket} ·{" "}
+                    <CaptainName
+                      match={match}
+                      playerId={p.batterAId}
+                      players={players}
+                      className=""
+                    />
                     {p.batterBId ? (
                       <>
-                        {" "}&{" "}
-                        <CaptainName match={match} playerId={p.batterBId} players={players} className="" />
+                        {" "}
+                        &{" "}
+                        <CaptainName
+                          match={match}
+                          playerId={p.batterBId}
+                          players={players}
+                          className=""
+                        />
                       </>
-                    ) : ""}
+                    ) : (
+                      ""
+                    )}
                     {!p.broken && <span className="text-emerald-500 ml-1">live</span>}
                   </span>
-                  <span className="font-bold">{p.runs} ({p.balls})</span>
+                  <span className="font-bold">
+                    {p.runs} ({p.balls})
+                  </span>
                 </div>
               </Fragment>
             ))}
@@ -248,22 +318,61 @@ function InningsBlock({ match, innings, players }: { match: Match; innings: Inni
   );
 }
 
-function dismissalText(b: { dismissalType?: string; bowlerId?: string; catcherId?: string }, players: Player[], match: Match) {
+function dismissalText(
+  b: { dismissalType?: string; bowlerId?: string; catcherId?: string },
+  players: Player[],
+  match: Match,
+) {
   const bowler = b.bowlerId ? (
-    <span>b <CaptainName match={match} playerId={b.bowlerId} players={players} className="text-[11px]" /></span>
+    <span>
+      b{" "}
+      <CaptainName match={match} playerId={b.bowlerId} players={players} className="text-[11px]" />
+    </span>
   ) : null;
   const catcher = b.catcherId ? (
-    <span>c <CaptainName match={match} playerId={b.catcherId} players={players} className="text-[11px]" /> </span>
+    <span>
+      c{" "}
+      <CaptainName
+        match={match}
+        playerId={b.catcherId}
+        players={players}
+        className="text-[11px]"
+      />{" "}
+    </span>
   ) : null;
   switch (b.dismissalType) {
-    case "bowled": return bowler;
-    case "caught": return <span>{catcher}{bowler}</span>;
-    case "caught-one-bounce": return <span>c¹ {catcher}{bowler}</span>;
-    case "six-and-out": return <span>six &amp; out</span>;
-    case "leg-l2": return <span>L2 {bowler}</span>;
-    case "run-out": return <span>run out ({catcher})</span>;
-    case "stumped": return <span>st {catcher}{bowler}</span>;
-    case "hit-wicket": return <span>hit wkt {bowler}</span>;
-    default: return <span>out</span>;
+    case "bowled":
+      return bowler;
+    case "caught":
+      return (
+        <span>
+          {catcher}
+          {bowler}
+        </span>
+      );
+    case "caught-one-bounce":
+      return (
+        <span>
+          c¹ {catcher}
+          {bowler}
+        </span>
+      );
+    case "six-and-out":
+      return <span>six &amp; out</span>;
+    case "leg-l2":
+      return <span>L2 {bowler}</span>;
+    case "run-out":
+      return <span>run out ({catcher})</span>;
+    case "stumped":
+      return (
+        <span>
+          st {catcher}
+          {bowler}
+        </span>
+      );
+    case "hit-wicket":
+      return <span>hit wkt {bowler}</span>;
+    default:
+      return <span>out</span>;
   }
 }

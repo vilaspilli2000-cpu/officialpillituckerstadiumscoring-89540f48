@@ -51,7 +51,10 @@ function Players() {
       </div>
       <div className="mb-3 flex gap-2">
         <div className="relative flex-1">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -76,7 +79,11 @@ function Players() {
             className="flex-1 rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm focus:border-primary outline-none"
           />
           <button
-            onClick={() => { addPlayer(newName); setNewName(""); setAdding(false); }}
+            onClick={() => {
+              addPlayer(newName);
+              setNewName("");
+              setAdding(false);
+            }}
             className="rounded-lg bg-primary px-3 py-2 text-sm font-bold text-primary-foreground"
           >
             Save
@@ -87,34 +94,56 @@ function Players() {
         {filtered.map((r) => {
           const c = combinedCareer(r.player);
           return (
-            <div key={r.player.id} className="card-gold rounded-xl p-4 hover:border-primary transition-colors relative">
+            <div
+              key={r.player.id}
+              className="card-gold rounded-xl p-4 hover:border-primary transition-colors relative"
+            >
               <Link to="/players/$id" params={{ id: r.player.id }} className="block">
-              <div className="flex items-baseline justify-between pr-16">
-                <div className="min-w-0">
-                  <div className="font-bold text-lg truncate">{r.player.name}</div>
-                  {r.player.role && r.player.role !== "—" && (
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{r.player.role}</div>
-                  )}
+                <div className="flex items-baseline justify-between pr-16">
+                  <div className="min-w-0">
+                    <div className="font-bold text-lg truncate">{r.player.name}</div>
+                    {r.player.role && r.player.role !== "—" && (
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {r.player.role}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Rank #{ranked.indexOf(r) + 1}</div>
                 </div>
-                <div className="text-xs text-muted-foreground">Rank #{ranked.indexOf(r) + 1}</div>
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {c.hundreds} × 100 · {c.fifties} × 50 · HS {c.highest}{c.highestNotOut ? "*" : ""}
-              </div>
-              <div className="text-xs mt-1">Matches {c.matches} · Runs {c.runs} · Wkts {c.wickets} · Awards {c.awards}</div>
-              <div className="mt-2 text-[11px] font-bold text-primary tabular-nums">{r.total} ranking pts</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {c.hundreds} × 100 · {c.fifties} × 50 · HS {c.highest}
+                  {c.highestNotOut ? "*" : ""}
+                </div>
+                <div className="text-xs mt-1">
+                  Matches {c.matches} · Runs {c.runs} · Wkts {c.wickets} · Awards {c.awards}
+                </div>
+                <div className="mt-2 text-[11px] font-bold text-primary tabular-nums">
+                  {r.total} ranking pts
+                </div>
               </Link>
               <div className="absolute top-2 right-2 flex gap-1">
                 <button
                   title="Reset to calculated"
-                  onClick={(e) => { e.preventDefault(); if (confirm(`Reset ${r.player.name} to calculated values?`)) { resetPlayer(r.player.id); toast.success("Reset"); } }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (confirm(`Reset ${r.player.name} to calculated values?`)) {
+                      resetPlayer(r.player.id);
+                      toast.success("Reset");
+                    }
+                  }}
                   className="rounded-full border border-border/60 bg-secondary/60 p-1.5 text-muted-foreground hover:text-primary hover:border-primary"
                 >
                   <RotateCcw size={12} />
                 </button>
                 <button
                   title="Delete player"
-                  onClick={(e) => { e.preventDefault(); if (confirm(`Delete ${r.player.name}? This cannot be undone.`)) { deletePlayer(r.player.id); toast.success("Deleted"); } }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (confirm(`Delete ${r.player.name}? This cannot be undone.`)) {
+                      deletePlayer(r.player.id);
+                      toast.success("Deleted");
+                    }
+                  }}
                   className="rounded-full border border-border/60 bg-secondary/60 p-1.5 text-muted-foreground hover:text-red-500 hover:border-red-500"
                 >
                   <Trash2 size={12} />

@@ -1,11 +1,20 @@
 import { useMemo } from "react";
 import type { Player } from "@/lib/pts/types";
 import {
-  analyzeMatchup, predictMatch, profileTeam, suggestSwaps, verdictFromGap,
+  analyzeMatchup,
+  predictMatch,
+  profileTeam,
+  suggestSwaps,
+  verdictFromGap,
 } from "@/lib/pts/teamIntel";
 
 export function TeamIntelligence({
-  teamAIds, teamBIds, teamAName, teamBName, players, jokerId,
+  teamAIds,
+  teamBIds,
+  teamAName,
+  teamBName,
+  players,
+  jokerId,
   onApplySwap,
 }: {
   teamAIds: string[];
@@ -52,9 +61,13 @@ export function TeamIntelligence({
       </div>
 
       <div className="rounded-xl border border-border/60 bg-card/60 p-3">
-        <div className="text-[10px] uppercase tracking-widest text-primary mb-2">AI Team Analysis</div>
+        <div className="text-[10px] uppercase tracking-widest text-primary mb-2">
+          AI Team Analysis
+        </div>
         {analysis.length === 0 ? (
-          <div className="text-xs text-muted-foreground">Both teams look evenly matched across every dimension.</div>
+          <div className="text-xs text-muted-foreground">
+            Both teams look evenly matched across every dimension.
+          </div>
         ) : (
           <ul className="space-y-1 text-xs">
             {analysis.map((line, i) => (
@@ -65,26 +78,33 @@ export function TeamIntelligence({
       </div>
 
       <div className="rounded-xl border border-border/60 bg-card/60 p-3">
-        <div className="text-[10px] uppercase tracking-widest text-primary mb-2">Match Prediction</div>
+        <div className="text-[10px] uppercase tracking-widest text-primary mb-2">
+          Match Prediction
+        </div>
         <div className="flex items-center justify-between text-sm font-bold">
           <span>{teamAName}</span>
-          <span className="tabular-nums text-primary">{pred.A}% – {pred.B}%</span>
+          <span className="tabular-nums text-primary">
+            {pred.A}% – {pred.B}%
+          </span>
           <span>{teamBName}</span>
         </div>
         <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
           <div className="h-full bg-primary" style={{ width: `${pred.A}%` }} />
         </div>
         <div className="mt-2 text-[11px] text-muted-foreground">
-          {pred.A === 50 ? "Teams are perfectly balanced (50% – 50%)." :
-            (pred.A > pred.B
+          {pred.A === 50
+            ? "Teams are perfectly balanced (50% – 50%)."
+            : pred.A > pred.B
               ? `${teamAName} favoured on career weight, ratings and depth.`
-              : `${teamBName} favoured on career weight, ratings and depth.`)}
+              : `${teamBName} favoured on career weight, ratings and depth.`}
         </div>
       </div>
 
       {swaps.length > 0 && (
         <div className="rounded-xl border border-primary/30 bg-primary/5 p-3">
-          <div className="text-[10px] uppercase tracking-widest text-primary mb-2">Balance Suggestions</div>
+          <div className="text-[10px] uppercase tracking-widest text-primary mb-2">
+            Balance Suggestions
+          </div>
           <ul className="space-y-2 text-xs">
             {swaps.map((s, i) => (
               <li key={i} className="flex items-center justify-between gap-2">
@@ -111,7 +131,17 @@ export function TeamIntelligence({
   );
 }
 
-function StrengthBar({ aName, bName, aVal, bVal }: { aName: string; bName: string; aVal: number; bVal: number }) {
+function StrengthBar({
+  aName,
+  bName,
+  aVal,
+  bVal,
+}: {
+  aName: string;
+  bName: string;
+  aVal: number;
+  bVal: number;
+}) {
   const total = aVal + bVal || 1;
   const aPct = (aVal / total) * 100;
   return (

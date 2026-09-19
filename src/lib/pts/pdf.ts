@@ -2,7 +2,8 @@ import { usePtsStore } from "./store";
 
 export async function exportMatchPdf(matchId: string) {
   const state = usePtsStore.getState();
-  const match = state.current?.id === matchId ? state.current : state.matches.find((m) => m.id === matchId);
+  const match =
+    state.current?.id === matchId ? state.current : state.matches.find((m) => m.id === matchId);
   if (!match) return;
   const lines: string[] = [];
   lines.push(`PTS — Pilli Tucker Stadium`);
@@ -10,12 +11,18 @@ export async function exportMatchPdf(matchId: string) {
   if (match.result) lines.push(match.result.summary);
   for (const inn of match.innings) {
     const t = inn.battingTeam === "A" ? match.teamA.name : match.teamB.name;
-    lines.push(`\n${t}: ${inn.runs}/${inn.wickets} (${Math.floor(inn.legalBalls/6)}.${inn.legalBalls%6})`);
+    lines.push(
+      `\n${t}: ${inn.runs}/${inn.wickets} (${Math.floor(inn.legalBalls / 6)}.${inn.legalBalls % 6})`,
+    );
     for (const b of inn.batters) {
-      lines.push(`  ${state.players.find((p) => p.id === b.playerId)?.name ?? b.playerId}  ${b.runs} (${b.balls})  4s:${b.fours}  ${b.out ? "out" : "not out"}`);
+      lines.push(
+        `  ${state.players.find((p) => p.id === b.playerId)?.name ?? b.playerId}  ${b.runs} (${b.balls})  4s:${b.fours}  ${b.out ? "out" : "not out"}`,
+      );
     }
     for (const bw of inn.bowlers) {
-      lines.push(`  ${state.players.find((p) => p.id === bw.playerId)?.name ?? bw.playerId}  ${Math.floor(bw.balls/6)}.${bw.balls%6}-${bw.wickets}/${bw.runs}`);
+      lines.push(
+        `  ${state.players.find((p) => p.id === bw.playerId)?.name ?? bw.playerId}  ${Math.floor(bw.balls / 6)}.${bw.balls % 6}-${bw.wickets}/${bw.runs}`,
+      );
     }
   }
   if (match.story) lines.push(`\n${match.story}`);

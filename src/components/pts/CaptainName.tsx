@@ -17,7 +17,8 @@ export function matchFinalStatus(m: Match, playerId: string): PrevMatchStatus | 
   if (isPom) return "potm";
   const isWorst = awards.some((a) => a.type === "worst" && a.playerId === playerId);
   if (isWorst) return "worst";
-  if (!m.result?.winner || m.result.winner === "tie" || m.result.winner === "draw") return undefined;
+  if (!m.result?.winner || m.result.winner === "tie" || m.result.winner === "draw")
+    return undefined;
   const inTeamA = m.teamA.playerIds.includes(playerId);
   const inTeamB = m.teamB.playerIds.includes(playerId);
   const winnerIsA = m.result.winner === "A";
@@ -128,7 +129,9 @@ export function CaptainName({
     if (glow.text) {
       return (
         <span className={`inline-flex items-center gap-1 ${className}`}>
-          <span className={`pts-glow-name pts-glow-${prevStatus} font-bold ${glow.text}`}>{name}</span>
+          <span className={`pts-glow-name pts-glow-${prevStatus} font-bold ${glow.text}`}>
+            {name}
+          </span>
         </span>
       );
     }

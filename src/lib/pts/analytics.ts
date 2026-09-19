@@ -47,7 +47,17 @@ export function batterAdvanced(innings: Innings, playerId: string) {
   const boundaryPct = legalFaced ? (boundaries / legalFaced) * 100 : 0;
   const boundaryRatio = boundaries ? legalFaced / boundaries : 0;
   const dotRatio = dots ? legalFaced / dots : 0;
-  return { dots, fours, sixes, boundaries, dotPct, boundaryPct, boundaryRatio, dotRatio, legalFaced };
+  return {
+    dots,
+    fours,
+    sixes,
+    boundaries,
+    dotPct,
+    boundaryPct,
+    boundaryRatio,
+    dotRatio,
+    legalFaced,
+  };
 }
 
 /** Per-bowler extended metrics derived from events. */
@@ -80,7 +90,18 @@ export function bowlerAdvanced(innings: Innings, playerId: string) {
   const boundaryPct = legal ? (boundaries / legal) * 100 : 0;
   const boundaryRatio = boundaries ? legal / boundaries : 0;
   const dotRatio = dots ? legal / dots : 0;
-  return { dots, fours, sixes, boundaries, dotPct, boundaryPct, boundaryRatio, dotRatio, legal, maidens };
+  return {
+    dots,
+    fours,
+    sixes,
+    boundaries,
+    dotPct,
+    boundaryPct,
+    boundaryRatio,
+    dotRatio,
+    legal,
+    maidens,
+  };
 }
 
 export function inningsExtras(innings: Innings) {
@@ -171,7 +192,12 @@ export function fallOfWickets(innings: Innings, players: Player[]): FallOfWicket
 export function overBuckets(innings: Innings, maxOver?: number): OverBucket[] {
   const map = new Map<number, OverBucket>();
   for (const e of innings.events) {
-    const b = map.get(e.overNumber) ?? { overNumber: e.overNumber, runs: 0, wickets: 0, legalBalls: 0 };
+    const b = map.get(e.overNumber) ?? {
+      overNumber: e.overNumber,
+      runs: 0,
+      wickets: 0,
+      legalBalls: 0,
+    };
     b.runs += e.runsToBatter + e.runsExtras;
     if (e.isLegal) b.legalBalls += 1;
     if (e.isWicket) b.wickets += 1;

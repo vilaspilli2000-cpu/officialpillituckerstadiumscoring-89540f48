@@ -19,20 +19,27 @@ function Records() {
       <h1 className="text-2xl font-black text-gradient-gold mb-4">Records & Rankings</h1>
 
       <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-widest text-primary/80 mb-2">PTS Player Rankings</h2>
+        <h2 className="text-sm uppercase tracking-widest text-primary/80 mb-2">
+          PTS Player Rankings
+        </h2>
         <p className="text-[11px] text-muted-foreground mb-2">
-          Historic ranking points + Net Match Points from every completed match. Auto-updates after every match.
+          Historic ranking points + Net Match Points from every completed match. Auto-updates after
+          every match.
         </p>
         <div className="space-y-2">
           {ranked.map((r, i) => (
             <div key={r.player.id} className="card-gold rounded-xl p-3">
               <div className="flex items-center gap-3">
-                <div className="text-lg font-black text-primary tabular-nums w-6 text-center">{i + 1}</div>
+                <div className="text-lg font-black text-primary tabular-nums w-6 text-center">
+                  {i + 1}
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold truncate">
                     {r.player.name}
                     {r.player.beginner && r.player.career.matches === 0 ? (
-                      <span className="ml-2 text-[10px] uppercase tracking-widest text-muted-foreground">Beginner</span>
+                      <span className="ml-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                        Beginner
+                      </span>
                     ) : null}
                   </div>
                   <div className="text-[11px] text-muted-foreground truncate">
@@ -67,7 +74,15 @@ function Records() {
         <div className="card-gold rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead className="text-xs uppercase tracking-widest text-primary/80">
-              <tr><th className="text-left p-2">Player</th><th>100s</th><th>50s</th><th>Highest</th><th>Runs</th><th>Wkts</th><th>Awards</th></tr>
+              <tr>
+                <th className="text-left p-2">Player</th>
+                <th>100s</th>
+                <th>50s</th>
+                <th>Highest</th>
+                <th>Runs</th>
+                <th>Wkts</th>
+                <th>Awards</th>
+              </tr>
             </thead>
             <tbody>
               {ranked.map((r) => {
@@ -77,7 +92,10 @@ function Records() {
                     <td className="p-2 font-medium">{r.player.name}</td>
                     <td className="text-center">{c.hundreds}</td>
                     <td className="text-center">{c.fifties}</td>
-                    <td className="text-center">{c.highest}{c.highestNotOut ? "*" : ""}</td>
+                    <td className="text-center">
+                      {c.highest}
+                      {c.highestNotOut ? "*" : ""}
+                    </td>
                     <td className="text-center">{c.runs}</td>
                     <td className="text-center">{c.wickets}</td>
                     <td className="text-center">{c.awards}</td>

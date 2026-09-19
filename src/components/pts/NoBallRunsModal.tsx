@@ -10,7 +10,9 @@ export function NoBallRunsModal({ open, onPick }: { open: boolean; onPick: (n: n
         </DialogHeader>
         <div className="grid grid-cols-3 gap-2">
           {[0, 1, 2, 3, 4, 6].map((n) => (
-            <Button key={n} variant="gold" onClick={() => onPick(n)}>{n}</Button>
+            <Button key={n} variant="gold" onClick={() => onPick(n)}>
+              {n}
+            </Button>
           ))}
         </div>
       </DialogContent>

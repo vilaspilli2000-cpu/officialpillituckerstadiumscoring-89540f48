@@ -13,7 +13,10 @@ export const Route = createFileRoute("/match/setup")({
   head: () => ({
     meta: [
       { title: "Match Setup — PTS Scorer" },
-      { name: "description", content: "Configure teams, lineup, joker, and format for a new PTS match." },
+      {
+        name: "description",
+        content: "Configure teams, lineup, joker, and format for a new PTS match.",
+      },
     ],
   }),
   component: Setup,
@@ -36,8 +39,14 @@ function Setup() {
   const [captainAId, setCaptainAId] = useState<string>("");
   const [captainBId, setCaptainBId] = useState<string>("");
 
-  const lineupA = useMemo(() => (jokerId && !teamAIds.includes(jokerId) ? [...teamAIds, jokerId] : teamAIds), [teamAIds, jokerId]);
-  const lineupB = useMemo(() => (jokerId && !teamBIds.includes(jokerId) ? [...teamBIds, jokerId] : teamBIds), [teamBIds, jokerId]);
+  const lineupA = useMemo(
+    () => (jokerId && !teamAIds.includes(jokerId) ? [...teamAIds, jokerId] : teamAIds),
+    [teamAIds, jokerId],
+  );
+  const lineupB = useMemo(
+    () => (jokerId && !teamBIds.includes(jokerId) ? [...teamBIds, jokerId] : teamBIds),
+    [teamBIds, jokerId],
+  );
 
   // If a captain is removed from the team, the captain must be invalidated.
   useEffect(() => {
@@ -133,10 +142,15 @@ function Setup() {
         </div>
       </Section>
 
-      <Section title="Captains (compulsory)" hint="Each captain must be a member of their team. Team identity will be captain-derived.">
+      <Section
+        title="Captains (compulsory)"
+        hint="Each captain must be a member of their team. Team identity will be captain-derived."
+      >
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <Label className="text-xs uppercase tracking-widest text-primary/80">Team A Captain</Label>
+            <Label className="text-xs uppercase tracking-widest text-primary/80">
+              Team A Captain
+            </Label>
             <div className="flex flex-wrap gap-2 mt-2">
               {teamAIds.length === 0 && (
                 <span className="text-xs text-muted-foreground">Select Team A players first.</span>
@@ -157,7 +171,9 @@ function Setup() {
             </div>
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-widest text-primary/80">Team B Captain</Label>
+            <Label className="text-xs uppercase tracking-widest text-primary/80">
+              Team B Captain
+            </Label>
             <div className="flex flex-wrap gap-2 mt-2">
               {teamBIds.length === 0 && (
                 <span className="text-xs text-muted-foreground">Select Team B players first.</span>
@@ -180,11 +196,16 @@ function Setup() {
         </div>
         <div className="mt-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
           <span className="text-muted-foreground">Match title: </span>
-          <span className="font-bold text-primary">{teamAName} vs {teamBName}</span>
+          <span className="font-bold text-primary">
+            {teamAName} vs {teamBName}
+          </span>
         </div>
       </Section>
 
-      <Section title="Joker (optional)" hint="A Joker plays for both teams. Stats credit to one profile; counts as a player and a wicket for both.">
+      <Section
+        title="Joker (optional)"
+        hint="A Joker plays for both teams. Stats credit to one profile; counts as a player and a wicket for both."
+      >
         <div className="flex flex-wrap gap-2">
           <button
             className={`px-3 py-2 rounded-lg border ${!jokerId ? "border-primary bg-primary/10" : "border-border"}`}
@@ -204,7 +225,10 @@ function Setup() {
         </div>
       </Section>
 
-      <Section title="Team Intelligence" hint="Auto-analysis, strength meter, prediction and balance suggestions from live career data.">
+      <Section
+        title="Team Intelligence"
+        hint="Auto-analysis, strength meter, prediction and balance suggestions from live career data."
+      >
         <TeamIntelligence
           teamAIds={teamAIds}
           teamBIds={teamBIds}
@@ -218,8 +242,18 @@ function Setup() {
 
       <Section title="First to Bat">
         <div className="flex gap-2">
-          <Button variant={firstBattingTeam === "A" ? "gold" : "score"} onClick={() => setFirstBattingTeam("A")}>{teamAName}</Button>
-          <Button variant={firstBattingTeam === "B" ? "gold" : "score"} onClick={() => setFirstBattingTeam("B")}>{teamBName}</Button>
+          <Button
+            variant={firstBattingTeam === "A" ? "gold" : "score"}
+            onClick={() => setFirstBattingTeam("A")}
+          >
+            {teamAName}
+          </Button>
+          <Button
+            variant={firstBattingTeam === "B" ? "gold" : "score"}
+            onClick={() => setFirstBattingTeam("B")}
+          >
+            {teamBName}
+          </Button>
         </div>
       </Section>
 
@@ -235,7 +269,13 @@ function Setup() {
         <Section title="Follow-on Margin">
           <div className="flex flex-wrap gap-2 items-center">
             {[200, 150, 100].map((n) => (
-              <Button key={n} variant={followOnMargin === n ? "gold" : "score"} onClick={() => setFollowOnMargin(n)}>{n}</Button>
+              <Button
+                key={n}
+                variant={followOnMargin === n ? "gold" : "score"}
+                onClick={() => setFollowOnMargin(n)}
+              >
+                {n}
+              </Button>
             ))}
             <Input
               type="number"
@@ -253,7 +293,7 @@ function Setup() {
         </Button>
         {!valid && (
           <p className="text-xs text-muted-foreground mt-2">
-            {(!captainAId || !captainBId)
+            {!captainAId || !captainBId
               ? "Select a captain for both teams to continue."
               : "Pick at least 1 player per team, plus opening batter and bowler."}
           </p>
@@ -263,7 +303,15 @@ function Setup() {
   );
 }
 
-function Section({ title, children, hint }: { title: string; children: React.ReactNode; hint?: string }) {
+function Section({
+  title,
+  children,
+  hint,
+}: {
+  title: string;
+  children: React.ReactNode;
+  hint?: string;
+}) {
   return (
     <div className="mt-6">
       <h2 className="text-sm uppercase tracking-widest text-primary/80 mb-2">{title}</h2>
@@ -274,7 +322,11 @@ function Section({ title, children, hint }: { title: string; children: React.Rea
 }
 
 function TeamCard({
-  label, selected, allPlayers, onToggle, onMoveUp,
+  label,
+  selected,
+  allPlayers,
+  onToggle,
+  onMoveUp,
 }: {
   label: string;
   selected: string[];
@@ -303,9 +355,16 @@ function TeamCard({
           <div className="text-xs text-muted-foreground mb-1">Batting order (tap ↑ to promote)</div>
           <ol className="space-y-1">
             {selected.map((id, i) => (
-              <li key={id} className="flex items-center justify-between bg-secondary rounded px-2 py-1">
-                <span>{i + 1}. {players.find((p) => p.id === id)?.name ?? id}</span>
-                <button onClick={() => onMoveUp(i)} className="text-primary text-sm">↑</button>
+              <li
+                key={id}
+                className="flex items-center justify-between bg-secondary rounded px-2 py-1"
+              >
+                <span>
+                  {i + 1}. {players.find((p) => p.id === id)?.name ?? id}
+                </span>
+                <button onClick={() => onMoveUp(i)} className="text-primary text-sm">
+                  ↑
+                </button>
               </li>
             ))}
           </ol>
@@ -315,7 +374,15 @@ function TeamCard({
   );
 }
 
-function PlayerPicker({ ids, value, onChange }: { ids: string[]; value: string; onChange: (id: string) => void }) {
+function PlayerPicker({
+  ids,
+  value,
+  onChange,
+}: {
+  ids: string[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
   const players = usePtsStore((s) => s.players);
   return (
     <div className="flex flex-wrap gap-2">

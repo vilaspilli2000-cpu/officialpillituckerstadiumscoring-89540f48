@@ -1,4 +1,9 @@
-import { RARITIES, HOS_TIER_EMOJI, HOS_TIER_LABELS, type AchProgress } from "@/lib/pts/achievements";
+import {
+  RARITIES,
+  HOS_TIER_EMOJI,
+  HOS_TIER_LABELS,
+  type AchProgress,
+} from "@/lib/pts/achievements";
 import { CATEGORY_META } from "@/lib/pts/achievements";
 
 /**
@@ -21,14 +26,16 @@ export function AchievementBadge({ p, compact }: { p: AchProgress; compact?: boo
     : "linear-gradient(145deg, #121212 0%, #1A1A1A 55%, #0D0D0D 100%)";
 
   // Premium glow effect for unlocked achievements
-  const glowStyle = unlocked ? {
-    boxShadow: `
+  const glowStyle = unlocked
+    ? {
+        boxShadow: `
       0 0 20px ${accent}40,
       0 0 40px ${accent}20,
       0 0 60px ${accent}10,
       inset 0 1px 0 ${accent2}33
     `,
-  } : {};
+      }
+    : {};
 
   // HOS tier emoji visible even when locked; normal achievements keep 🔒
   const tierEmoji = shame ? HOS_TIER_EMOJI[def.rarity] : null;
@@ -73,7 +80,9 @@ export function AchievementBadge({ p, compact }: { p: AchProgress; compact?: boo
         <div
           className="grid size-11 shrink-0 place-items-center rounded-xl text-xl"
           style={{
-            background: unlocked ? `radial-gradient(circle at 30% 25%, ${accent2}55, #0A0A0A 70%)` : "#191919",
+            background: unlocked
+              ? `radial-gradient(circle at 30% 25%, ${accent2}55, #0A0A0A 70%)`
+              : "#191919",
             border: `1px solid ${unlocked ? accent + "88" : "#2E2E2E"}`,
             filter: unlocked ? "none" : "grayscale(1)",
             // Icon glow for unlocked achievements
@@ -83,9 +92,16 @@ export function AchievementBadge({ p, compact }: { p: AchProgress; compact?: boo
           {unlocked ? def.icon : "🔒"}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.18em]" style={{ color: accent }}>
-            <span>{tierEmoji ?? r.emoji} {tierLabel}</span>
-            <span className="text-muted-foreground">· {CATEGORY_META[def.category].icon} {CATEGORY_META[def.category].label}</span>
+          <div
+            className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.18em]"
+            style={{ color: accent }}
+          >
+            <span>
+              {tierEmoji ?? r.emoji} {tierLabel}
+            </span>
+            <span className="text-muted-foreground">
+              · {CATEGORY_META[def.category].icon} {CATEGORY_META[def.category].label}
+            </span>
           </div>
           <div className="truncate font-bold" style={{ color: unlocked ? "#F4F1EA" : "#8A8A80" }}>
             {unlocked ? def.name : "???"}
@@ -97,11 +113,22 @@ export function AchievementBadge({ p, compact }: { p: AchProgress; compact?: boo
           {!unlocked && (
             <>
               <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-black/60">
-                <div className="h-full rounded-full" style={{ width: `${Math.round(p.pct * 100)}%`, background: shame ? "#8A2C2C" : "#D9A928" }} />
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${Math.round(p.pct * 100)}%`,
+                    background: shame ? "#8A2C2C" : "#D9A928",
+                  }}
+                />
               </div>
               <div className="mt-1 text-[10px] tabular-nums text-muted-foreground">
-                {Math.floor(p.value).toLocaleString()} / {def.requirement.toLocaleString()} {def.unit}
-                {p.legacyLockedOut && <span className="ml-1 text-[9px] uppercase tracking-widest text-primary/70">· claimed</span>}
+                {Math.floor(p.value).toLocaleString()} / {def.requirement.toLocaleString()}{" "}
+                {def.unit}
+                {p.legacyLockedOut && (
+                  <span className="ml-1 text-[9px] uppercase tracking-widest text-primary/70">
+                    · claimed
+                  </span>
+                )}
               </div>
             </>
           )}
@@ -115,8 +142,12 @@ export function AchievementBadge({ p, compact }: { p: AchProgress; compact?: boo
                     ? new Date(p.unlock.ts).toLocaleDateString()
                     : ""}
               </span>
-              <span className="font-bold tabular-nums" style={{ color: def.shame ? "#EB5757" : accent }}>
-                {def.points > 0 ? "+" : ""}{def.points} ACH
+              <span
+                className="font-bold tabular-nums"
+                style={{ color: def.shame ? "#EB5757" : accent }}
+              >
+                {def.points > 0 ? "+" : ""}
+                {def.points} ACH
               </span>
             </div>
           )}
