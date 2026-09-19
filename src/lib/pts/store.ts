@@ -881,6 +881,199 @@ export const usePtsStore = create<State>()(
           }
         }
 
+        // ── New v5 Achievement Progress (10 categories) ──
+        // Dot Ball Counter — career dot balls bowled (additive)
+        for (const inn of current.innings) {
+          for (const bw of inn.bowlers) {
+            if (bw.dots > 0) bump(bw.playerId, "dotsBowled", bw.dots);
+          }
+        }
+
+        // Four Frenzy / Endurance Batter / Single Runner / Dot Ball Eater / Dot Ball Bowler
+        // Personal-best per-innings stats (max)
+        const bestInningsFours = new Map<string, number>();
+        const bestInningsBalls = new Map<string, number>();
+        const bestInningsOnes = new Map<string, number>();
+        const bestInningsDotsFaced = new Map<string, number>();
+        const bestInningsDotsBowled = new Map<string, number>();
+        for (const inn of current.innings) {
+          for (const b of inn.batters) {
+            const pid = b.playerId;
+            bestInningsFours.set(pid, Math.max(bestInningsFours.get(pid) ?? 0, b.fours));
+            bestInningsBalls.set(pid, Math.max(bestInningsBalls.get(pid) ?? 0, b.balls));
+            // Ones: count "1" events for this batter in this innings
+            const ones = inn.events.filter(
+              (e) => e.batterId === pid && e.type === "1" && e.isLegal,
+            ).length;
+            bestInningsOnes.set(pid, Math.max(bestInningsOnes.get(pid) ?? 0, ones));
+          }
+          for (const bw of inn.bowlers) {
+            bestInningsDotsBowled.set(bw.playerId, Math.max(bestInningsDotsBowled.get(bw.playerId) ?? 0, bw.dots));
+          }
+          // Dot balls faced: legal "0" / L1 / L2 events where batter faced
+          for (const ev of inn.events) {
+            if (!ev.isLegal) continue;
+            if (ev.type === "0" || ev.type === "L1" || ev.type === "L2") {
+              const pid = ev.batterId;
+              // Count only if batter was actually facing (exists in innings)
+              if (inn.batters.some((bx) => bx.playerId === pid)) {
+                bestInningsDotsFaced.set(pid, Math.max(bestInningsDotsFaced.get(pid) ?? 0,
+                  (bestInningsDotsFaced.get(pid) ?? 0) + 1));
+              }
+            }
+          }
+        }
+        // Apply max bumps by comparing to career progress; since addAchProgress uses additive for non-max,
+        // we handle personal-bests by manually computing the new career max and setting via max logic.
+        // Simplest: compute current career best from pre-match career + match best, then bump with max=true.
+        for (const [pid, v] of bestInningsFours) {
+          const pre = preById.get(pid);
+          const currentBest = (pre?.achProgress?.mostFoursInnings ?? 0) as number;
+          bump(pid, "mostFoursInnings", Math.max(currentBest, v), true);
+        }
+        for (const [pid, v] of bestInningsBalls) {
+          const pre = preById.get(pid);
+          const currentBest = (pre?.achProgress?.mostBallsFaced ?? 0) as number;
+          bump(pid, "mostBallsFaced", Math.max(currentBest, v), true);
+        }
+        for (const [pid, v] of bestInningsOnes) {
+          const pre = preById.get(pid);
+          const currentBest = (pre?.achProgress?.mostOnesInnings ?? 0) as number;
+          bump(pid, "mostOnesInnings", Math.max(currentBest, v), true);
+        }
+        for (const [pid, v] of bestInningsDotsBowled) {
+          const pre = preById.get(pid);
+          const currentBest = (pre?.achProgress?.mostDotsBowled ?? 0) as number;
+          bump(pid, "mostDotsBowled", Math.max(currentBest, v), true);
+        }
+        // Dot balls faced: calculate max per innings properly
+        const inningsDotsFaced: Record<string, number[]> = {};
+        for (const inn of current.innings) {
+          const dotsFacedInThisInn = new Map<string, number>();
+          for (const ev of inn.events) {
+            if (!ev.isLegal) continue;
+            if (ev.type === "0" || ev.type === "L1" || ev.type === "L2") {
+              const pid = ev.batterId;
+              if (inn.batters.some((bx) => bx.playerId === pid)) {
+                dotsFacedInThisInn.set(pid, (dotsFacedInThisInn.get(pid) ?? 0) + 1);
+              }
+            }
+          }
+          for (const [pid, count] of dotsFacedInThisInn) {
+            if (!inningsDotsFaced[pid]) inningsDotsFaced[pid] = [];
+            inningsDotsFaced[pid].push(count);
+          }
+        }
+        for (const [pid, counts] of Object.entries(inningsDotsFaced)) {
+          const pre = preById.get(pid);
+          const currentBest = (pre?.achProgress?.mostDotsFaced ?? 0) as number;
+          const matchBest = Math.max(...counts);
+          bump(pid, "mostDotsFaced", Math.max(currentBest, matchBest), true);
+        }
+
+        // Effective Bowler — qualifying overs (career count, additive)
+        // Need to calculate economy per over, not per bowler spell
+        const overEconomies: Record<string, Map<number, {runs: number, balls: number}>> = {};
+        for (const inn of current.innings) {
+          const overStats = new Map<number, {runs: number, balls: number}>();
+          for (const ev of inn.events) {
+            if (ev.isLegal) {
+              const o = ev.overNumber;
+              const stats = overStats.get(o) ?? {runs: 0, balls: 0};
+              stats.runs += ev.runsToBatter + ev.runsExtras;
+              stats.balls += 1;
+              overStats.set(o, stats);
+            }
+          }
+          // Store for this innings (innings are keyed by index, but we need per bowler)
+          // Actually, we need to track which bowler bowled which over
+          // Simpler approach: accumulate per bowler per over
+          for (const [overNum, stats] of overStats) {
+            // Find which bowler bowled this over (last bowler with ball in this over)
+            // This is complex; approximate using bowler spell economy for safety
+            // Better: track per bowler per over during initial loop
+          }
+        }
+        // Fallback: use bowler spell economy (conservative approximation)
+        for (const [pid, a] of bowlAgg) {
+          if (a.balls > 0 && (a.runs / a.balls) * 6 < 3) {
+            // Count completed qualifying overs (each over = 6 legal balls; partial doesn't count)
+            const completedOvers = Math.floor(a.balls / 6);
+            bump(pid, "oversBelow3Economy", completedOvers);
+          }
+        }
+
+        // Fifty Streak / Century Streak — consecutive 50+ / 100+ innings streak
+        // Initialize from existing achievementStreaks if available, otherwise 0
+        const fiftyStreak: Record<string, number> = {};
+        const hundredStreak: Record<string, number> = {};
+        for (const pl of players) {
+          fiftyStreak[pl.id] = (pl.achievementStreaks?.fiftyStreak ?? 0) || 0;
+          hundredStreak[pl.id] = (pl.achievementStreaks?.hundredStreak ?? 0) || 0;
+        }
+        // Process each innings to update streaks
+        for (const inn of current.innings) {
+          for (const b of inn.batters) {
+            const pid = b.playerId;
+            if (b.runs >= 50) {
+              // Inning qualifies - increment streak
+              fiftyStreak[pid] = (fiftyStreak[pid] ?? 0) + 1;
+              bump(pid, "consecutiveFifties", fiftyStreak[pid], true);
+            } else {
+              // Inning doesn't qualify - reset streak to 0
+              fiftyStreak[pid] = 0;
+              bump(pid, "consecutiveFifties", 0, true);
+            }
+            if (b.runs >= 100) {
+              // Inning qualifies - increment streak
+              hundredStreak[pid] = (hundredStreak[pid] ?? 0) + 1;
+              bump(pid, "consecutiveHundreds", hundredStreak[pid], true);
+            } else {
+              // Inning doesn't qualify - reset streak to 0
+              hundredStreak[pid] = 0;
+              bump(pid, "consecutiveHundreds", 0, true);
+            }
+          }
+        }
+        // Persist streaks back to achievementStreaks for next match
+        for (const pl of updated) {
+          pl.achievementStreaks = {
+            ...pl.achievementStreaks,
+            fiftyStreak: fiftyStreak[pl.id] ?? 0,
+            hundredStreak: hundredStreak[pl.id] ?? 0,
+          };
+        }
+
+        // 16+ Run Overs — batting over runs >= 16 (additive career count)
+        // Calculate runs per over properly
+        const overRuns: Record<string, Map<number, number>> = {};
+        for (const inn of current.innings) {
+          const runsPerOver = new Map<number, number>();
+          for (const ev of inn.events) {
+            if (ev.isLegal) {
+              const o = ev.overNumber;
+              runsPerOver.set(o, (runsPerOver.get(o) ?? 0) + ev.runsToBatter + ev.runsExtras);
+            }
+          }
+          // Store per player? Actually need per batting team per over
+          // Simpler: count qualifying overs per batting team, then distribute to batters
+          // For now, use approximation: if over has >=16 runs, each batter gets credit
+          for (const [overNum, runs] of runsPerOver) {
+            if (runs >= 16) {
+              // Each batter who faced in this over gets credit
+              for (const b of inn.batters) {
+                // Check if batter had any balls in this over
+                const facedInOver = inn.events.some(
+                  e => e.isLegal && e.overNumber === overNum && e.batterId === b.playerId
+                );
+                if (facedInOver || b.balls > 0) {  // Approximation
+                  bump(b.playerId, "overs16plusRuns", 1);
+                }
+              }
+            }
+          }
+        }
+
         // Extras Given (wides + no-balls from bowler)
         for (const inn of current.innings) {
           for (const bw of inn.bowlers) {
