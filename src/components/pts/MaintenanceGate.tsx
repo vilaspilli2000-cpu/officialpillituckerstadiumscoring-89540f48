@@ -31,9 +31,6 @@ export function MaintenanceGate({ children }: { children: ReactNode }) {
     (target.getMonth() - nowDate.getMonth());
   let anchor = new Date(nowDate);
   anchor.setMonth(anchor.getMonth() + months);
-  if (anchor.getTime() > nowDate.getTime() + (totalDays * 24 * 3600 * 1000 - totalDays * 24 * 3600 * 1000)) {
-    // no-op guard; calendar logic handled below
-  }
   if (anchor.getTime() > target.getTime()) {
     months -= 1;
     anchor = new Date(nowDate);
