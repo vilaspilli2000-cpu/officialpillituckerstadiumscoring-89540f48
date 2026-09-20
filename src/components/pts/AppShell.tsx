@@ -3,12 +3,15 @@ import type { ReactNode } from "react";
 import { AuthGate } from "./AuthGate";
 import { CloudBar } from "./CloudBar";
 import { AchievementUnlockOverlay } from "./AchievementUnlockOverlay";
+import { MaintenanceGate } from "./MaintenanceGate";
 
 export function AppShell({ children, title }: { children: ReactNode; title?: string }) {
   return (
-    <AuthGate>
-      <Shell title={title}>{children}</Shell>
-    </AuthGate>
+    <MaintenanceGate>
+      <AuthGate>
+        <Shell title={title}>{children}</Shell>
+      </AuthGate>
+    </MaintenanceGate>
   );
 }
 
