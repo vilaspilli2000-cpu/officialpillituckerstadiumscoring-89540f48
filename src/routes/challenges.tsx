@@ -2,6 +2,7 @@ import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { usePtsStore } from "@/lib/pts/store";
 import ChallengeCard from "@/components/challenges/ChallengeCard";
+import { MaintenanceGate } from "@/components/pts/MaintenanceGate";
 
 export const Route = createFileRoute("/challenges")({
   component: ChallengesPage,
@@ -29,6 +30,7 @@ export default function ChallengesPage() {
   }
 
   return (
+    <MaintenanceGate>
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Challenges</h1>
       <div className="mb-4">
@@ -58,5 +60,6 @@ export default function ChallengesPage() {
         ))}
       </div>
     </div>
+    </MaintenanceGate>
   );
 }
