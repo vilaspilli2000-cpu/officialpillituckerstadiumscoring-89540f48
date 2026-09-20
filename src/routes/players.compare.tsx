@@ -18,7 +18,13 @@ export const Route = createFileRoute("/players/compare")({
   component: Compare,
 });
 
-type Row = { label: string; a: number | string; b: number | string; aBetter?: boolean; bBetter?: boolean; };
+type Row = {
+  label: string;
+  a: number | string;
+  b: number | string;
+  aBetter?: boolean;
+  bBetter?: boolean;
+};
 
 function num(v: number | string) {
   return typeof v === "number" ? v : parseFloat(v as string);
@@ -26,7 +32,8 @@ function num(v: number | string) {
 
 function markBetter(rows: Row[]): Row[] {
   return rows.map((r) => {
-    const av = num(r.a), bv = num(r.b);
+    const av = num(r.a),
+      bv = num(r.b);
     if (isNaN(av) || isNaN(bv) || av === bv) return r;
     return { ...r, aBetter: av > bv, bBetter: bv > av };
   });
@@ -90,8 +97,16 @@ function Compare() {
   );
 }
 
-function PlayerPicker({ label, value, onChange, players }: {
-  label: string; value: string; onChange: (v: string) => void; players: Player[];
+function PlayerPicker({
+  label,
+  value,
+  onChange,
+  players,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  players: Player[];
 }) {
   return (
     <label className="block">
@@ -101,14 +116,24 @@ function PlayerPicker({ label, value, onChange, players }: {
         onChange={(e) => onChange(e.target.value)}
         className="mt-1 w-full rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm outline-none focus:border-primary"
       >
-        {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        {players.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
+        ))}
       </select>
     </label>
   );
 }
 
-function Comparison({ a, b, ranked, matches }: {
-  a: Player; b: Player;
+function Comparison({
+  a,
+  b,
+  ranked,
+  matches,
+}: {
+  a: Player;
+  b: Player;
   ranked: ReturnType<typeof rankAllOvertake>;
   matches: ReturnType<typeof usePtsStore.getState>["matches"];
 }) {
@@ -120,12 +145,20 @@ function Comparison({ a, b, ranked, matches }: {
 
   const battingRows = markBetter([
     { label: "Matches", a: a.career.matches, b: b.career.matches },
-    { label: "Innings", a: a.career.innings ?? a.career.matches, b: b.career.innings ?? b.career.matches },
+    {
+      label: "Innings",
+      a: a.career.innings ?? a.career.matches,
+      b: b.career.innings ?? b.career.matches,
+    },
     { label: "Runs", a: a.career.runs, b: b.career.runs },
     { label: "Balls", a: a.career.balls, b: b.career.balls },
     { label: "Average", a: avgOf(a), b: avgOf(b) },
     { label: "Strike Rate", a: srOf(a), b: srOf(b) },
-    { label: "Highest", a: `${a.career.highest}${a.career.highestNotOut ? "*" : ""}`, b: `${b.career.highest}${b.career.highestNotOut ? "*" : ""}` },
+    {
+      label: "Highest",
+      a: `${a.career.highest}${a.career.highestNotOut ? "*" : ""}`,
+      b: `${b.career.highest}${b.career.highestNotOut ? "*" : ""}`,
+    },
     { label: "50s", a: a.career.fifties, b: b.career.fifties },
     { label: "100s", a: a.career.hundreds, b: b.career.hundreds },
     { label: "150s", a: a.career.hundred50s ?? 0, b: b.career.hundred50s ?? 0 },
@@ -146,10 +179,15 @@ function Comparison({ a, b, ranked, matches }: {
     { label: "Dot Balls", a: a.career.dots ?? 0, b: b.career.dots ?? 0 },
     { label: "Wides", a: a.career.wides ?? 0, b: b.career.wides ?? 0 },
     { label: "No Balls", a: a.career.noBalls ?? 0, b: b.career.noBalls ?? 0 },
-    { label: "Best", a: `${a.career.bestBowlingWkts ?? 0}/${a.career.bestBowlingRuns ?? 0}`, b: `${b.career.bestBowlingWkts ?? 0}/${b.career.bestBowlingRuns ?? 0}` },
+    {
+      label: "Best",
+      a: `${a.career.bestBowlingWkts ?? 0}/${a.career.bestBowlingRuns ?? 0}`,
+      b: `${b.career.bestBowlingWkts ?? 0}/${b.career.bestBowlingRuns ?? 0}`,
+    },
   ]);
 
-  const catchPct = (p: Player) => p.career.matches ? ((p.career.catches / p.career.matches) * 100).toFixed(0) : "0";
+  const catchPct = (p: Player) =>
+    p.career.matches ? ((p.career.catches / p.career.matches) * 100).toFixed(0) : "0";
   const fieldingRows = markBetter([
     { label: "Catches", a: a.career.catches, b: b.career.catches },
     { label: "Catch % (per match)", a: catchPct(a), b: catchPct(b) },
@@ -183,13 +221,33 @@ function Comparison({ a, b, ranked, matches }: {
   const rankingRows: Row[] = [
     { label: "Overall", a: overallRank(a.id), b: overallRank(b.id) },
     { label: "Runs", a: rankOf(a.id, (p) => p.career.runs), b: rankOf(b.id, (p) => p.career.runs) },
-    { label: "Wickets", a: rankOf(a.id, (p) => p.career.wickets), b: rankOf(b.id, (p) => p.career.wickets) },
+    {
+      label: "Wickets",
+      a: rankOf(a.id, (p) => p.career.wickets),
+      b: rankOf(b.id, (p) => p.career.wickets),
+    },
     { label: "Average", a: rankOf(a.id, avgOf), b: rankOf(b.id, avgOf) },
     { label: "Strike Rate", a: rankOf(a.id, srOf), b: rankOf(b.id, srOf) },
-    { label: "Fours", a: rankOf(a.id, (p) => p.career.fours), b: rankOf(b.id, (p) => p.career.fours) },
-    { label: "Catches", a: rankOf(a.id, (p) => p.career.catches), b: rankOf(b.id, (p) => p.career.catches) },
-    { label: "Awards", a: rankOf(a.id, (p) => p.career.awards), b: rankOf(b.id, (p) => p.career.awards) },
-  ].map((r) => ({ ...r, aBetter: (r.a as number) < (r.b as number), bBetter: (r.b as number) < (r.a as number) }));
+    {
+      label: "Fours",
+      a: rankOf(a.id, (p) => p.career.fours),
+      b: rankOf(b.id, (p) => p.career.fours),
+    },
+    {
+      label: "Catches",
+      a: rankOf(a.id, (p) => p.career.catches),
+      b: rankOf(b.id, (p) => p.career.catches),
+    },
+    {
+      label: "Awards",
+      a: rankOf(a.id, (p) => p.career.awards),
+      b: rankOf(b.id, (p) => p.career.awards),
+    },
+  ].map((r) => ({
+    ...r,
+    aBetter: (r.a as number) < (r.b as number),
+    bBetter: (r.b as number) < (r.a as number),
+  }));
 
   // Head-to-head (batter A vs bowler B and vice versa)
   const aVsB = batterVsBowler(matches, undefined, a.id, b.id);
@@ -209,23 +267,46 @@ function Comparison({ a, b, ranked, matches }: {
       <Section title="Fielding" rows={fieldingRows} aName={a.name} bName={b.name} />
       <Section title="Awards" rows={awardRows} aName={a.name} bName={b.name} />
       <Section title="Ratings" rows={ratingRows} aName={a.name} bName={b.name} />
-      <Section title="Rankings (lower is better)" rows={rankingRows} aName={a.name} bName={b.name} />
+      <Section
+        title="Rankings (lower is better)"
+        rows={rankingRows}
+        aName={a.name}
+        bName={b.name}
+      />
 
       {(aVsB.encounters > 0 || bVsA.encounters > 0) && (
         <div className="rounded-xl border border-primary/30 bg-card/60 p-3">
-          <div className="text-[10px] uppercase tracking-widest text-primary mb-2">Head-to-Head</div>
+          <div className="text-[10px] uppercase tracking-widest text-primary mb-2">
+            Head-to-Head
+          </div>
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
-              <div className="font-semibold mb-1">{a.name} vs {b.name} (bat)</div>
-              <div>Runs: {aVsB.runs} · Balls: {aVsB.balls}</div>
-              <div>SR: {aVsB.balls ? aVsB.strikeRate.toFixed(1) : "—"} · Dismissed: {aVsB.dismissed}</div>
-              <div>4s: {aVsB.fours} · Highest: {aVsB.highest || "—"}</div>
+              <div className="font-semibold mb-1">
+                {a.name} vs {b.name} (bat)
+              </div>
+              <div>
+                Runs: {aVsB.runs} · Balls: {aVsB.balls}
+              </div>
+              <div>
+                SR: {aVsB.balls ? aVsB.strikeRate.toFixed(1) : "—"} · Dismissed: {aVsB.dismissed}
+              </div>
+              <div>
+                4s: {aVsB.fours} · Highest: {aVsB.highest || "—"}
+              </div>
             </div>
             <div>
-              <div className="font-semibold mb-1">{b.name} vs {a.name} (bat)</div>
-              <div>Runs: {bVsA.runs} · Balls: {bVsA.balls}</div>
-              <div>SR: {bVsA.balls ? bVsA.strikeRate.toFixed(1) : "—"} · Dismissed: {bVsA.dismissed}</div>
-              <div>4s: {bVsA.fours} · Highest: {bVsA.highest || "—"}</div>
+              <div className="font-semibold mb-1">
+                {b.name} vs {a.name} (bat)
+              </div>
+              <div>
+                Runs: {bVsA.runs} · Balls: {bVsA.balls}
+              </div>
+              <div>
+                SR: {bVsA.balls ? bVsA.strikeRate.toFixed(1) : "—"} · Dismissed: {bVsA.dismissed}
+              </div>
+              <div>
+                4s: {bVsA.fours} · Highest: {bVsA.highest || "—"}
+              </div>
             </div>
           </div>
         </div>
@@ -239,10 +320,18 @@ function avgOf(p: Player) {
   const outs = Math.max(1, innings - p.career.notOuts);
   return p.career.runs / outs;
 }
-function srOf(p: Player) { return p.career.balls ? (p.career.runs / p.career.balls) * 100 : 0; }
-function econOf(p: Player) { return p.career.bowlBalls ? (p.career.bowlRuns / p.career.bowlBalls) * 6 : 0; }
-function bowlAvgOf(p: Player) { return p.career.wickets ? p.career.bowlRuns / p.career.wickets : 0; }
-function bowlSROf(p: Player) { return p.career.wickets ? p.career.bowlBalls / p.career.wickets : 0; }
+function srOf(p: Player) {
+  return p.career.balls ? (p.career.runs / p.career.balls) * 100 : 0;
+}
+function econOf(p: Player) {
+  return p.career.bowlBalls ? (p.career.bowlRuns / p.career.bowlBalls) * 6 : 0;
+}
+function bowlAvgOf(p: Player) {
+  return p.career.wickets ? p.career.bowlRuns / p.career.wickets : 0;
+}
+function bowlSROf(p: Player) {
+  return p.career.wickets ? p.career.bowlBalls / p.career.wickets : 0;
+}
 
 function fmt(v: number | string) {
   if (typeof v === "string") return v;
@@ -251,9 +340,13 @@ function fmt(v: number | string) {
 }
 
 function OvertakeView({
-  a, b, overtakeRanked, matches,
+  a,
+  b,
+  overtakeRanked,
+  matches,
 }: {
-  a: Player; b: Player;
+  a: Player;
+  b: Player;
   overtakeRanked: OvertakeScore[];
   matches: ReturnType<typeof usePtsStore.getState>["matches"];
 }) {
@@ -270,26 +363,38 @@ function OvertakeView({
     [trailer, leader, overtakeRanked],
   );
 
-  const catKeys: OvertakeCategoryKey[] = ["batting", "bigInnings", "consistency", "awards", "boundaries", "bowling"];
+  const catKeys: OvertakeCategoryKey[] = [
+    "batting",
+    "bigInnings",
+    "consistency",
+    "awards",
+    "boundaries",
+    "bowling",
+  ];
 
   return (
     <div className="space-y-3">
       {/* Overall */}
       <div className="rounded-xl border border-primary/40 bg-primary/5 p-3">
-        <div className="text-[10px] uppercase tracking-widest text-primary mb-2">Overall Ranking</div>
+        <div className="text-[10px] uppercase tracking-widest text-primary mb-2">
+          Overall Ranking
+        </div>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <ScoreCard s={sA} rank={rankA} winner={sA.total > sB.total} />
           <ScoreCard s={sB} rank={rankB} winner={sB.total > sA.total} />
         </div>
         <div className="mt-3 text-xs text-muted-foreground">
-          Difference: <span className="text-primary font-bold">{Math.abs(sA.total - sB.total)} pts</span>
+          Difference:{" "}
+          <span className="text-primary font-bold">{Math.abs(sA.total - sB.total)} pts</span>
           {" · "}Leader: <span className="font-bold text-foreground">{leader.player.name}</span>
         </div>
       </div>
 
       {/* Category Breakdown */}
       <div className="rounded-xl border border-border/60 bg-card/60 p-3">
-        <div className="text-[10px] uppercase tracking-widest text-primary mb-2">Category Points</div>
+        <div className="text-[10px] uppercase tracking-widest text-primary mb-2">
+          Category Points
+        </div>
         <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-1 text-xs items-center">
           <div className="text-muted-foreground">Category</div>
           <div className="text-right font-semibold truncate">{a.name}</div>
@@ -304,10 +409,16 @@ function OvertakeView({
               <div key={k} className="contents">
                 <div className="text-muted-foreground">
                   <div>{ca.label}</div>
-                  <div className="text-[10px] opacity-70">{aWin ? ca.detail : bWin ? cb.detail : ca.detail}</div>
+                  <div className="text-[10px] opacity-70">
+                    {aWin ? ca.detail : bWin ? cb.detail : ca.detail}
+                  </div>
                 </div>
-                <div className={`text-right tabular-nums ${aWin ? "text-primary font-bold" : ""}`}>{ca.points}</div>
-                <div className={`text-right tabular-nums ${bWin ? "text-primary font-bold" : ""}`}>{cb.points}</div>
+                <div className={`text-right tabular-nums ${aWin ? "text-primary font-bold" : ""}`}>
+                  {ca.points}
+                </div>
+                <div className={`text-right tabular-nums ${bWin ? "text-primary font-bold" : ""}`}>
+                  {cb.points}
+                </div>
                 <div className="text-right text-[10px] font-semibold">
                   {aWin ? a.name : bWin ? b.name : "—"}
                 </div>
@@ -350,12 +461,19 @@ function OvertakeView({
             <Stat label="Confidence" value={`${plan.confidence}%`} />
           </div>
           <div className="space-y-2">
-            <div className="text-[10px] uppercase tracking-widest text-primary">Improvement Suggestions</div>
+            <div className="text-[10px] uppercase tracking-widest text-primary">
+              Improvement Suggestions
+            </div>
             {plan.suggestions.length === 0 ? (
-              <div className="text-xs text-muted-foreground">No gaps — {trailer.player.name} already matches or leads in every category.</div>
+              <div className="text-xs text-muted-foreground">
+                No gaps — {trailer.player.name} already matches or leads in every category.
+              </div>
             ) : (
               plan.suggestions.map((sg) => (
-                <div key={sg.key} className="rounded-lg border border-border/60 bg-background/40 p-2">
+                <div
+                  key={sg.key}
+                  className="rounded-lg border border-border/60 bg-background/40 p-2"
+                >
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-foreground">{sg.label}</span>
                     <span className="text-primary font-bold tabular-nums">+{sg.points} pts</span>
@@ -367,7 +485,9 @@ function OvertakeView({
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-2">
-              <div className="text-[10px] uppercase tracking-widest text-primary">Quickest Path</div>
+              <div className="text-[10px] uppercase tracking-widest text-primary">
+                Quickest Path
+              </div>
               <div className="font-semibold">{sA.categories[plan.quickestPath].label}</div>
             </div>
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-2">
@@ -383,10 +503,18 @@ function OvertakeView({
 
 function ScoreCard({ s, rank, winner }: { s: OvertakeScore; rank: number; winner: boolean }) {
   return (
-    <div className={`rounded-lg border p-2 ${winner ? "border-primary bg-primary/10" : "border-border/60 bg-background/40"}`}>
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground truncate">{s.player.name}</div>
-      <div className={`text-2xl font-black tabular-nums ${winner ? "text-primary" : ""}`}>{s.total}</div>
-      <div className="text-[10px] text-muted-foreground">Rank #{rank || "—"} · SR {s.strikeRate.toFixed(1)}</div>
+    <div
+      className={`rounded-lg border p-2 ${winner ? "border-primary bg-primary/10" : "border-border/60 bg-background/40"}`}
+    >
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground truncate">
+        {s.player.name}
+      </div>
+      <div className={`text-2xl font-black tabular-nums ${winner ? "text-primary" : ""}`}>
+        {s.total}
+      </div>
+      <div className="text-[10px] text-muted-foreground">
+        Rank #{rank || "—"} · SR {s.strikeRate.toFixed(1)}
+      </div>
     </div>
   );
 }
@@ -400,7 +528,17 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Section({ title, rows, aName, bName }: { title: string; rows: Row[]; aName: string; bName: string; }) {
+function Section({
+  title,
+  rows,
+  aName,
+  bName,
+}: {
+  title: string;
+  rows: Row[];
+  aName: string;
+  bName: string;
+}) {
   return (
     <div className="rounded-xl border border-border/60 bg-card/60 p-3">
       <div className="text-[10px] uppercase tracking-widest text-primary mb-2">{title}</div>
@@ -410,9 +548,21 @@ function Section({ title, rows, aName, bName }: { title: string; rows: Row[]; aN
         <div className="text-right font-semibold truncate">{bName}</div>
         {rows.map((r) => (
           <>
-            <div key={r.label + "l"} className="text-muted-foreground">{r.label}</div>
-            <div key={r.label + "a"} className={`text-right tabular-nums ${r.aBetter ? "text-primary font-bold" : ""}`}>{fmt(r.a)}</div>
-            <div key={r.label + "b"} className={`text-right tabular-nums ${r.bBetter ? "text-primary font-bold" : ""}`}>{fmt(r.b)}</div>
+            <div key={r.label + "l"} className="text-muted-foreground">
+              {r.label}
+            </div>
+            <div
+              key={r.label + "a"}
+              className={`text-right tabular-nums ${r.aBetter ? "text-primary font-bold" : ""}`}
+            >
+              {fmt(r.a)}
+            </div>
+            <div
+              key={r.label + "b"}
+              className={`text-right tabular-nums ${r.bBetter ? "text-primary font-bold" : ""}`}
+            >
+              {fmt(r.b)}
+            </div>
           </>
         ))}
       </div>

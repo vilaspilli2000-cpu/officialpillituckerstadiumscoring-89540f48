@@ -19,7 +19,11 @@ export function AchievementUnlockOverlay() {
     const now = Date.now();
     const fresh = feed.filter((u) => !u.baseline && !seen.has(u.id) && now - u.ts < 20_000);
     if (fresh.length === 0) return;
-    setSeen((prev) => { const n = new Set(prev); fresh.forEach((f) => n.add(f.id)); return n; });
+    setSeen((prev) => {
+      const n = new Set(prev);
+      fresh.forEach((f) => n.add(f.id));
+      return n;
+    });
     setQueue((q) => [...q, ...fresh.slice().reverse()]);
   }, [feed, seen]);
 
@@ -66,30 +70,45 @@ export function AchievementUnlockOverlay() {
     <div
       aria-live="assertive"
       className="fixed inset-0 z-[10000] flex items-center justify-center overflow-hidden"
-      style={{ background: "#050505", animation: def.legacy ? "achShake 700ms ease-in-out 2" : undefined }}
+      style={{
+        background: "#050505",
+        animation: def.legacy ? "achShake 700ms ease-in-out 2" : undefined,
+      }}
       onClick={() => setActive(null)}
     >
       <div
         className="absolute inset-0 opacity-80"
-        style={{ background: shame
-          ? `radial-gradient(circle at 50% 40%, ${accent}44, #050505 65%)`
-          : `radial-gradient(circle at 50% 40%, ${r.accent2}55, ${accent}33 35%, #050505 70%)` }}
+        style={{
+          background: shame
+            ? `radial-gradient(circle at 50% 40%, ${accent}44, #050505 65%)`
+            : `radial-gradient(circle at 50% 40%, ${r.accent2}55, ${accent}33 35%, #050505 70%)`,
+        }}
       />
       {/* moving light rays */}
-      <div className="pointer-events-none absolute -top-1/2 left-1/2 h-[200vmax] w-[45vmax] -translate-x-1/2 rotate-12 opacity-30 blur-3xl"
-           style={{ background: `linear-gradient(180deg, ${accent}88, transparent 70%)` }} />
+      <div
+        className="pointer-events-none absolute -top-1/2 left-1/2 h-[200vmax] w-[45vmax] -translate-x-1/2 rotate-12 opacity-30 blur-3xl"
+        style={{ background: `linear-gradient(180deg, ${accent}88, transparent 70%)` }}
+      />
       <Particles accent={accent} accent2={shame ? "#7A1F1F" : r.accent2} rarity={def.rarity} />
 
       <div className="relative z-10 max-w-lg px-8 text-center text-[#F4F1EA]">
         <div className="text-[10px] uppercase tracking-[0.45em] text-white/60">
-          {shame ? "Hall Of Shame" : def.legacy ? "First Player In PTS History" : "Achievement Unlocked"}
+          {shame
+            ? "Hall Of Shame"
+            : def.legacy
+              ? "First Player In PTS History"
+              : "Achievement Unlocked"}
         </div>
         <div className="mt-4 text-6xl" style={{ filter: `drop-shadow(0 0 24px ${accent})` }}>
           {def.legacy && !shame ? "👑" : def.icon}
         </div>
         <h1
           className="mt-4 font-black leading-tight"
-          style={{ fontFamily: "Cinzel, serif", fontSize: "clamp(1.8rem,8vw,3.4rem)", textShadow: `0 0 40px ${accent}` }}
+          style={{
+            fontFamily: "Cinzel, serif",
+            fontSize: "clamp(1.8rem,8vw,3.4rem)",
+            textShadow: `0 0 40px ${accent}`,
+          }}
         >
           {def.name}
         </h1>
@@ -102,13 +121,22 @@ export function AchievementUnlockOverlay() {
           className="mt-5 text-5xl font-black tabular-nums"
           style={{ color: accent, textShadow: `0 0 28px ${accent}aa` }}
         >
-          {def.points > 0 ? "+" : ""}{def.points} ACH
+          {def.points > 0 ? "+" : ""}
+          {def.points} ACH
         </div>
         <div className="mx-auto mt-8 h-1.5 w-44 overflow-hidden rounded-full bg-white/10">
-          <div className="h-full transition-[width] duration-100"
-               style={{ width: `${progress * 100}%`, background: accent, boxShadow: `0 0 16px ${accent}` }} />
+          <div
+            className="h-full transition-[width] duration-100"
+            style={{
+              width: `${progress * 100}%`,
+              background: accent,
+              boxShadow: `0 0 16px ${accent}`,
+            }}
+          />
         </div>
-        <div className="mt-3 text-[10px] uppercase tracking-[0.3em] text-white/40">Tap to continue</div>
+        <div className="mt-3 text-[10px] uppercase tracking-[0.3em] text-white/40">
+          Tap to continue
+        </div>
       </div>
 
       <style>{`
@@ -120,8 +148,17 @@ export function AchievementUnlockOverlay() {
   );
 }
 
-function Particles({ accent, accent2, rarity }: { accent: string; accent2: string; rarity: string }) {
-  const count = rarity === "legacy" ? 90 : rarity === "legendary" ? 70 : rarity === "epic" ? 60 : 42;
+function Particles({
+  accent,
+  accent2,
+  rarity,
+}: {
+  accent: string;
+  accent2: string;
+  rarity: string;
+}) {
+  const count =
+    rarity === "legacy" ? 90 : rarity === "legendary" ? 70 : rarity === "epic" ? 60 : 42;
   const square = rarity === "legacy" || rarity === "rare";
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -138,15 +175,17 @@ function Particles({ accent, accent2, rarity }: { accent: string; accent2: strin
           <span
             key={i}
             className={square ? "absolute bottom-0" : "absolute bottom-0 rounded-full"}
-            style={{
-              left: `${Math.random() * 100}%`,
-              width: size,
-              height: size * (square ? 1.8 : 1),
-              background: color,
-              boxShadow: `0 0 ${size * 3}px ${color}`,
-              animation: `achFloat ${4 + Math.random() * 5}s linear ${Math.random() * 3}s infinite`,
-              ["--x" as string]: `${(Math.random() - 0.5) * 100}px`,
-            } as React.CSSProperties}
+            style={
+              {
+                left: `${Math.random() * 100}%`,
+                width: size,
+                height: size * (square ? 1.8 : 1),
+                background: color,
+                boxShadow: `0 0 ${size * 3}px ${color}`,
+                animation: `achFloat ${4 + Math.random() * 5}s linear ${Math.random() * 3}s infinite`,
+                ["--x" as string]: `${(Math.random() - 0.5) * 100}px`,
+              } as React.CSSProperties
+            }
           />
         );
       })}
@@ -159,16 +198,22 @@ function playSound(u: AchUnlock) {
   const def = achievementById(u.achId);
   if (!def || typeof window === "undefined") return;
   try {
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const Ctx =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!Ctx) return;
     const ctx = new Ctx();
     const notes = def.shame
       ? [220, 165, 110]
-      : def.rarity === "legacy" ? [523, 659, 784, 1046]
-      : def.rarity === "legendary" ? [440, 587, 880]
-      : def.rarity === "epic" ? [392, 523, 659]
-      : def.rarity === "rare" ? [523, 659]
-      : [659, 880];
+      : def.rarity === "legacy"
+        ? [523, 659, 784, 1046]
+        : def.rarity === "legendary"
+          ? [440, 587, 880]
+          : def.rarity === "epic"
+            ? [392, 523, 659]
+            : def.rarity === "rare"
+              ? [523, 659]
+              : [659, 880];
     notes.forEach((f, i) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -182,5 +227,7 @@ function playSound(u: AchUnlock) {
       osc.stop(ctx.currentTime + 1.4 + i * 0.12);
     });
     setTimeout(() => void ctx.close(), 2600);
-  } catch { /* audio unavailable */ }
+  } catch {
+    /* audio unavailable */
+  }
 }

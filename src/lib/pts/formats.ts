@@ -56,9 +56,9 @@ function teamNameOf(match: Match, side: "A" | "B") {
 }
 
 /** Detect & describe the result. Returns undefined while still live. */
-export function detectResult(match: Match):
-  | { winner: "A" | "B" | "tie" | "draw"; summary: string }
-  | undefined {
+export function detectResult(
+  match: Match,
+): { winner: "A" | "B" | "tie" | "draw"; summary: string } | undefined {
   const inns = match.innings;
   const last = inns[inns.length - 1];
 
@@ -91,7 +91,8 @@ export function detectResult(match: Match):
     if (teamA === teamB) return { winner: "tie", summary: "Match tied" };
     if (inns[1].closeReason === "target") {
       const wktsLeft =
-        (inns[1].battingTeam === "A" ? match.teamA : match.teamB).playerIds.length - inns[1].wickets;
+        (inns[1].battingTeam === "A" ? match.teamA : match.teamB).playerIds.length -
+        inns[1].wickets;
       const team = inns[1].battingTeam === "A" ? match.teamA.name : match.teamB.name;
       return { winner: inns[1].battingTeam, summary: `${team} won by ${wktsLeft} wickets` };
     }
@@ -261,8 +262,12 @@ export function canDeclare(match: Match): boolean {
 
 export function leadTrailStatus(match: Match): string {
   if (match.format !== "C") return "";
-  const teamARuns = match.innings.filter((i) => i.battingTeam === "A").reduce((s, i) => s + i.runs, 0);
-  const teamBRuns = match.innings.filter((i) => i.battingTeam === "B").reduce((s, i) => s + i.runs, 0);
+  const teamARuns = match.innings
+    .filter((i) => i.battingTeam === "A")
+    .reduce((s, i) => s + i.runs, 0);
+  const teamBRuns = match.innings
+    .filter((i) => i.battingTeam === "B")
+    .reduce((s, i) => s + i.runs, 0);
   const innings = match.innings[match.currentInnings];
   if (!innings) return "";
   const ownRuns = innings.battingTeam === "A" ? teamARuns : teamBRuns;

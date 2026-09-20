@@ -99,7 +99,12 @@ export function computeConsistency(scores: number[]): {
       consecutive = 0;
     }
   }
-  return { points, currentStreak: consecutive, longestStreak: longest, streakBonusInnings: bonusInnings };
+  return {
+    points,
+    currentStreak: consecutive,
+    longestStreak: longest,
+    streakBonusInnings: bonusInnings,
+  };
 }
 
 export function computeOvertakeScore(player: Player, matches: Match[]): OvertakeScore {
@@ -155,15 +160,50 @@ export function computeOvertakeScore(player: Player, matches: Match[]): Overtake
   const historicDetail = "Included in the official baseline buckets";
 
   const categories: Record<OvertakeCategoryKey, OvertakeCategory> = {
-    batting: { key: "batting", label: CATEGORY_LABELS.batting, points: battingPts, detail: battingDetail },
-    bigInnings: { key: "bigInnings", label: CATEGORY_LABELS.bigInnings, points: bigPts, detail: bigDetail },
-    consistency: { key: "consistency", label: CATEGORY_LABELS.consistency, points: consPts, detail: consDetail },
+    batting: {
+      key: "batting",
+      label: CATEGORY_LABELS.batting,
+      points: battingPts,
+      detail: battingDetail,
+    },
+    bigInnings: {
+      key: "bigInnings",
+      label: CATEGORY_LABELS.bigInnings,
+      points: bigPts,
+      detail: bigDetail,
+    },
+    consistency: {
+      key: "consistency",
+      label: CATEGORY_LABELS.consistency,
+      points: consPts,
+      detail: consDetail,
+    },
     awards: { key: "awards", label: CATEGORY_LABELS.awards, points: awardPts, detail: awardDetail },
-    boundaries: { key: "boundaries", label: CATEGORY_LABELS.boundaries, points: fourPts, detail: boundaryDetail },
-    bowling: { key: "bowling", label: CATEGORY_LABELS.bowling, points: histWktPts, detail: bowlingDetail },
-    matchPerf: { key: "matchPerf", label: CATEGORY_LABELS.matchPerf, points: matchPerfPts, detail: matchPerfDetail },
+    boundaries: {
+      key: "boundaries",
+      label: CATEGORY_LABELS.boundaries,
+      points: fourPts,
+      detail: boundaryDetail,
+    },
+    bowling: {
+      key: "bowling",
+      label: CATEGORY_LABELS.bowling,
+      points: histWktPts,
+      detail: bowlingDetail,
+    },
+    matchPerf: {
+      key: "matchPerf",
+      label: CATEGORY_LABELS.matchPerf,
+      points: matchPerfPts,
+      detail: matchPerfDetail,
+    },
     ach: { key: "ach", label: CATEGORY_LABELS.ach, points: achPts, detail: achDetail },
-    historic: { key: "historic", label: CATEGORY_LABELS.historic, points: historicPts, detail: historicDetail },
+    historic: {
+      key: "historic",
+      label: CATEGORY_LABELS.historic,
+      points: historicPts,
+      detail: historicDetail,
+    },
   };
 
   const total = Object.values(categories).reduce((a, b) => a + b.points, 0);
@@ -194,9 +234,7 @@ export interface OvertakePlan {
 
 /** Build ranking of all players by overall Overtake score. */
 export function rankAllOvertake(players: Player[], matches: Match[]): OvertakeScore[] {
-  return players
-    .map((p) => computeOvertakeScore(p, matches))
-    .sort((a, b) => b.total - a.total);
+  return players.map((p) => computeOvertakeScore(p, matches)).sort((a, b) => b.total - a.total);
 }
 
 /** Build an improvement plan for the trailing player to overtake the leader. */
@@ -217,10 +255,9 @@ export function buildOvertakePlan(
   // Strengths / weaknesses vs leader
   const sortedByDiff = [...deficits].sort((a, b) => b.diff - a.diff);
   const weakestKey = sortedByDiff[0]?.key ?? "batting";
-  const strongestKey =
-    (Object.keys(trailer.categories) as OvertakeCategoryKey[])
-      .slice()
-      .sort((a, b) => trailer.categories[b].points - trailer.categories[a].points)[0];
+  const strongestKey = (Object.keys(trailer.categories) as OvertakeCategoryKey[])
+    .slice()
+    .sort((a, b) => trailer.categories[b].points - trailer.categories[a].points)[0];
 
   // Suggestions per category — concrete, quality-first
   const s: OvertakePlan["suggestions"] = [];
@@ -231,44 +268,52 @@ export function buildOvertakePlan(
 
   // Exact single-lever paths (§1 requires mathematically exact numbers).
   s.push({
-    key: "bigInnings", label: "Centuries",
+    key: "bigInnings",
+    label: "Centuries",
     points: Math.ceil(need / 20) * 20,
     text: `${trailerName} needs exactly ${Math.ceil(need / 20)} century${Math.ceil(need / 20) === 1 ? "" : "ies"} to overtake ${leaderName}.`,
   });
   s.push({
-    key: "bigInnings", label: "Fifties",
+    key: "bigInnings",
+    label: "Fifties",
     points: Math.ceil(need / 10) * 10,
     text: `${trailerName} needs exactly ${Math.ceil(need / 10)} fifty${Math.ceil(need / 10) === 1 ? "" : "ies"} to overtake ${leaderName}.`,
   });
   s.push({
-    key: "awards", label: "Player of the Match",
+    key: "awards",
+    label: "Player of the Match",
     points: Math.ceil(need / 6) * 6,
     text: `${trailerName} needs exactly ${Math.ceil(need / 6)} Player of the Match award${Math.ceil(need / 6) === 1 ? "" : "s"} to overtake ${leaderName}.`,
   });
   s.push({
-    key: "boundaries", label: "Fours",
+    key: "boundaries",
+    label: "Fours",
     points: need,
     text: `${trailerName} needs exactly ${need} more four${need === 1 ? "" : "s"} to overtake ${leaderName}.`,
   });
   // Wickets assumed middle-order tier @ 4 pts each.
   s.push({
-    key: "bowling", label: "Wickets",
+    key: "bowling",
+    label: "Wickets",
     points: Math.ceil(need / 4) * 4,
     text: `${trailerName} needs exactly ${Math.ceil(need / 4)} more wickets (middle-order) to overtake ${leaderName}.`,
   });
   // SR — need Δ = ceil(need/2)
   const srDelta = Math.ceil(need / 2);
   s.push({
-    key: "batting", label: "Strike Rate",
+    key: "batting",
+    label: "Strike Rate",
     points: srDelta * 2,
     text: `${trailerName} needs exactly +${srDelta} career strike rate (${trailer.strikeRate.toFixed(1)} → ${(trailer.strikeRate + srDelta).toFixed(1)}) to overtake ${leaderName}.`,
   });
   // Consistency streak — +12 per extra 30+ once streak ≥ 3.
-  const streakLeft = trailer.currentStreak >= 2
-    ? Math.ceil(need / 12)
-    : Math.ceil((need + 12) / 12) + (2 - trailer.currentStreak);
+  const streakLeft =
+    trailer.currentStreak >= 2
+      ? Math.ceil(need / 12)
+      : Math.ceil((need + 12) / 12) + (2 - trailer.currentStreak);
   s.push({
-    key: "consistency", label: "Consistency Streak",
+    key: "consistency",
+    label: "Consistency Streak",
     points: need,
     text: `${trailerName} needs exactly ${streakLeft} more consecutive 30+ innings${trailer.currentStreak < 2 ? " (first two build the streak)" : ""} to overtake ${leaderName}.`,
   });
@@ -314,15 +359,24 @@ export function buildOvertakePlan(
 
 function categoryPhrase(k: OvertakeCategoryKey): string {
   switch (k) {
-    case "batting": return "raising the career strike rate";
-    case "bigInnings": return "scoring more centuries and fifties";
-    case "consistency": return "building a 30+ consistency streak";
-    case "awards": return "winning more match awards";
-    case "boundaries": return "hitting more boundaries";
-    case "bowling": return "picking up more wickets";
-    case "matchPerf": return "compiling stronger match-by-match performances";
-    case "ach": return "unlocking more achievements";
-    case "historic": return "adding to the career record";
+    case "batting":
+      return "raising the career strike rate";
+    case "bigInnings":
+      return "scoring more centuries and fifties";
+    case "consistency":
+      return "building a 30+ consistency streak";
+    case "awards":
+      return "winning more match awards";
+    case "boundaries":
+      return "hitting more boundaries";
+    case "bowling":
+      return "picking up more wickets";
+    case "matchPerf":
+      return "compiling stronger match-by-match performances";
+    case "ach":
+      return "unlocking more achievements";
+    case "historic":
+      return "adding to the career record";
   }
 }
 

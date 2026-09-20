@@ -14,12 +14,12 @@ import type { Player } from "./types";
  */
 
 const WEIGHTS = {
-  batting: 0.30,
+  batting: 0.3,
   bowling: 0.22,
   pressure: 0.18,
   awards: 0.12,
   fielding: 0.08,
-  form: 0.10,
+  form: 0.1,
 } as const;
 
 const clamp = (n: number, lo = 0, hi = 100) => Math.min(hi, Math.max(lo, n));
@@ -31,16 +31,18 @@ function battingScore(p: Player): { score: number; sr: number; avg: number } {
   const avg = p.career.runs / Math.max(1, innings - p.career.notOuts);
   if (p.career.matches === 0) return { score: 50, sr: 0, avg: 0 };
   // Component sub-scores (each 0..100)
-  const runsS = clamp((c.runs / 5000) * 100);              // 5000 runs → 100
-  const avgS = clamp((avg / 60) * 100);                    // avg 60 → 100
-  const srS = clamp(((sr - 80) / 80) * 100);               // sr 160 → 100
-  const hundredsS = clamp((c.hundreds / 20) * 100);        // 20 tons → 100
-  const fiftiesS = clamp((c.fifties / 40) * 100);          // 40 fifties → 100
-  const highestS = clamp((c.highest / 250) * 100);         // HS 250 → 100
-  const bigS = clamp((((p.career.hundred50s ?? 0) * 2 + (p.career.doubleHundreds ?? 0) * 4) / 10) * 100);
+  const runsS = clamp((c.runs / 5000) * 100); // 5000 runs → 100
+  const avgS = clamp((avg / 60) * 100); // avg 60 → 100
+  const srS = clamp(((sr - 80) / 80) * 100); // sr 160 → 100
+  const hundredsS = clamp((c.hundreds / 20) * 100); // 20 tons → 100
+  const fiftiesS = clamp((c.fifties / 40) * 100); // 40 fifties → 100
+  const highestS = clamp((c.highest / 250) * 100); // HS 250 → 100
+  const bigS = clamp(
+    (((p.career.hundred50s ?? 0) * 2 + (p.career.doubleHundreds ?? 0) * 4) / 10) * 100,
+  );
   const boundaries = (p.career.fours ?? 0) + (p.career.sixes ?? 0);
   const boundaryPct = p.career.balls ? (boundaries / p.career.balls) * 100 : 0;
-  const boundaryS = clamp((boundaryPct / 25) * 100);       // 25% boundaries → 100
+  const boundaryS = clamp((boundaryPct / 25) * 100); // 25% boundaries → 100
   const score =
     runsS * 0.25 +
     avgS * 0.18 +
@@ -58,19 +60,21 @@ function bowlingScore(p: Player): { score: number; econ: number } {
   if ((p.career.wickets ?? 0) === 0 && (p.career.bowlBalls ?? 0) === 0) {
     return { score: p.career.matches === 0 ? 50 : 30, econ: 0 };
   }
-  const wktsS = clamp((p.career.wickets / 100) * 100);              // 100 wkts → 100
-  const econS = clamp(((9 - econ) / 4) * 100);                       // econ 5 → 100
+  const wktsS = clamp((p.career.wickets / 100) * 100); // 100 wkts → 100
+  const econS = clamp(((9 - econ) / 4) * 100); // econ 5 → 100
   const dots = p.career.dots ?? 0;
   const dotsS = clamp((dots / Math.max(1, p.career.bowlBalls)) * 200); // 50% dots → 100
   const bestS = clamp(((p.career.bestBowlingWkts ?? 0) / 5) * 100);
-  const score = wktsS * 0.45 + econS * 0.30 + dotsS * 0.15 + bestS * 0.10;
+  const score = wktsS * 0.45 + econS * 0.3 + dotsS * 0.15 + bestS * 0.1;
   return { score: clamp(score), econ };
 }
 
 function pressureScore(p: Player): number {
   const r = p.ratings ?? {};
   if (p.career.matches === 0) return 50;
-  const parts = [r.pressure, r.matchWinning, r.deathBat, r.deathBowl].filter((x): x is number => typeof x === "number");
+  const parts = [r.pressure, r.matchWinning, r.deathBat, r.deathBowl].filter(
+    (x): x is number => typeof x === "number",
+  );
   if (parts.length === 0) return 50;
   return clamp(parts.reduce((a, b) => a + b, 0) / parts.length);
 }
@@ -96,10 +100,19 @@ function formScore(p: Player): number {
   return clamp(p.ratings?.recentForm ?? p.ratings?.overall ?? 60);
 }
 
-function buildExplanation(p: Player, parts: {
-  bat: number; bowl: number; pres: number; awd: number; fld: number; form: number;
-  sr: number; econ: number;
-}): string {
+function buildExplanation(
+  p: Player,
+  parts: {
+    bat: number;
+    bowl: number;
+    pres: number;
+    awd: number;
+    fld: number;
+    form: number;
+    sr: number;
+    econ: number;
+  },
+): string {
   const c = combinedCareer(p);
   const bits: string[] = [];
   if (c.hundreds >= 5) bits.push(`${c.hundreds} centuries`);
@@ -134,8 +147,14 @@ export function rankPlayers(players: Player[]) {
       form * WEIGHTS.form;
     const c = combinedCareer(p);
     const reason = buildExplanation(p, {
-      bat: bat.score, bowl: bowl.score, pres, awd, fld, form,
-      sr: bat.sr, econ: bowl.econ,
+      bat: bat.score,
+      bowl: bowl.score,
+      pres,
+      awd,
+      fld,
+      form,
+      sr: bat.sr,
+      econ: bowl.econ,
     });
     return {
       player: p,
@@ -145,8 +164,12 @@ export function rankPlayers(players: Player[]) {
       econ: bowl.econ,
       reason,
       breakdown: {
-        batting: bat.score, bowling: bowl.score, pressure: pres,
-        awards: awd, fielding: fld, form,
+        batting: bat.score,
+        bowling: bowl.score,
+        pressure: pres,
+        awards: awd,
+        fielding: fld,
+        form,
       },
     };
   });

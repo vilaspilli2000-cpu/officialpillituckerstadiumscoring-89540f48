@@ -123,9 +123,11 @@ async function doPush() {
       _device: (claiming ? deviceId() : null) as unknown as string,
     });
     if (error) throw error;
-    const row = (Array.isArray(data) ? data[0] : data) as
-      | { version?: number; scoring_device?: string | null; scoring_heartbeat?: string | null }
-      | null;
+    const row = (Array.isArray(data) ? data[0] : data) as {
+      version?: number;
+      scoring_device?: string | null;
+      scoring_heartbeat?: string | null;
+    } | null;
     if (row) {
       useCloud.setState({
         version: Number(row.version ?? 0),
@@ -201,28 +203,24 @@ function subscribeRealtime() {
   if (channel) return;
   channel = supabase
     .channel("pts-state")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "pts_state" },
-      (payload) => {
-        const row = payload.new as {
-          version?: number;
-          data?: Record<string, unknown>;
-          scoring_device?: string | null;
-          scoring_heartbeat?: string | null;
-        };
-        if (!row) return;
-        useCloud.setState({
-          version: Number(row.version ?? 0),
-          scoringDevice: row.scoring_device ?? null,
-          scoringHeartbeat: row.scoring_heartbeat ?? null,
-        });
-        const origin = (row.data as { __origin?: string } | undefined)?.__origin;
-        if (origin === deviceId()) return;
-        applyRemote(row.data);
-        useCloud.setState({ status: "synced" });
-      },
-    )
+    .on("postgres_changes", { event: "*", schema: "public", table: "pts_state" }, (payload) => {
+      const row = payload.new as {
+        version?: number;
+        data?: Record<string, unknown>;
+        scoring_device?: string | null;
+        scoring_heartbeat?: string | null;
+      };
+      if (!row) return;
+      useCloud.setState({
+        version: Number(row.version ?? 0),
+        scoringDevice: row.scoring_device ?? null,
+        scoringHeartbeat: row.scoring_heartbeat ?? null,
+      });
+      const origin = (row.data as { __origin?: string } | undefined)?.__origin;
+      if (origin === deviceId()) return;
+      applyRemote(row.data);
+      useCloud.setState({ status: "synced" });
+    })
     .subscribe();
 }
 
@@ -329,14 +327,16 @@ export async function enterAsAdmin(username: string, password: string) {
     throw new Error("Incorrect username or password");
   }
   let { data, error } = await supabase.auth.signInWithPassword({
-    email: ADMIN_EMAIL, password: PTS_ADMIN_PASSWORD,
+    email: ADMIN_EMAIL,
+    password: PTS_ADMIN_PASSWORD,
   });
   if (error) {
     const up = await supabase.auth.signUp({ email: ADMIN_EMAIL, password: PTS_ADMIN_PASSWORD });
     if (up.error) throw up.error;
     if (!up.data.session) {
       const retry = await supabase.auth.signInWithPassword({
-        email: ADMIN_EMAIL, password: PTS_ADMIN_PASSWORD,
+        email: ADMIN_EMAIL,
+        password: PTS_ADMIN_PASSWORD,
       });
       if (retry.error) throw retry.error;
       data = retry.data;
@@ -375,7 +375,13 @@ export function teardownCloud() {
     heartbeat = null;
   }
   useCloud.setState({
-    ready: false, userId: null, email: null, role: null, status: "idle",
-    version: -1, scoringDevice: null, scoringHeartbeat: null,
+    ready: false,
+    userId: null,
+    email: null,
+    role: null,
+    status: "idle",
+    version: -1,
+    scoringDevice: null,
+    scoringHeartbeat: null,
   });
 }

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AchievementsRouteImport } from './routes/achievements'
 import { Route as AlmanacRouteImport } from './routes/almanac'
+import { Route as ChallengesRouteImport } from './routes/challenges'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as PlayersRouteImport } from './routes/players'
 import { Route as RecordsRouteImport } from './routes/records'
@@ -38,6 +39,11 @@ const AchievementsRoute = AchievementsRouteImport.update({
 const AlmanacRoute = AlmanacRouteImport.update({
   id: '/almanac',
   path: '/almanac',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChallengesRoute = ChallengesRouteImport.update({
+  id: '/challenges',
+  path: '/challenges',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/achievements': typeof AchievementsRoute
   '/almanac': typeof AlmanacRoute
+  '/challenges': typeof ChallengesRoute
   '/history': typeof HistoryRoute
   '/players': typeof PlayersRouteWithChildren
   '/records': typeof RecordsRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/achievements': typeof AchievementsRoute
   '/almanac': typeof AlmanacRoute
+  '/challenges': typeof ChallengesRoute
   '/history': typeof HistoryRoute
   '/players': typeof PlayersRouteWithChildren
   '/records': typeof RecordsRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/achievements': typeof AchievementsRoute
   '/almanac': typeof AlmanacRoute
+  '/challenges': typeof ChallengesRoute
   '/history': typeof HistoryRoute
   '/players': typeof PlayersRouteWithChildren
   '/records': typeof RecordsRoute
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/'
     | '/achievements'
     | '/almanac'
+    | '/challenges'
     | '/history'
     | '/players'
     | '/records'
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/'
     | '/achievements'
     | '/almanac'
+    | '/challenges'
     | '/history'
     | '/players'
     | '/records'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/'
     | '/achievements'
     | '/almanac'
+    | '/challenges'
     | '/history'
     | '/players'
     | '/records'
@@ -211,6 +223,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AchievementsRoute: typeof AchievementsRoute
   AlmanacRoute: typeof AlmanacRoute
+  ChallengesRoute: typeof ChallengesRoute
   HistoryRoute: typeof HistoryRoute
   PlayersRoute: typeof PlayersRouteWithChildren
   RecordsRoute: typeof RecordsRoute
@@ -243,6 +256,13 @@ declare module '@tanstack/react-router' {
       path: '/almanac'
       fullPath: '/almanac'
       preLoaderRoute: typeof AlmanacRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/challenges': {
+      id: '/challenges'
+      path: '/challenges'
+      fullPath: '/challenges'
+      preLoaderRoute: typeof ChallengesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -361,6 +381,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AchievementsRoute: AchievementsRoute,
   AlmanacRoute: AlmanacRoute,
+  ChallengesRoute: ChallengesRoute,
   HistoryRoute: HistoryRoute,
   PlayersRoute: PlayersRouteWithChildren,
   RecordsRoute: RecordsRoute,

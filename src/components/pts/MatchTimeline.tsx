@@ -3,10 +3,21 @@ import type { Match, Player } from "@/lib/pts/types";
 import { timelineEvents, type TimelineEvent } from "@/lib/pts/insights";
 
 const KIND_ICON: Record<TimelineEvent["kind"], string> = {
-  toss: "🪙", "first-run": "•", "first-four": "4", "first-six": "6",
-  "first-wicket": "W", fifty: "50", hundred: "100", "hat-trick": "H!",
-  "three-wkt": "3W", partnership: "🤝", "turning-point": "⚡",
-  "last-over": "⏱", "winning-shot": "🏆", result: "🎯", award: "👑",
+  toss: "🪙",
+  "first-run": "•",
+  "first-four": "4",
+  "first-six": "6",
+  "first-wicket": "W",
+  fifty: "50",
+  hundred: "100",
+  "hat-trick": "H!",
+  "three-wkt": "3W",
+  partnership: "🤝",
+  "turning-point": "⚡",
+  "last-over": "⏱",
+  "winning-shot": "🏆",
+  result: "🎯",
+  award: "👑",
 };
 
 export function MatchTimeline({ match, players }: { match: Match; players: Player[] }) {
@@ -52,7 +63,9 @@ export function MatchTimeline({ match, players }: { match: Match; players: Playe
             className="card-gold w-full max-w-md rounded-2xl p-5"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-[10px] uppercase tracking-widest text-primary/80">Timeline event</div>
+            <div className="text-[10px] uppercase tracking-widest text-primary/80">
+              Timeline event
+            </div>
             <div className="mt-1 text-lg font-black">{sel.title}</div>
             <div className="text-sm text-muted-foreground">{sel.detail}</div>
             <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
@@ -63,7 +76,10 @@ export function MatchTimeline({ match, players }: { match: Match; players: Playe
               <div className="bg-secondary/40 rounded-lg p-2">
                 <div className="text-muted-foreground">Innings</div>
                 <div className="font-bold">
-                  {sel.inningsIndex + 1} · {match.innings[sel.inningsIndex]?.battingTeam === "A" ? match.teamA.name : match.teamB.name}
+                  {sel.inningsIndex + 1} ·{" "}
+                  {match.innings[sel.inningsIndex]?.battingTeam === "A"
+                    ? match.teamA.name
+                    : match.teamB.name}
                 </div>
               </div>
             </div>
@@ -75,7 +91,9 @@ export function MatchTimeline({ match, players }: { match: Match; players: Playe
             <button
               className="mt-4 w-full rounded-lg bg-primary text-primary-foreground py-2 text-sm font-bold"
               onClick={() => setSel(null)}
-            >Close</button>
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

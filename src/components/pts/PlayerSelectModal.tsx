@@ -5,7 +5,13 @@ import { getPreviousMatchGlow, previousMatchStatusFor } from "./CaptainName";
 import type { Match } from "@/lib/pts/types";
 
 export function PlayerSelectModal({
-  open, title, options, onPick, excludeIds, lockReason, onClose,
+  open,
+  title,
+  options,
+  onPick,
+  excludeIds,
+  lockReason,
+  onClose,
 }: {
   open: boolean;
   title: string;
@@ -19,7 +25,12 @@ export function PlayerSelectModal({
   // ROLLING PREVIOUS-MATCH GLOW SOURCE — most recent completed match.
   const previousMatch = usePtsStore((s) => s.previousCompletedMatch());
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose?.(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose?.();
+      }}
+    >
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="text-gradient-gold">{title}</DialogTitle>
@@ -41,7 +52,9 @@ export function PlayerSelectModal({
                   className="justify-start"
                 >
                   {o.name}
-                  {reason && <span className="ml-auto text-xs text-muted-foreground">{reason}</span>}
+                  {reason && (
+                    <span className="ml-auto text-xs text-muted-foreground">{reason}</span>
+                  )}
                 </Button>
               );
             }

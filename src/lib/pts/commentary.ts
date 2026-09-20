@@ -1,8 +1,13 @@
 import type { BallEvent, CommentaryEntry, Match, Player } from "./types";
-import { batterAdvanced, currentRunRate, partnerships, recentRunRate, recentWickets } from "./analytics";
+import {
+  batterAdvanced,
+  currentRunRate,
+  partnerships,
+  recentRunRate,
+  recentWickets,
+} from "./analytics";
 
-const uid = () =>
-  globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
+const uid = () => globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
 
 function nameOf(players: Player[], id?: string) {
   return players.find((p) => p.id === id)?.name ?? "—";
@@ -11,17 +16,23 @@ function nameOf(players: Player[], id?: string) {
 /** Pick a non-recently-used phrase from a pool, keyed against existing commentary. */
 function pickPhrase(pool: string[], used: Set<string>): string {
   const fresh = pool.filter((p) => !used.has(p));
-  const choice = fresh.length > 0 ? fresh[Math.floor(Math.random() * fresh.length)] : pool[Math.floor(Math.random() * pool.length)];
+  const choice =
+    fresh.length > 0
+      ? fresh[Math.floor(Math.random() * fresh.length)]
+      : pool[Math.floor(Math.random() * pool.length)];
   used.add(choice);
   return choice;
 }
 
 /** Render a template; supports {batter} {bowler} {runs} {balls} {team} {need} {rrr} {crr} {ballsLeft}. */
 function render(tpl: string, vars: Record<string, string | number | undefined>) {
-  return tpl.replace(/\{(\w+)\}/g, (_, k) => {
-    const v = vars[k];
-    return v === undefined || v === null ? "" : String(v);
-  }).replace(/\s+/g, " ").trim();
+  return tpl
+    .replace(/\{(\w+)\}/g, (_, k) => {
+      const v = vars[k];
+      return v === undefined || v === null ? "" : String(v);
+    })
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /** Build a single commentary entry for the most recent ball, varied + non-repeating. */
@@ -40,19 +51,31 @@ export function generateCommentaryFor(
   const batCard = innings.batters.find((b) => b.playerId === ev.batterId);
   const bowlCard = innings.bowlers.find((b) => b.playerId === ev.bowlerId);
   const target = match.target;
-  const ballsLeft = innings.oversCap ? Math.max(0, innings.oversCap - innings.legalBalls) : undefined;
+  const ballsLeft = innings.oversCap
+    ? Math.max(0, innings.oversCap - innings.legalBalls)
+    : undefined;
   const need = target ? Math.max(0, target - innings.runs) : undefined;
-  const rrr = need !== undefined && ballsLeft && ballsLeft > 0 ? Number(((need / ballsLeft) * 6).toFixed(2)) : undefined;
+  const rrr =
+    need !== undefined && ballsLeft && ballsLeft > 0
+      ? Number(((need / ballsLeft) * 6).toFixed(2))
+      : undefined;
   const crr = Number(currentRunRate(innings).toFixed(2));
   const overLabel = `${ev.overNumber}.${ev.ballInOver || 0}`;
   const swing = prevBatPct !== undefined ? Math.round(newBatPct - prevBatPct) : 0;
 
   const batterPlayer = players.find((p) => p.id === ev.batterId);
   const bowlerPlayer = players.find((p) => p.id === ev.bowlerId);
-  void batterPlayer; void bowlerPlayer;
+  void batterPlayer;
+  void bowlerPlayer;
   // Captain flags (match-specific). Authoritative: teamA/B.captainId only.
-  const batterIsCaptain = !!(ev.batterId && (match.teamA.captainId === ev.batterId || match.teamB.captainId === ev.batterId));
-  const bowlerIsCaptain = !!(ev.bowlerId && (match.teamA.captainId === ev.bowlerId || match.teamB.captainId === ev.bowlerId));
+  const batterIsCaptain = !!(
+    ev.batterId &&
+    (match.teamA.captainId === ev.batterId || match.teamB.captainId === ev.batterId)
+  );
+  const bowlerIsCaptain = !!(
+    ev.bowlerId &&
+    (match.teamA.captainId === ev.bowlerId || match.teamB.captainId === ev.bowlerId)
+  );
 
   const recent = recentRunRate(innings, 18);
   const recWk = recentWickets(innings, 18);
@@ -60,8 +83,10 @@ export function generateCommentaryFor(
   const curPS = ps[ps.length - 1];
 
   const vars = {
-    batter, bowler,
-    team: batting.name, opp: bowling.name,
+    batter,
+    bowler,
+    team: batting.name,
+    opp: bowling.name,
     runs: batCard?.runs ?? 0,
     balls: batCard?.balls ?? 0,
     bRuns: bowlCard?.runs ?? 0,
@@ -168,9 +193,20 @@ export function generateCommentaryFor(
       main += render(pickPhrase(chasePool, used), vars);
     }
     if (Math.abs(swing) >= 6) {
-      const swingPool = swing > 0
-        ? [" Probability swings towards {opp}.", " Game tilts to {opp}.", " Big momentum to {opp}.", " Pendulum swings — {opp} on top."]
-        : [" {team} claw back into it.", " {team} not done yet.", " Lifeline for {team}.", " {team} still very much in this."];
+      const swingPool =
+        swing > 0
+          ? [
+              " Probability swings towards {opp}.",
+              " Game tilts to {opp}.",
+              " Big momentum to {opp}.",
+              " Pendulum swings — {opp} on top.",
+            ]
+          : [
+              " {team} claw back into it.",
+              " {team} not done yet.",
+              " Lifeline for {team}.",
+              " {team} still very much in this.",
+            ];
       main += render(pickPhrase(swingPool, used), vars);
     }
   }
@@ -227,22 +263,23 @@ export function generateCommentaryFor(
   }
   // ---------- NO BALL ----------
   else if (ev.type === "no-ball") {
-    const pool = ev.runsToBatter > 0
-      ? [
-          "No ball! {batter} cashes in with {runs} off the free hit.",
-          "Over-stepped — and punished. {runs} to {batter}.",
-          "Free hit dispatched — {batter} adds to the tally.",
-          "Front-foot fault, and {batter} makes {bowler} pay — {runs} runs.",
-          "No ball called, and put away for {runs} by {batter}.",
-          "Waist-high full toss — {runs} runs and a re-ball. Costly.",
-        ]
-      : [
-          "No ball called against {bowler}. Free hit coming.",
-          "Foot fault — {bowler} gives one away. Re-ball.",
-          "{bowler} oversteps. Costs the side an extra.",
-          "Toe on the line — no ball. {bowler} must re-set.",
-          "High full-toss ruled a no ball. {bowler} warned.",
-        ];
+    const pool =
+      ev.runsToBatter > 0
+        ? [
+            "No ball! {batter} cashes in with {runs} off the free hit.",
+            "Over-stepped — and punished. {runs} to {batter}.",
+            "Free hit dispatched — {batter} adds to the tally.",
+            "Front-foot fault, and {batter} makes {bowler} pay — {runs} runs.",
+            "No ball called, and put away for {runs} by {batter}.",
+            "Waist-high full toss — {runs} runs and a re-ball. Costly.",
+          ]
+        : [
+            "No ball called against {bowler}. Free hit coming.",
+            "Foot fault — {bowler} gives one away. Re-ball.",
+            "{bowler} oversteps. Costs the side an extra.",
+            "Toe on the line — no ball. {bowler} must re-set.",
+            "High full-toss ruled a no ball. {bowler} warned.",
+          ];
     const vars2 = { ...vars, runs: ev.runsToBatter };
     main = render(pickPhrase(pool, used), vars2);
   }
@@ -289,7 +326,7 @@ export function generateCommentaryFor(
       "Massive dot! {batter} can't get {bowler} away, RRR now {rrr}.",
       "Beaten! Priceless dot for {opp} at this stage.",
     ];
-    const pool = (rrr !== undefined && rrr > 10) ? pressurePool : tightPool;
+    const pool = rrr !== undefined && rrr > 10 ? pressurePool : tightPool;
     main = render(pickPhrase(pool, used), vars);
   }
   // ---------- SINGLE ----------
@@ -333,12 +370,12 @@ export function generateCommentaryFor(
     ];
     main = render(pickPhrase(pool, used), vars);
   } else {
-    const pool = [
-      "{runs} run{plural}.",
-      "Adds {runs} to the tally.",
-      "{runs} more to the score.",
-    ];
-    main = render(pickPhrase(pool, used), { ...vars, runs: ev.runsToBatter, plural: ev.runsToBatter === 1 ? "" : "s" });
+    const pool = ["{runs} run{plural}.", "Adds {runs} to the tally.", "{runs} more to the score."];
+    main = render(pickPhrase(pool, used), {
+      ...vars,
+      runs: ev.runsToBatter,
+      plural: ev.runsToBatter === 1 ? "" : "s",
+    });
   }
 
   // ---------- MILESTONES ----------
@@ -384,7 +421,11 @@ export function generateCommentaryFor(
   }
 
   // ---------- CHASE / RRR APPENDIX ----------
-  if (need !== undefined && rrr !== undefined && (ev.runsToBatter + ev.runsExtras > 0 || Math.abs(swing) >= 4)) {
+  if (
+    need !== undefined &&
+    rrr !== undefined &&
+    (ev.runsToBatter + ev.runsExtras > 0 || Math.abs(swing) >= 4)
+  ) {
     if (Math.random() < 0.5) main += ` (CRR ${crr.toFixed(1)} · RRR ${rrr.toFixed(1)})`;
   }
 
@@ -403,7 +444,10 @@ export function generateCommentaryFor(
 
   // ---------- MATCH-SPECIFIC CAPTAIN FLAVOUR ----------
   // Natural, probabilistic — never forced. Captain references only when contextually natural.
-  const catcherIsCaptain = !!(ev.catcherId && (match.teamA.captainId === ev.catcherId || match.teamB.captainId === ev.catcherId));
+  const catcherIsCaptain = !!(
+    ev.catcherId &&
+    (match.teamA.captainId === ev.catcherId || match.teamB.captainId === ev.catcherId)
+  );
   if (catcherIsCaptain && ev.isWicket && Math.random() < 0.45) {
     const pool = [
       " The captain completes the catch!",
@@ -482,7 +526,8 @@ export function generateCommentaryFor(
   if (prevEntries.some((c) => c.text === main)) {
     main = `${main} [${overLabel}]`;
   }
-  void recent; void recWk;
+  void recent;
+  void recWk;
 
   return {
     id: uid(),

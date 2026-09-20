@@ -20,18 +20,31 @@ export function CommentaryFeed({ entries }: { entries: CommentaryEntry[] }) {
       <div className="text-[10px] uppercase tracking-widest text-primary/80">Live Commentary</div>
       <ul className="space-y-2">
         {visible.map((c) => (
-          <li key={c.id} className="text-sm leading-snug border-l-2 pl-2"
-              style={{ borderColor: c.kind === "wicket" ? "#dc2626" : c.kind === "boundary" || c.kind === "milestone" ? "var(--primary, #D9A928)" : "rgba(217,169,40,0.4)" }}>
+          <li
+            key={c.id}
+            className="text-sm leading-snug border-l-2 pl-2"
+            style={{
+              borderColor:
+                c.kind === "wicket"
+                  ? "#dc2626"
+                  : c.kind === "boundary" || c.kind === "milestone"
+                    ? "var(--primary, #D9A928)"
+                    : "rgba(217,169,40,0.4)",
+            }}
+          >
             <div className="flex items-baseline gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
               <span className="tabular-nums">{c.overLabel}</span>
               <span>{c.kind}</span>
               {!!c.probSwing && Math.abs(c.probSwing) >= 3 && (
                 <span className={c.probSwing > 0 ? "text-emerald-500" : "text-red-500"}>
-                  {c.probSwing > 0 ? "+" : ""}{c.probSwing}%
+                  {c.probSwing > 0 ? "+" : ""}
+                  {c.probSwing}%
                 </span>
               )}
             </div>
-            <div><GlowCommentaryNames text={c.text} players={players} /></div>
+            <div>
+              <GlowCommentaryNames text={c.text} players={players} />
+            </div>
           </li>
         ))}
       </ul>

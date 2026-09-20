@@ -5,7 +5,7 @@ import { overBuckets, partnerships } from "./analytics";
 const nameOf = (id: string | undefined, players: Player[]) =>
   players.find((p) => p.id === id)?.name ?? "Unknown";
 
-const pick = <T,>(arr: T[], seed: number) => arr[Math.abs(seed) % arr.length];
+const pick = <T>(arr: T[], seed: number) => arr[Math.abs(seed) % arr.length];
 
 function detectFastStart(inn: Innings): string | null {
   const buckets = overBuckets(inn);
@@ -13,7 +13,8 @@ function detectFastStart(inn: Innings): string | null {
   const first3 = buckets.slice(0, 3);
   const runs = first3.reduce((s, b) => s + b.runs, 0);
   const balls = first3.reduce((s, b) => s + b.legalBalls, 0);
-  if (balls >= 12 && (runs / balls) * 6 >= 10) return `blazing start (${runs} in ${first3.length} ov)`;
+  if (balls >= 12 && (runs / balls) * 6 >= 10)
+    return `blazing start (${runs} in ${first3.length} ov)`;
   if (balls >= 12 && (runs / balls) * 6 <= 4) return `cagey start (${runs} in ${first3.length} ov)`;
   return null;
 }
@@ -32,7 +33,9 @@ function detectCollapse(inn: Innings): { runs: number; wkts: number; overs: numb
 
 function detectRecovery(inn: Innings): { runs: number; balls: number } | null {
   // Any partnership >=40 that came at wicket >=4
-  const best = partnerships(inn).filter((p) => p.wicket >= 4).sort((a, b) => b.runs - a.runs)[0];
+  const best = partnerships(inn)
+    .filter((p) => p.wicket >= 4)
+    .sort((a, b) => b.runs - a.runs)[0];
   if (best && best.runs >= 40) return { runs: best.runs, balls: best.balls };
   return null;
 }
@@ -64,7 +67,9 @@ export function buildStory(match: Match, players: Player[]): string {
     "The kind of contest people talk about the next day.",
     "A match that lived on the fine line.",
   ];
-  sections.push(`${FORMAT_LABELS[match.format]} — ${match.teamA.name} vs ${match.teamB.name}. ${pick(openers, seed)}`);
+  sections.push(
+    `${FORMAT_LABELS[match.format]} — ${match.teamA.name} vs ${match.teamB.name}. ${pick(openers, seed)}`,
+  );
 
   match.innings.forEach((inn, i) => {
     const battingName = inn.battingTeam === "A" ? match.teamA.name : match.teamB.name;
@@ -81,11 +86,19 @@ export function buildStory(match: Match, players: Player[]): string {
 
     const bits: string[] = [line];
     if (fast) bits.push(`They opened with a ${fast}.`);
-    if (collapse) bits.push(`Then came a collapse — ${collapse.wkts} wickets for ${collapse.runs} in ${collapse.overs} overs.`);
-    if (recovery) bits.push(`${nameOf(top?.playerId, players)}'s crew rebuilt with a ${recovery.runs}-run stand (${recovery.balls}).`);
+    if (collapse)
+      bits.push(
+        `Then came a collapse — ${collapse.wkts} wickets for ${collapse.runs} in ${collapse.overs} overs.`,
+      );
+    if (recovery)
+      bits.push(
+        `${nameOf(top?.playerId, players)}'s crew rebuilt with a ${recovery.runs}-run stand (${recovery.balls}).`,
+      );
     if (top && top.runs >= 20) {
       const sr = top.balls ? ((top.runs / top.balls) * 100).toFixed(0) : "-";
-      bits.push(`${nameOf(top.playerId, players)} top-scored with ${top.runs}${top.out ? "" : "*"} off ${top.balls} (SR ${sr}).`);
+      bits.push(
+        `${nameOf(top.playerId, players)} top-scored with ${top.runs}${top.out ? "" : "*"} off ${top.balls} (SR ${sr}).`,
+      );
     }
     if (bw && bw.wickets > 0) {
       bits.push(`${nameOf(bw.playerId, players)} led the attack with ${bw.wickets}/${bw.runs}.`);
@@ -104,13 +117,19 @@ export function buildStory(match: Match, players: Player[]): string {
 
   // Turning point via probability swing
   if (match.probability.length > 2) {
-    let bestSwing = 0, bestIdx = -1;
+    let bestSwing = 0,
+      bestIdx = -1;
     for (let j = 1; j < match.probability.length; j++) {
       const s = Math.abs(match.probability[j].teamA - match.probability[j - 1].teamA);
-      if (s > bestSwing) { bestSwing = s; bestIdx = j; }
+      if (s > bestSwing) {
+        bestSwing = s;
+        bestIdx = j;
+      }
     }
     if (bestIdx > 0 && bestSwing >= 8) {
-      sections.push(`Turning point: a ${bestSwing.toFixed(0)}% probability swing — ${match.probability[bestIdx].note}.`);
+      sections.push(
+        `Turning point: a ${bestSwing.toFixed(0)}% probability swing — ${match.probability[bestIdx].note}.`,
+      );
     }
   }
 
@@ -120,7 +139,9 @@ export function buildStory(match: Match, players: Player[]): string {
     const last6 = lastInn.events.slice(-6);
     const r = last6.reduce((s, e) => s + e.runsToBatter + e.runsExtras, 0);
     const w = last6.filter((e) => e.isWicket).length;
-    sections.push(`Final over: ${r} run${r === 1 ? "" : "s"}${w ? `, ${w} wkt${w === 1 ? "" : "s"}` : ""}.`);
+    sections.push(
+      `Final over: ${r} run${r === 1 ? "" : "s"}${w ? `, ${w} wkt${w === 1 ? "" : "s"}` : ""}.`,
+    );
   }
 
   if (match.result) sections.push(match.result.summary + ".");

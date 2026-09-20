@@ -24,11 +24,71 @@ export interface HistoricAddition {
 }
 
 export const HISTORIC_ADDITIONS: Record<string, HistoricAddition> = {
-  sunny:   { fours: 1700, topWickets: 40, middleWickets: 20, lowerWickets: 10, directCatches: 50, oneBounceCatches: 30, pom: 25, botm: 18, fielder: 15, fighter: 12, consistency: 100 },
-  sathvik: { fours: 900,  topWickets: 18, middleWickets: 15, lowerWickets: 8,  directCatches: 28, oneBounceCatches: 15, pom: 12, botm: 10, fielder: 8,  fighter: 8,  consistency: 56 },
-  rithu:   { fours: 560,  topWickets: 16, middleWickets: 12, lowerWickets: 6,  directCatches: 22, oneBounceCatches: 10, pom: 8,  botm: 6,  fielder: 5,  fighter: 5,  consistency: 43 },
-  karthik: { fours: 380,  topWickets: 10, middleWickets: 10, lowerWickets: 6,  directCatches: 16, oneBounceCatches: 10, pom: 5,  botm: 4,  fielder: 4,  fighter: 4,  consistency: 28 },
-  deva:    { fours: 70,   topWickets: 2,  middleWickets: 2,  lowerWickets: 2,  directCatches: 6,  oneBounceCatches: 3,  pom: 1,  botm: 1,  fielder: 1,  fighter: 1,  consistency: 6 },
+  sunny: {
+    fours: 1700,
+    topWickets: 40,
+    middleWickets: 20,
+    lowerWickets: 10,
+    directCatches: 50,
+    oneBounceCatches: 30,
+    pom: 25,
+    botm: 18,
+    fielder: 15,
+    fighter: 12,
+    consistency: 100,
+  },
+  sathvik: {
+    fours: 900,
+    topWickets: 18,
+    middleWickets: 15,
+    lowerWickets: 8,
+    directCatches: 28,
+    oneBounceCatches: 15,
+    pom: 12,
+    botm: 10,
+    fielder: 8,
+    fighter: 8,
+    consistency: 56,
+  },
+  rithu: {
+    fours: 560,
+    topWickets: 16,
+    middleWickets: 12,
+    lowerWickets: 6,
+    directCatches: 22,
+    oneBounceCatches: 10,
+    pom: 8,
+    botm: 6,
+    fielder: 5,
+    fighter: 5,
+    consistency: 43,
+  },
+  karthik: {
+    fours: 380,
+    topWickets: 10,
+    middleWickets: 10,
+    lowerWickets: 6,
+    directCatches: 16,
+    oneBounceCatches: 10,
+    pom: 5,
+    botm: 4,
+    fielder: 4,
+    fighter: 4,
+    consistency: 28,
+  },
+  deva: {
+    fours: 70,
+    topWickets: 2,
+    middleWickets: 2,
+    lowerWickets: 2,
+    directCatches: 6,
+    oneBounceCatches: 3,
+    pom: 1,
+    botm: 1,
+    fielder: 1,
+    fighter: 1,
+    consistency: 6,
+  },
 };
 
 /** Permanent PTS Historic Points baseline after the additions are applied. */
@@ -48,10 +108,7 @@ export const HISTORIC_TARGETS: Record<string, number> = {
 
 /** Engine points for a player, ignoring live match points & calibration. */
 function enginePoints(p: Player): number {
-  return computeOvertakeScore(
-    { ...p, matchPoints: 0, historicRankingPoints: 0 },
-    [],
-  ).total;
+  return computeOvertakeScore({ ...p, matchPoints: 0, historicRankingPoints: 0 }, []).total;
 }
 
 /** Apply the historic stat additions + calibrate to the official baseline. */
@@ -72,16 +129,17 @@ export function applyHistoricBaseline(player: Player): Player {
     p.career.fighterAwards = (p.career.fighterAwards ?? 0) + add.fighter;
     p.career.awards = (p.career.awards ?? 0) + add.pom + add.botm + add.fielder + add.fighter;
     p.historicWicketTiers = {
-      top: add.topWickets, middle: add.middleWickets, lower: add.lowerWickets,
+      top: add.topWickets,
+      middle: add.middleWickets,
+      lower: add.lowerWickets,
     };
-    p.historicWicketBonus =
-      add.topWickets * 7 + add.middleWickets * 4 + add.lowerWickets * 3;
+    p.historicWicketBonus = add.topWickets * 7 + add.middleWickets * 4 + add.lowerWickets * 3;
     p.historicConsistency = add.consistency;
   }
 
   // Historic snapshots always track the restored career figures.
   p.historicFours = p.career.fours;
-  p.historicWickets = (player.historicWickets ?? player.career.wickets ?? 0);
+  p.historicWickets = player.historicWickets ?? player.career.wickets ?? 0;
   p.matchPoints = p.matchPoints ?? 0;
 
   const target = HISTORIC_TARGETS[p.id];

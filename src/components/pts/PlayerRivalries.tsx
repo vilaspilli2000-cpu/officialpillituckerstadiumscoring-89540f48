@@ -1,6 +1,11 @@
 import { useMemo } from "react";
 import type { Match, Player } from "@/lib/pts/types";
-import { batterVsBowler, bowlerVsBatter, fielderVsBatter, rivalryAlerts } from "@/lib/pts/rivalries";
+import {
+  batterVsBowler,
+  bowlerVsBatter,
+  fielderVsBatter,
+  rivalryAlerts,
+} from "@/lib/pts/rivalries";
 
 /** Live rivalries panel — updates after every ball because `match` is a fresh reference. */
 export function PlayerRivalries({
@@ -26,7 +31,15 @@ export function PlayerRivalries({
     [matches, match, batterId, bowlerId],
   );
   const fielders = useMemo(
-    () => (batterId ? fielderVsBatter(matches, match, batterId, bowlingTeam.playerIds.filter((i) => i !== batterId)) : []),
+    () =>
+      batterId
+        ? fielderVsBatter(
+            matches,
+            match,
+            batterId,
+            bowlingTeam.playerIds.filter((i) => i !== batterId),
+          )
+        : [],
     [matches, match, batterId, bowlingTeam],
   );
   const alerts = useMemo(
@@ -54,7 +67,10 @@ export function PlayerRivalries({
       {alerts.length > 0 && (
         <div className="space-y-1">
           {alerts.slice(0, 3).map((a) => (
-            <div key={a.id} className="flex items-start gap-2 rounded-lg border border-primary/40 bg-primary/5 px-2 py-1.5 text-xs">
+            <div
+              key={a.id}
+              className="flex items-start gap-2 rounded-lg border border-primary/40 bg-primary/5 px-2 py-1.5 text-xs"
+            >
               <span>{a.icon}</span>
               <span>{a.text}</span>
             </div>
@@ -63,31 +79,37 @@ export function PlayerRivalries({
       )}
 
       {bvb && (
-        <RivalryCard title={`${batterName} vs ${bowlerName}`} rows={[
-          ["Runs", String(bvb.runs)],
-          ["Balls", String(bvb.balls)],
-          ["SR", bvb.balls ? bvb.strikeRate.toFixed(2) : "—"],
-          ["Dismissed", String(bvb.dismissed)],
-          ["Avg", bvb.dismissed ? bvb.average.toFixed(1) : "—"],
-          ["4s", String(bvb.fours)],
-          ["Dots", String(bvb.dots)],
-          ["Highest", bvb.highest ? `${bvb.highest}${bvb.highestNotOut ? "*" : ""}` : "—"],
-          ["Last dismissal", bvb.lastDismissal ?? "—"],
-          ["Last match", bvb.lastMatchLabel ?? "—"],
-        ]} />
+        <RivalryCard
+          title={`${batterName} vs ${bowlerName}`}
+          rows={[
+            ["Runs", String(bvb.runs)],
+            ["Balls", String(bvb.balls)],
+            ["SR", bvb.balls ? bvb.strikeRate.toFixed(2) : "—"],
+            ["Dismissed", String(bvb.dismissed)],
+            ["Avg", bvb.dismissed ? bvb.average.toFixed(1) : "—"],
+            ["4s", String(bvb.fours)],
+            ["Dots", String(bvb.dots)],
+            ["Highest", bvb.highest ? `${bvb.highest}${bvb.highestNotOut ? "*" : ""}` : "—"],
+            ["Last dismissal", bvb.lastDismissal ?? "—"],
+            ["Last match", bvb.lastMatchLabel ?? "—"],
+          ]}
+        />
       )}
 
       {bwb && (
-        <RivalryCard title={`${bowlerName} vs ${batterName}`} rows={[
-          ["Wickets", String(bwb.wickets)],
-          ["Runs", String(bwb.runs)],
-          ["Balls", String(bwb.balls)],
-          ["Econ", bwb.balls ? bwb.economy.toFixed(2) : "—"],
-          ["Avg", bwb.wickets ? bwb.average.toFixed(1) : "—"],
-          ["SR", bwb.wickets ? bwb.strikeRate.toFixed(1) : "—"],
-          ["Dots", String(bwb.dots)],
-          ["Best", bwb.bestWickets ? `${bwb.bestWickets}/${bwb.bestRuns}` : "—"],
-        ]} />
+        <RivalryCard
+          title={`${bowlerName} vs ${batterName}`}
+          rows={[
+            ["Wickets", String(bwb.wickets)],
+            ["Runs", String(bwb.runs)],
+            ["Balls", String(bwb.balls)],
+            ["Econ", bwb.balls ? bwb.economy.toFixed(2) : "—"],
+            ["Avg", bwb.wickets ? bwb.average.toFixed(1) : "—"],
+            ["SR", bwb.wickets ? bwb.strikeRate.toFixed(1) : "—"],
+            ["Dots", String(bwb.dots)],
+            ["Best", bwb.bestWickets ? `${bwb.bestWickets}/${bwb.bestRuns}` : "—"],
+          ]}
+        />
       )}
 
       <div>
@@ -105,7 +127,9 @@ export function PlayerRivalries({
               return (
                 <div key={f.fielderId} className="flex items-center justify-between text-xs">
                   <span>{nm}</span>
-                  <span className="text-muted-foreground">{parts.join(" · ")} · total {f.total}</span>
+                  <span className="text-muted-foreground">
+                    {parts.join(" · ")} · total {f.total}
+                  </span>
                 </div>
               );
             })}
@@ -119,7 +143,9 @@ export function PlayerRivalries({
 function RivalryCard({ title, rows }: { title: string; rows: [string, string][] }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">{title}</div>
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+        {title}
+      </div>
       <div className="grid grid-cols-3 gap-x-3 gap-y-1 text-xs tabular-nums">
         {rows.map(([k, v]) => (
           <div key={k} className="flex justify-between border-b border-border/30 py-0.5">

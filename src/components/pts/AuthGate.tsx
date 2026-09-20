@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  PTS_ADMIN_PASSWORD, PTS_ADMIN_USERNAME, claimScoring, enterAsAdmin,
-  enterAsViewer, ptsSignOut, useCloud,
+  PTS_ADMIN_PASSWORD,
+  PTS_ADMIN_USERNAME,
+  claimScoring,
+  enterAsAdmin,
+  enterAsViewer,
+  ptsSignOut,
+  useCloud,
 } from "@/lib/pts/cloud";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -25,7 +30,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       }
       if (active) setBooting(false);
     })();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (booting) {
@@ -106,7 +113,10 @@ function AccessScreen() {
           </Button>
           <button
             type="button"
-            onClick={() => { setLocked(null); void viewer(); }}
+            onClick={() => {
+              setLocked(null);
+              void viewer();
+            }}
             className="w-full text-xs text-muted-foreground hover:text-primary"
           >
             Continue as Viewer instead

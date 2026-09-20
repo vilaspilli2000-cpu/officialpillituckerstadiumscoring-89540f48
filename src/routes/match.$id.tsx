@@ -41,7 +41,9 @@ function MatchView() {
       <AppShell title="Scorecard">
         <div className="text-center mt-12">
           <p className="text-muted-foreground">Match not found.</p>
-          <Link to="/history" className="text-primary underline mt-3 inline-block">Back to History</Link>
+          <Link to="/history" className="text-primary underline mt-3 inline-block">
+            Back to History
+          </Link>
         </div>
       </AppShell>
     );
@@ -65,10 +67,16 @@ function MatchView() {
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
           {match.innings.map((inn, i) => (
             <div key={i} className="bg-secondary/40 rounded-lg p-3">
-              <div className="text-xs text-muted-foreground">{inn.battingTeam === "A" ? match.teamA.name : match.teamB.name}</div>
+              <div className="text-xs text-muted-foreground">
+                {inn.battingTeam === "A" ? match.teamA.name : match.teamB.name}
+              </div>
               <div className="text-xl font-bold tabular-nums">
                 {inn.runs}/{inn.wickets}
-                {inn.declared && <span className="ml-1 text-[10px] uppercase tracking-widest text-primary">Declared</span>}
+                {inn.declared && (
+                  <span className="ml-1 text-[10px] uppercase tracking-widest text-primary">
+                    Declared
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -103,7 +111,9 @@ function MatchView() {
             key={t}
             onClick={() => setTab(t)}
             className={`rounded-lg px-3 py-2 font-bold transition ${
-              tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"
+              tab === t
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-primary"
             }`}
           >
             {t}
@@ -115,7 +125,9 @@ function MatchView() {
         {tab === "scorecard" && <LiveScorecard match={match} players={players} />}
         {tab === "analytics" && <MatchAnalytics match={match} />}
         {tab === "commentary" && <CommentaryFeed entries={match.commentary ?? []} />}
-        {tab === "points" && <PointsBreakdown match={match} players={players} priorMatches={matches} />}
+        {tab === "points" && (
+          <PointsBreakdown match={match} players={players} priorMatches={matches} />
+        )}
       </div>
 
       {match.story && (
@@ -129,7 +141,9 @@ function MatchView() {
         <section className="mt-6 grid gap-3">
           {awards.map((a) => (
             <div key={a.type} className="card-gold rounded-xl p-4">
-              <div className="text-xs uppercase tracking-widest text-primary/80">{AWARD_LABEL[a.type] ?? a.type}</div>
+              <div className="text-xs uppercase tracking-widest text-primary/80">
+                {AWARD_LABEL[a.type] ?? a.type}
+              </div>
               <div className="font-bold">{a.headline}</div>
               <div className="text-xs text-muted-foreground mt-1">{a.reason}</div>
             </div>
@@ -144,7 +158,9 @@ function MatchView() {
           </Button>
         )}
         {!live && (
-          <Button variant="outline" className="flex-1" onClick={() => navigate({ to: "/history" })}>Back</Button>
+          <Button variant="outline" className="flex-1" onClick={() => navigate({ to: "/history" })}>
+            Back
+          </Button>
         )}
       </div>
     </AppShell>

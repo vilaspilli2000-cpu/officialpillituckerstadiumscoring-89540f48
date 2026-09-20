@@ -1,7 +1,11 @@
 import type { Match, Player } from "./types";
 import { computeMatchPoints, buildStreakSnapshot, type PointLine } from "./matchPoints";
 import { computeOvertakeScore } from "./overtakeRanking";
-import { layerResult, legacyLevelFromAchievements, meltdownLevelFromAchievements } from "./legacyMeltdown";
+import {
+  layerResult,
+  legacyLevelFromAchievements,
+  meltdownLevelFromAchievements,
+} from "./legacyMeltdown";
 
 export interface PointsBreakdownEntry {
   playerId: string;

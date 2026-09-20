@@ -31,7 +31,10 @@ export interface MilestoneCard {
   unitPlural: string;
 }
 
-const META: Record<MilestoneKey, { label: string; icon: string; unit: string; unitPlural: string }> = {
+const META: Record<
+  MilestoneKey,
+  { label: string; icon: string; unit: string; unitPlural: string }
+> = {
   runs: { label: "Career Runs", icon: "🏏", unit: "run", unitPlural: "runs" },
   fours: { label: "Career Fours", icon: "🎯", unit: "four", unitPlural: "fours" },
   sixes: { label: "Career Sixes", icon: "⚡", unit: "six", unitPlural: "sixes" },
@@ -43,8 +46,18 @@ const META: Record<MilestoneKey, { label: string; icon: string; unit: string; un
   batsmanAwards: { label: "Batsman of the Match", icon: "🏏", unit: "BOTM", unitPlural: "BOTMs" },
   bowlerAwards: { label: "Bowler of the Match", icon: "🎯", unit: "BOWLTM", unitPlural: "BOWLTMs" },
   fielderAwards: { label: "Fielder of the Match", icon: "🧤", unit: "FOTM", unitPlural: "FOTMs" },
-  fighterAwards: { label: "Fighter of the Match", icon: "🔥", unit: "Fighter award", unitPlural: "Fighter awards" },
-  worstAwards: { label: "Worst Player Awards", icon: "🥶", unit: "Worst award", unitPlural: "Worst awards" },
+  fighterAwards: {
+    label: "Fighter of the Match",
+    icon: "🔥",
+    unit: "Fighter award",
+    unitPlural: "Fighter awards",
+  },
+  worstAwards: {
+    label: "Worst Player Awards",
+    icon: "🥶",
+    unit: "Worst award",
+    unitPlural: "Worst awards",
+  },
 };
 
 /** Returns the next multiple of `step` strictly greater than `current`. */
@@ -63,8 +76,12 @@ export function careerValue(p: Player, key: MilestoneKey): number {
 export function totalAwards(p: Player): number {
   const c = p.career;
   const perType =
-    (c.pomAwards ?? 0) + (c.batsmanAwards ?? 0) + (c.bowlerAwards ?? 0) +
-    (c.fielderAwards ?? 0) + (c.fighterAwards ?? 0) + (c.worstAwards ?? 0);
+    (c.pomAwards ?? 0) +
+    (c.batsmanAwards ?? 0) +
+    (c.bowlerAwards ?? 0) +
+    (c.fielderAwards ?? 0) +
+    (c.fighterAwards ?? 0) +
+    (c.worstAwards ?? 0);
   return Math.max(perType, c.awards ?? 0);
 }
 
@@ -75,7 +92,17 @@ export function milestoneCard(p: Player, key: MilestoneKey): MilestoneCard {
   const gap = Math.max(0, target - current);
   const progress = target > 0 ? Math.min(1, current / target) : 0;
   const m = META[key];
-  return { key, label: m.label, icon: m.icon, current, target, gap, progress, unit: m.unit, unitPlural: m.unitPlural };
+  return {
+    key,
+    label: m.label,
+    icon: m.icon,
+    current,
+    target,
+    gap,
+    progress,
+    unit: m.unit,
+    unitPlural: m.unitPlural,
+  };
 }
 
 export function allMilestoneCards(p: Player): MilestoneCard[] {
@@ -110,9 +137,11 @@ function projectedCareer(p: Player, match: Match | undefined, key: MilestoneKey)
       const c = inn.bowlers.find((b) => b.playerId === p.id);
       if (c) live += c.wickets;
     } else if (key === "catches") {
-      for (const ev of inn.events) if (ev.catcherId === p.id && ev.dismissalType !== "run-out") live += 1;
+      for (const ev of inn.events)
+        if (ev.catcherId === p.id && ev.dismissalType !== "run-out") live += 1;
     } else if (key === "runOuts") {
-      for (const ev of inn.events) if (ev.catcherId === p.id && ev.dismissalType === "run-out") live += 1;
+      for (const ev of inn.events)
+        if (ev.catcherId === p.id && ev.dismissalType === "run-out") live += 1;
     }
   }
   return base + live;

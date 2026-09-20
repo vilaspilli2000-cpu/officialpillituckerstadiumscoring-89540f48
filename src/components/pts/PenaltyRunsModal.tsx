@@ -2,7 +2,12 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-export function PenaltyRunsModal({ open, playerName, onClose, onApply }: {
+export function PenaltyRunsModal({
+  open,
+  playerName,
+  onClose,
+  onApply,
+}: {
   open: boolean;
   playerName: string;
   onClose: () => void;
@@ -33,8 +38,12 @@ export function PenaltyRunsModal({ open, playerName, onClose, onApply }: {
           className="w-full accent-primary cursor-pointer"
         />
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button variant="gold" onClick={() => onApply(runs)}>APPLY PENALTY</Button>
-          <Button variant="score" onClick={onClose}>CANCEL</Button>
+          <Button variant="gold" onClick={() => onApply(runs)}>
+            APPLY PENALTY
+          </Button>
+          <Button variant="score" onClick={onClose}>
+            CANCEL
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

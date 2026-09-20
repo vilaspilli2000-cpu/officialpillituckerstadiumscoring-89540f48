@@ -6,7 +6,10 @@ function Meter({ value, label, tone }: { value: number; label: string; tone: "go
     <div>
       <div className="flex items-baseline justify-between">
         <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</span>
-        <span className="tabular-nums text-sm font-black text-primary">{value}<span className="text-[10px] text-muted-foreground">/100</span></span>
+        <span className="tabular-nums text-sm font-black text-primary">
+          {value}
+          <span className="text-[10px] text-muted-foreground">/100</span>
+        </span>
       </div>
       <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-secondary/70">
         <div
@@ -22,8 +25,11 @@ export function FormPressureCard({ player, matches }: { player: Player; matches:
   const form = computePlayerForm(player, matches);
   const pressure = computePressure(player, matches);
   const trendTone =
-    form.trend === "Improving" ? "text-primary"
-      : form.trend === "Declining" ? "text-red-500" : "text-muted-foreground";
+    form.trend === "Improving"
+      ? "text-primary"
+      : form.trend === "Declining"
+        ? "text-red-500"
+        : "text-muted-foreground";
 
   return (
     <section className="mt-4 card-gold rounded-2xl p-4 space-y-4">
@@ -44,7 +50,9 @@ export function FormPressureCard({ player, matches }: { player: Player; matches:
 
       {form.recent.length > 0 && (
         <div>
-          <div className="text-[10px] uppercase tracking-widest text-primary/80 mb-1">Last {form.recent.length} Matches</div>
+          <div className="text-[10px] uppercase tracking-widest text-primary/80 mb-1">
+            Last {form.recent.length} Matches
+          </div>
           <div className="space-y-1">
             {form.recent.map((r) => (
               <div key={r.matchId} className="flex items-center justify-between gap-3 text-xs">

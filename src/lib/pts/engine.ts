@@ -8,8 +8,7 @@ import type {
   Match,
 } from "./types";
 
-const uid = () =>
-  globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
+const uid = () => globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
 
 export function newBatterCard(playerId: string): BatterCard {
   return { playerId, runs: 0, balls: 0, fours: 0, sixes: 0, out: false, legState: 0 };
@@ -146,7 +145,11 @@ export function applyEvent(
       isWicket = true;
       dismissalType = opts.dismissalType ?? "bowled";
       dismissedPlayerId = batterId;
-      if (opts.dismissalType === "caught" || opts.dismissalType === "caught-one-bounce" || opts.dismissalType === "stumped") {
+      if (
+        opts.dismissalType === "caught" ||
+        opts.dismissalType === "caught-one-bounce" ||
+        opts.dismissalType === "stumped"
+      ) {
         catcherId = opts.catcherId;
       }
       if (opts.dismissalType === "run-out") {
@@ -224,11 +227,15 @@ export function applyEvent(
     achievements.push({ kind: "century", text: `Century for batter`, playerId: batterId });
   }
   // 4 fours in current over check
-  const overFours = innings.events
-    .filter((e) => e.overNumber === currentOver(innings) && e.runsToBatter === 4)
-    .length + (runsBatter === 4 ? 1 : 0);
+  const overFours =
+    innings.events.filter((e) => e.overNumber === currentOver(innings) && e.runsToBatter === 4)
+      .length + (runsBatter === 4 ? 1 : 0);
   if (overFours === 4) {
-    achievements.push({ kind: "four-fours", text: `Four boundaries in one over!`, playerId: batterId });
+    achievements.push({
+      kind: "four-fours",
+      text: `Four boundaries in one over!`,
+      playerId: batterId,
+    });
   }
 
   const event: BallEvent = {

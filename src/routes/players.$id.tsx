@@ -11,15 +11,23 @@ import { allMilestoneCards } from "@/lib/pts/milestones";
 import { FormPressureCard } from "@/components/pts/FormPressureCard";
 import { AchievementBadge } from "@/components/pts/AchievementBadge";
 import {
-  ACHIEVEMENT_GROUPS, CATEGORY_META, groupProgress, liveAchStats,
-  type AchCategory, type AchProgress,
+  ACHIEVEMENT_GROUPS,
+  CATEGORY_META,
+  groupProgress,
+  liveAchStats,
+  type AchCategory,
+  type AchProgress,
 } from "@/lib/pts/achievements";
 import { canScoreHere } from "@/lib/pts/cloud";
 
 export const Route = createFileRoute("/players/$id")({
   head: ({ params }) => ({ meta: [{ title: `Profile · ${params.id} — PTS Scorer` }] }),
   component: Profile,
-  notFoundComponent: () => <AppShell><div className="text-muted-foreground">Player not found.</div></AppShell>,
+  notFoundComponent: () => (
+    <AppShell>
+      <div className="text-muted-foreground">Player not found.</div>
+    </AppShell>
+  ),
 });
 
 function Profile() {
@@ -30,22 +38,32 @@ function Profile() {
   const player = usePtsStore((s) => s.players.find((p) => p.id === id));
   const players = usePtsStore((s) => s.players);
   const matches = usePtsStore((s) => s.matches);
-  if (!player) return <AppShell><p>Player not found. <Link to="/players" className="text-primary underline">Back</Link></p></AppShell>;
+  if (!player)
+    return (
+      <AppShell>
+        <p>
+          Player not found.{" "}
+          <Link to="/players" className="text-primary underline">
+            Back
+          </Link>
+        </p>
+      </AppShell>
+    );
   const updatePlayer = usePtsStore((s) => s.updatePlayer);
   const isOwner = canScoreHere();
   const CATS: AchCategory[] = ["batting", "bowling", "fielding", "awards", "shame"];
 
   // Showcase selections (editable by profile owner only).
   const savedShowcase = player.showcase ?? {};
-  const [draftShowcase, setDraftShowcase] = useState<Record<string, string>>(
-    () => ({ ...savedShowcase as Record<string, string> }),
-  );
+  const [draftShowcase, setDraftShowcase] = useState<Record<string, string>>(() => ({
+    ...(savedShowcase as Record<string, string>),
+  }));
   const [hasChanges, setHasChanges] = useState(false);
 
   // Reset draft when player changes (e.g. after sync from another device).
   useEffect(() => {
     if (!player) return;
-    setDraftShowcase({ ... (player.showcase ?? {}) } as Record<string, string>);
+    setDraftShowcase({ ...(player.showcase ?? {}) } as Record<string, string>);
     setHasChanges(false);
   }, [player?.id]);
 
@@ -86,16 +104,22 @@ function Profile() {
   const c = combinedCareer(player);
   const innings = Math.max(0, player.career.innings ?? player.career.matches);
   const outs = Math.max(0, innings - player.career.notOuts);
-  const sr = player.career.balls ? ((player.career.runs / player.career.balls) * 100).toFixed(1) : "-";
+  const sr = player.career.balls
+    ? ((player.career.runs / player.career.balls) * 100).toFixed(1)
+    : "-";
   const avg = outs > 0 ? (player.career.runs / outs).toFixed(1) : "-";
   const boundaries = (player.career.fours ?? 0) + (player.career.sixes ?? 0);
-  const boundaryPct = player.career.balls ? ((boundaries / player.career.balls) * 100).toFixed(1) + "%" : "-";
+  const boundaryPct = player.career.balls
+    ? ((boundaries / player.career.balls) * 100).toFixed(1) + "%"
+    : "-";
   const boundaryRatio = boundaries ? (player.career.balls / boundaries).toFixed(1) : "-";
   const dots = player.career.dots ?? 0;
   const bowlBalls = player.career.bowlBalls;
   const oversBowled = bowlBalls ? `${Math.floor(bowlBalls / 6)}.${bowlBalls % 6}` : "-";
   const econ = bowlBalls ? ((player.career.bowlRuns / bowlBalls) * 6).toFixed(2) : "-";
-  const bowlAvg = player.career.wickets ? (player.career.bowlRuns / player.career.wickets).toFixed(1) : "-";
+  const bowlAvg = player.career.wickets
+    ? (player.career.bowlRuns / player.career.wickets).toFixed(1)
+    : "-";
   const bowlSR = player.career.wickets ? (bowlBalls / player.career.wickets).toFixed(1) : "-";
   const bowlerDotPct = bowlBalls && dots ? ((dots / bowlBalls) * 100).toFixed(0) + "%" : "-";
   const awardCounts = playerAwardCounts(player.id, matches);
@@ -109,8 +133,12 @@ function Profile() {
   };
   const totalAwards = Math.max(
     player.career.awards,
-    perTypeCareer.pom + perTypeCareer.batsman + perTypeCareer.bowler +
-      perTypeCareer.fielder + perTypeCareer.fighter + perTypeCareer.worst,
+    perTypeCareer.pom +
+      perTypeCareer.batsman +
+      perTypeCareer.bowler +
+      perTypeCareer.fielder +
+      perTypeCareer.fighter +
+      perTypeCareer.worst,
   );
   const cards = allMilestoneCards(player);
   const achStats = liveAchStats(player, undefined);
@@ -141,10 +169,14 @@ function Profile() {
             <div className="text-xs uppercase tracking-[0.3em] text-primary/80">Player</div>
             <h1 className="text-3xl font-black text-gradient-gold truncate">{player.name}</h1>
             {player.role && player.role !== "—" && (
-              <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1">{player.role}</div>
+              <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1">
+                {player.role}
+              </div>
             )}
             {player.manualOverride && (
-              <span className="mt-2 inline-block rounded-full border border-primary/50 px-2 py-0.5 text-[10px] uppercase tracking-wider text-primary">Edited</span>
+              <span className="mt-2 inline-block rounded-full border border-primary/50 px-2 py-0.5 text-[10px] uppercase tracking-wider text-primary">
+                Edited
+              </span>
             )}
           </div>
           <Link to="/players/$id/edit" params={{ id: player.id }}>
@@ -153,7 +185,11 @@ function Profile() {
             </Button>
           </Link>
         </div>
-        {player.beginner && player.career.matches === 0 && <p className="text-xs text-muted-foreground mt-2">Beginner — pinned last until earning stats.</p>}
+        {player.beginner && player.career.matches === 0 && (
+          <p className="text-xs text-muted-foreground mt-2">
+            Beginner — pinned last until earning stats.
+          </p>
+        )}
         {player.notes && <p className="mt-3 text-sm text-muted-foreground">{player.notes}</p>}
       </header>
 
@@ -161,7 +197,9 @@ function Profile() {
 
       <section className="mt-4">
         <div className="mb-2 flex items-baseline justify-between">
-          <h2 className="text-sm uppercase tracking-widest text-primary/80">Achievement Showcase</h2>
+          <h2 className="text-sm uppercase tracking-widest text-primary/80">
+            Achievement Showcase
+          </h2>
           <Link
             to="/achievements"
             search={{ player: player.id }}
@@ -171,11 +209,15 @@ function Profile() {
           </Link>
         </div>
         <div className="mb-2 text-[11px] text-muted-foreground">
-          {isOwner ? "Choose one achievement per category — your pick is shown to everyone" : "Highest tier unlocked in each category"} · {player.achPoints ?? 0} ACH
+          {isOwner
+            ? "Choose one achievement per category — your pick is shown to everyone"
+            : "Highest tier unlocked in each category"}{" "}
+          · {player.achPoints ?? 0} ACH
         </div>
         {isOwner && (
           <div className="mb-3 rounded-xl border border-primary/30 bg-primary/5 p-2 text-[11px] text-primary/80">
-            ⚙️ You are the profile scorer — edit your showcase below. Changes are shared across all devices.
+            ⚙️ You are the profile scorer — edit your showcase below. Changes are shared across all
+            devices.
           </div>
         )}
         <div className="grid gap-2 sm:grid-cols-2">
@@ -187,9 +229,7 @@ function Profile() {
                 {selected ? (
                   <AchievementBadge p={selected} compact />
                 ) : (
-                  <div
-                    className="rounded-2xl border border-border/50 bg-secondary/30 p-3 text-xs text-muted-foreground"
-                  >
+                  <div className="rounded-2xl border border-border/50 bg-secondary/30 p-3 text-xs text-muted-foreground">
                     <span className="mr-1">{CATEGORY_META[cat].icon}</span>
                     {CATEGORY_META[cat].label} — nothing unlocked yet
                   </div>
@@ -205,7 +245,9 @@ function Profile() {
                     {achAll
                       .filter((a) => a.unlocked && a.def.category === cat)
                       .map((a) => (
-                        <option key={a.def.id} value={a.def.id}>{a.def.name}</option>
+                        <option key={a.def.id} value={a.def.id}>
+                          {a.def.name}
+                        </option>
                       ))}
                   </select>
                 )}
@@ -215,12 +257,7 @@ function Profile() {
         </div>
         {isOwner && hasChanges && (
           <div className="mt-3">
-            <Button
-              variant="gold"
-              size="sm"
-              onClick={saveShowcase}
-              className="gap-1"
-            >
+            <Button variant="gold" size="sm" onClick={saveShowcase} className="gap-1">
               Save Showcase
             </Button>
             <span className="ml-2 text-[11px] text-yellow-500/80">unsaved changes</span>
@@ -246,7 +283,12 @@ function Profile() {
         {milestones.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2 text-xs">
             {milestones.map((m) => (
-              <span key={m} className="rounded-full border border-primary/40 px-2 py-0.5 text-primary">{m}</span>
+              <span
+                key={m}
+                className="rounded-full border border-primary/40 px-2 py-0.5 text-primary"
+              >
+                {m}
+              </span>
             ))}
           </div>
         )}
@@ -316,7 +358,9 @@ function Profile() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{c.icon}</span>
-                  <span className="text-xs uppercase tracking-widest text-primary/80">{c.label}</span>
+                  <span className="text-xs uppercase tracking-widest text-primary/80">
+                    {c.label}
+                  </span>
                 </div>
                 <span className="text-[10px] tabular-nums text-muted-foreground">
                   {c.current.toLocaleString()} / {c.target.toLocaleString()}
@@ -343,7 +387,9 @@ function Profile() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {RATING_ORDER.map((k) => {
               const v = player.ratings?.[k as keyof typeof player.ratings];
-              return typeof v === "number" ? <Stat key={k} label={RATING_LABELS[k] ?? k} value={v} /> : null;
+              return typeof v === "number" ? (
+                <Stat key={k} label={RATING_LABELS[k] ?? k} value={v} />
+              ) : null;
             })}
           </div>
         </Section>
@@ -353,11 +399,15 @@ function Profile() {
         <details className="mt-4 text-xs text-muted-foreground">
           <summary className="cursor-pointer">Edit history ({player.edits.length})</summary>
           <ul className="mt-2 space-y-1">
-            {player.edits.slice(-10).reverse().map((e, i) => (
-              <li key={i}>
-                {new Date(e.ts).toLocaleString()} · <span className="text-primary">{e.field}</span>: {String(e.from)} → {String(e.to)}
-              </li>
-            ))}
+            {player.edits
+              .slice(-10)
+              .reverse()
+              .map((e, i) => (
+                <li key={i}>
+                  {new Date(e.ts).toLocaleString()} ·{" "}
+                  <span className="text-primary">{e.field}</span>: {String(e.from)} → {String(e.to)}
+                </li>
+              ))}
           </ul>
         </details>
       )}
@@ -384,12 +434,28 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 const RATING_ORDER = [
-  "overall", "batting", "bowling", "fielding", "pressure", "matchWinning",
-  "wicketTaking", "sixHitting", "deathBat", "deathBowl", "recentForm",
+  "overall",
+  "batting",
+  "bowling",
+  "fielding",
+  "pressure",
+  "matchWinning",
+  "wicketTaking",
+  "sixHitting",
+  "deathBat",
+  "deathBowl",
+  "recentForm",
 ];
 const RATING_LABELS: Record<string, string> = {
-  overall: "Overall", batting: "Batting", bowling: "Bowling", fielding: "Fielding",
-  pressure: "Pressure", matchWinning: "Match Winning", wicketTaking: "Wicket Taking",
-  sixHitting: "Six Hitting", deathBat: "Death Batting", deathBowl: "Death Bowling",
+  overall: "Overall",
+  batting: "Batting",
+  bowling: "Bowling",
+  fielding: "Fielding",
+  pressure: "Pressure",
+  matchWinning: "Match Winning",
+  wicketTaking: "Wicket Taking",
+  sixHitting: "Six Hitting",
+  deathBat: "Death Batting",
+  deathBowl: "Death Bowling",
   recentForm: "Recent Form",
 };
