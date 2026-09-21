@@ -1,4 +1,3 @@
-import { createHash, timingSafeEqual } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
 import { useSession } from "@tanstack/react-start/server";
 
@@ -18,7 +17,12 @@ function sessionConfig() {
   };
 }
 
-function matchesSecret(input: string, expected: string): boolean {
+function matchesSecret(
+  input: string,
+  expected: string,
+  createHash: (algorithm: string) => { update: (value: string, encoding: string) => { digest: () => Uint8Array } },
+  timingSafeEqual: (left: Uint8Array, right: Uint8Array) => boolean,
+): boolean {
   const inputHash = createHash("sha256").update(input, "utf8").digest();
   const expectedHash = createHash("sha256").update(expected, "utf8").digest();
   return timingSafeEqual(inputHash, expectedHash);
