@@ -1,4 +1,10 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { Button } from "@/components/ui/button";
+import {
+  getOwnerAccess,
+  unlockOwnerAccess,
+} from "@/lib/ownerGate.functions";
 
 // PTS closure: app is under maintenance until Feb 1, 2027 (local system time).
 const REOPEN_AT = new Date(2027, 1, 1, 0, 0, 0).getTime();
@@ -9,11 +15,73 @@ function pad(n: number) {
 
 export function MaintenanceGate({ children }: { children: ReactNode }) {
   const [now, setNow] = useState(() => Date.now());
+  const [ownerUnlocked, setOwnerUnlocked] = useState(false);
+  const [clicks, setClicks] = useState(0);
+  const [showOwnerLogin, setShowOwnerLogin] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const resetClicksTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const getAccess = useServerFn(getOwnerAccess);
+  const unlockAccess = useServerFn(unlockOwnerAccess);
 
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(t);
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    void getAccess().then(({ unlocked }) => {
+      if (active) setOwnerUnlocked(unlocked);
+    });
+    return () => {
+      active = false;
+    };
+  }, [getAccess]);
+
+  useEffect(() => {
+    return () => {
+      if (resetClicksTimer.current) clearTimeout(resetClicksTimer.current);
+    };
+  }, []);
+
+  function handleLogoClick() {
+    const nextClicks = clicks + 1;
+    if (resetClicksTimer.current) clearTimeout(resetClicksTimer.current);
+    if (nextClicks >= 15) {
+      setClicks(0);
+      setShowOwnerLogin(true);
+      setLoginError(false);
+      setUsername("");
+      setPassword("");
+      return;
+    }
+    setClicks(nextClicks);
+    resetClicksTimer.current = setTimeout(() => setClicks(0), 3000);
+  }
+
+  async function handleOwnerLogin(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setLoginError(false);
+    try {
+      const result = await unlockAccess({ data: { username, password } });
+      if (result.ok) {
+        setOwnerUnlocked(true);
+        setShowOwnerLogin(false);
+        setUsername("");
+        setPassword("");
+      } else {
+        setLoginError(true);
+      }
+    } catch {
+      setLoginError(true);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const remainingMs = Math.max(0, REOPEN_AT - now);
   const totalSeconds = Math.floor(remainingMs / 1000);
@@ -41,12 +109,19 @@ export function MaintenanceGate({ children }: { children: ReactNode }) {
     Math.floor((target.getTime() - anchor.getTime()) / (24 * 3600 * 1000))
   );
 
+  if (ownerUnlocked) return <>{children}</>;
+
   return (
     <div className="min-h-screen grid place-items-center px-5">
       <div className="w-full max-w-md text-center">
-        <div className="mx-auto size-16 rounded-2xl gradient-gold grid place-items-center text-primary-foreground font-black text-xl shadow-gold">
+        <button
+          type="button"
+          aria-label="PTS"
+          onClick={handleLogoClick}
+          className="mx-auto block size-16 rounded-2xl gradient-gold text-primary-foreground font-black text-xl shadow-gold"
+        >
           PTS
-        </div>
+        </button>
         <h1 className="mt-5 text-2xl font-black text-gradient-gold leading-snug">
           The PTS app is closed and is under maintainance
         </h1>
@@ -78,6 +153,52 @@ export function MaintenanceGate({ children }: { children: ReactNode }) {
         </p>
       </div>
       <div className="hidden">{children}</div>
+      {showOwnerLogin && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-background/90 px-5 backdrop-blur-sm">
+          <form
+            onSubmit={handleOwnerLogin}
+            className="w-full max-w-sm rounded-2xl border border-primary/30 bg-card p-5 text-left shadow-gold"
+          >
+            <h2 className="text-lg font-black text-gradient-gold">Owner access</h2>
+            <div className="mt-4 space-y-3">
+              <input
+                autoFocus
+                required
+                autoComplete="username"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                placeholder="Username"
+                className="w-full rounded-xl border border-border/60 bg-secondary/50 px-4 py-3 text-sm outline-none focus:border-primary"
+              />
+              <input
+                required
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Password"
+                className="w-full rounded-xl border border-border/60 bg-secondary/50 px-4 py-3 text-sm outline-none focus:border-primary"
+              />
+            </div>
+            {loginError && (
+              <p className="mt-3 text-sm text-destructive">Incorrect username or password.</p>
+            )}
+            <div className="mt-4 flex gap-2">
+              <Button type="submit" variant="gold" className="flex-1" disabled={busy}>
+                {busy ? "Checking…" : "Continue"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghostGold"
+                onClick={() => setShowOwnerLogin(false)}
+                disabled={busy}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

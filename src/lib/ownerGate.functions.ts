@@ -20,7 +20,9 @@ function sessionConfig() {
 function matchesSecret(
   input: string,
   expected: string,
-  createHash: (algorithm: string) => { update: (value: string, encoding: string) => { digest: () => Uint8Array } },
+  createHash: (
+    algorithm: string,
+  ) => { update: (value: string, encoding: string) => { digest: () => Uint8Array } },
   timingSafeEqual: (left: Uint8Array, right: Uint8Array) => boolean,
 ): boolean {
   const inputHash = createHash("sha256").update(input, "utf8").digest();
@@ -42,9 +44,10 @@ export const unlockOwnerAccess = createServerFn({ method: "POST" })
       throw new Error("Owner access is unavailable");
     }
 
+    const { createHash, timingSafeEqual } = await import("node:crypto");
     const valid =
-      matchesSecret(data.username, expectedUsername) &&
-      matchesSecret(data.password, expectedPassword);
+      matchesSecret(data.username, expectedUsername, createHash, timingSafeEqual) &&
+      matchesSecret(data.password, expectedPassword, createHash, timingSafeEqual);
     if (!valid) return { ok: false as const };
 
     const session = await useSession<OwnerGateSession>(sessionConfig());
