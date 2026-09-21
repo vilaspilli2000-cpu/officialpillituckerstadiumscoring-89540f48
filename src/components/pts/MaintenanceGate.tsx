@@ -16,12 +16,12 @@ function pad(n: number) {
 export function MaintenanceGate({ children }: { children: ReactNode }) {
   const [now, setNow] = useState(() => Date.now());
   const [ownerUnlocked, setOwnerUnlocked] = useState(false);
-  const [clicks, setClicks] = useState(0);
   const [showOwnerLogin, setShowOwnerLogin] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState(false);
   const [busy, setBusy] = useState(false);
+  const clickCount = useRef(0);
   const resetClicksTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const getAccess = useServerFn(getOwnerAccess);
   const unlockAccess = useServerFn(unlockOwnerAccess);
@@ -48,18 +48,20 @@ export function MaintenanceGate({ children }: { children: ReactNode }) {
   }, []);
 
   function handleLogoClick() {
-    const nextClicks = clicks + 1;
+    const nextClicks = clickCount.current + 1;
     if (resetClicksTimer.current) clearTimeout(resetClicksTimer.current);
     if (nextClicks >= 15) {
-      setClicks(0);
+      clickCount.current = 0;
       setShowOwnerLogin(true);
       setLoginError(false);
       setUsername("");
       setPassword("");
       return;
     }
-    setClicks(nextClicks);
-    resetClicksTimer.current = setTimeout(() => setClicks(0), 3000);
+    clickCount.current = nextClicks;
+    resetClicksTimer.current = setTimeout(() => {
+      clickCount.current = 0;
+    }, 3000);
   }
 
   async function handleOwnerLogin(event: React.FormEvent<HTMLFormElement>) {
