@@ -1,3 +1,4 @@
-- [ ] Add 35 achievements and additive Legacy/Meltdown progression
-- [ ] Layer and display final multiplier results
-- [ ] Verify typecheck and preview flows
+- [ ] Remove the public maintenance lock and restore normal app access.
+- [ ] Finish the previously requested additive Legacy/Meltdown progression and 35 achievements.
+- [ ] Fix and validate type, build, runtime, and route issues across the app.
+- [ ] Report GitHub sync status and any action only the project owner can take.
