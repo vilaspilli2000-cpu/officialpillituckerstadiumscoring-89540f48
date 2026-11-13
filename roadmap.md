@@ -1,4 +1,5 @@
 - [ ] Remove the public maintenance lock and restore normal app access.
+- [ ] Replace the current sign-in screen with the requested case-insensitive owner login, keeping credentials out of client code.
 - [ ] Finish the previously requested additive Legacy/Meltdown progression and 35 achievements.
 - [ ] Fix and validate type, build, runtime, and route issues across the app.
 - [ ] Report GitHub sync status and any action only the project owner can take.
